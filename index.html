@@ -1,0 +1,426 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drakantos – Tudo sobre o universo do jogo</title>
+
+  <!-- ===== FONTES (LETRAS ESPECIAIS) =====
+       Aqui carregamos fontes externas do Google Fonts para deixar o site bonito.
+       Cinzel Decorative: fonte grande e ornamentada usada no logo "DRAKANTOS"
+       Cinzel: fonte elegante usada nos títulos e botões
+       Crimson Pro: fonte de leitura fácil usada nos textos do corpo do site -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       NAVBAR FIXA (BARRA DE NAVEGAÇÃO NO TOPO)
+       Esta barra aparece em todas as páginas e nunca some ao rolar.
+       Contém: logo clicável, links de navegação, busca e login.
+  ============================================================ -->
+  <nav id="navbar">
+
+    <!-- Logo: ao clicar, o usuário volta para a página inicial -->
+    <div class="nav-logo" onclick="showPage('home')">
+      <!-- Ícone de dragão desenhado em SVG (formato vetorial — não é uma imagem, é código) -->
+      <svg class="nav-logo-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 4C14 4 6 12 6 22c0 4 1.5 7.5 4 10.5L4 44l12-4c2.5 1.3 5.2 2 8 2 10 0 18-8 18-18S34 4 24 4z" fill="currentColor" opacity=".15"/>
+        <path d="M32 14l-8 6-4-4-6 8 4 2-2 6 6-2 2 6 4-8 6 2-4-6 4-4-2-6z" fill="currentColor" opacity=".9"/>
+        <circle cx="18" cy="20" r="2" fill="white" opacity=".8"/>
+        <path d="M36 10c2-1 4 1 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>
+      </svg>
+      <span class="nav-logo-text">DRAKANTOS</span>
+    </div>
+
+    <!-- Botão hambúrguer — fica ao lado do logo, visível apenas em telas pequenas -->
+    <button class="nav-hamburger" id="navHamburger" onclick="toggleMobileMenu()" aria-label="Abrir menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <!-- Botões que levam para as diferentes seções do site.
+         O "data-page" guarda o nome da página para o JavaScript usar. -->
+    <nav class="nav-links">
+      <button class="nav-link active" data-page="home"      onclick="showPage('home')">Início</button>
+      <button class="nav-link"        data-page="novidades" onclick="showPage('novidades')">Novidades</button>
+      <button class="nav-link"        data-page="builds"    onclick="showPage('builds')">Builds</button>
+      <button class="nav-link"        data-page="guias"     onclick="showPage('guias')">Guias</button>
+    </nav>
+
+    <!-- Lado direito da navbar: campo de busca e botão de login (ou avatar quando logado) -->
+    <div class="nav-actions">
+
+      <!-- Campo de busca: filtra posts em tempo real enquanto o usuário digita -->
+      <div class="nav-search">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M11.7 10.3l3 3-1.4 1.4-3-3A6 6 0 1 1 13 6a6 6 0 0 1-1.3 4.3zM6 10A4 4 0 1 0 6 2a4 4 0 0 0 0 8z"/>
+        </svg>
+        <input type="text" placeholder="Buscar..." id="searchInput" oninput="handleSearch()" />
+      </div>
+
+      <!-- Botão "Entrar" — visível quando nenhum usuário está logado -->
+      <button class="btn btn-primary" id="btnEntrar" onclick="openAuthModal()">Entrar</button>
+
+      <!-- Avatar circular com a inicial do usuário — oculto até o login ser feito.
+           Ao passar o mouse, abre o menu com opções de criar posts e sair. -->
+      <div class="user-avatar hidden" id="userAvatar">
+        <span id="userInitial">?</span>
+        <!-- Menu que aparece ao passar o mouse sobre o avatar -->
+        <div class="user-menu" id="userMenu">
+          <div class="user-menu-item" style="color:var(--gold);font-size:.65rem;pointer-events:none" id="userMenuName"></div>
+          <div class="divider" style="margin:.4rem 0"></div>
+          <div class="user-menu-item" onclick="openNewPostModal('novidades')">
+            📰 Nova Notícia
+          </div>
+          <div class="user-menu-item" onclick="openNewPostModal('builds')">
+            ⚔️ Nova Build
+          </div>
+          <div class="user-menu-item" onclick="openNewPostModal('guias')">
+            📖 Novo Guia
+          </div>
+          <div class="divider" style="margin:.4rem 0"></div>
+          <div class="user-menu-item danger" onclick="logout()">
+            🚪 Sair
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- ============================================================
+       ÁREA PRINCIPAL DO APLICATIVO
+       Todas as páginas do site ficam aqui dentro. O JavaScript
+       controla qual delas aparece por vez, ocultando as demais.
+       Isso evita recarregar a página inteira ao navegar.
+  ============================================================ -->
+  <div id="app">
+
+    <!-- =====================================================
+         PÁGINA: HOME
+    ===================================================== -->
+    <div class="page active" id="page-home">
+
+      <!-- Banner principal da home: fundo gradiente, dragão decorativo e texto de boas-vindas -->
+      <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-particles"></div>
+
+        <!-- Dragão grande em SVG no lado direito do hero — semitransparente e animado -->
+        <svg class="hero-dragon" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="200" cy="300" rx="120" ry="160" fill="url(#drg)" opacity=".6"/>
+          <path d="M200 60 C150 100 80 160 100 240 C120 300 160 320 200 340 C240 320 280 300 300 240 C320 160 250 100 200 60Z" fill="url(#drg)" opacity=".8"/>
+          <path d="M200 60 L130 20 L160 80Z M200 60 L270 20 L240 80Z" fill="url(#drg)"/>
+          <circle cx="170" cy="160" r="12" fill="white" opacity=".6"/>
+          <circle cx="230" cy="160" r="12" fill="white" opacity=".6"/>
+          <path d="M160 240 Q200 280 240 240" stroke="url(#drg)" stroke-width="3" fill="none"/>
+          <path d="M100 240 C60 200 40 160 80 140" stroke="url(#drg)" stroke-width="4" fill="none"/>
+          <path d="M300 240 C340 200 360 160 320 140" stroke="url(#drg)" stroke-width="4" fill="none"/>
+          <defs>
+            <linearGradient id="drg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#c8001e"/>
+              <stop offset="100%" stop-color="#4a0008"/>
+            </linearGradient>
+          </defs>
+        </svg>
+
+        <!-- Texto do banner: subtítulo, título principal, descrição e botões de ação -->
+        <div class="hero-content">
+          <p class="hero-eyebrow">✦ Portal Oficial ✦</p>
+          <div style="font-family:'Cinzel',serif;font-size:.9rem;color:var(--text-secondary);margin-bottom:.3rem">TUDO SOBRE</div>
+          <h1 class="hero-title">DRAKANTOS</h1>
+          <p class="hero-sub">
+            Fique por dentro das novidades, descubra builds poderosas
+            e aprenda com guias completos sobre o universo do jogo.
+          </p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" onclick="showPage('novidades')">
+              🔔 Ver Novidades
+            </button>
+            <button class="btn btn-outline" onclick="showPage('builds')">
+              ⚔️ Ver Builds
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Grade com as 3 colunas de prévia da home.
+           Cada coluna mostra os 3 itens mais recentes de cada seção. -->
+      <div class="sections-grid" id="homeSections">
+
+        <!-- COLUNA 1: Prévia das últimas novidades -->
+        <div class="section-block">
+          <div class="section-header">
+            <h2 class="section-title">Novidades</h2>
+            <span class="section-link" onclick="showPage('novidades')">Ver todas</span>
+          </div>
+          <div id="homeNewsList">
+            <!-- Este espaço é preenchido automaticamente pelo JavaScript
+                 com os posts salvos no navegador (localStorage) -->
+          </div>
+          <div class="section-footer">
+            <button class="btn btn-outline" onclick="showPage('novidades')" style="font-size:.68rem;">Ver Todas as Novidades</button>
+          </div>
+        </div>
+
+        <!-- COLUNA 2: Prévia das builds em destaque -->
+        <div class="section-block">
+          <div class="section-header">
+            <h2 class="section-title">Builds em Destaque</h2>
+            <span class="section-link" onclick="showPage('builds')">Ver todas</span>
+          </div>
+          <div id="homeBuildsList">
+          </div>
+          <div class="section-footer">
+            <button class="btn btn-outline" onclick="showPage('builds')" style="font-size:.68rem;">Ver Todos os Builds</button>
+          </div>
+        </div>
+
+        <!-- COLUNA 3: Prévia dos guias mais populares -->
+        <div class="section-block">
+          <div class="section-header">
+            <h2 class="section-title">Guias Populares</h2>
+            <span class="section-link" onclick="showPage('guias')">Ver todos</span>
+          </div>
+          <div id="homeGuidesList">
+          </div>
+          <div class="section-footer">
+            <button class="btn btn-outline" onclick="showPage('guias')" style="font-size:.68rem;">Ver Todos os Guias</button>
+          </div>
+        </div>
+
+      </div>
+
+    </div><!-- /page-home -->
+
+    <!-- =====================================================
+         PÁGINA: NOVIDADES
+    ===================================================== -->
+    <div class="page" id="page-novidades">
+      <div class="page-header">
+        <div>
+          <h1 class="page-header-title">📰 Novidades</h1>
+          <p class="page-header-sub">Atualizações, eventos e notícias do universo Drakantos</p>
+        </div>
+        <!-- Botão para criar uma nova notícia — só aparece se o usuário estiver logado -->
+        <button class="btn btn-primary hidden" id="btnNewNovidade" onclick="openNewPostModal('novidades')">
+          + Nova Notícia
+        </button>
+      </div>
+
+      <!-- Botões de filtro: clique em um para ver apenas posts daquela categoria -->
+      <div class="page-filters">
+        <button class="filter-btn active" data-filter="all" onclick="filterPosts('novidades','all',this)">Todos</button>
+        <button class="filter-btn" data-filter="ATUALIZAÇÃO" onclick="filterPosts('novidades','ATUALIZAÇÃO',this)">Atualização</button>
+        <button class="filter-btn" data-filter="EVENTO" onclick="filterPosts('novidades','EVENTO',this)">Evento</button>
+        <button class="filter-btn" data-filter="NOTÍCIAS" onclick="filterPosts('novidades','NOTÍCIAS',this)">Notícias</button>
+      </div>
+
+      <!-- Grade de cards preenchida pelo JavaScript com todos os posts de novidades -->
+      <div class="posts-grid" id="novidadesGrid"></div>
+
+    </div><!-- /page-novidades -->
+
+    <!-- =====================================================
+         PÁGINA: BUILDS
+    ===================================================== -->
+    <div class="page" id="page-builds">
+      <div class="page-header">
+        <div>
+          <h1 class="page-header-title">⚔️ Builds</h1>
+          <p class="page-header-sub">Construções poderosas criadas pela comunidade</p>
+        </div>
+        <button class="btn btn-primary hidden" id="btnNewBuild" onclick="openNewPostModal('builds')">
+          + Nova Build
+        </button>
+      </div>
+
+      <div class="page-filters">
+        <button class="filter-btn active" data-filter="all" onclick="filterPosts('builds','all',this)">Todos</button>
+        <button class="filter-btn" data-filter="PVE" onclick="filterPosts('builds','PVE',this)">PVE</button>
+        <button class="filter-btn" data-filter="PVP" onclick="filterPosts('builds','PVP',this)">PVP</button>
+        <button class="filter-btn" data-filter="FARM" onclick="filterPosts('builds','FARM',this)">Farm</button>
+        <button class="filter-btn" data-filter="ENDGAME" onclick="filterPosts('builds','ENDGAME',this)">Endgame</button>
+      </div>
+
+      <div class="posts-grid" id="buildsGrid"></div>
+
+    </div><!-- /page-builds -->
+
+    <!-- =====================================================
+         PÁGINA: GUIAS
+    ===================================================== -->
+    <div class="page" id="page-guias">
+      <div class="page-header">
+        <div>
+          <h1 class="page-header-title">📖 Guias</h1>
+          <p class="page-header-sub">Aprenda com guias escritos pelos mestres da comunidade</p>
+        </div>
+        <button class="btn btn-primary hidden" id="btnNewGuia" onclick="openNewPostModal('guias')">
+          + Novo Guia
+        </button>
+      </div>
+
+      <div class="page-filters">
+        <button class="filter-btn active" data-filter="all" onclick="filterPosts('guias','all',this)">Todos</button>
+        <button class="filter-btn" data-filter="INICIANTE" onclick="filterPosts('guias','INICIANTE',this)">Iniciante</button>
+        <button class="filter-btn" data-filter="AVANÇADO" onclick="filterPosts('guias','AVANÇADO',this)">Avançado</button>
+        <button class="filter-btn" data-filter="ECONOMIA" onclick="filterPosts('guias','ECONOMIA',this)">Economia</button>
+        <button class="filter-btn" data-filter="DUNGEON" onclick="filterPosts('guias','DUNGEON',this)">Masmorras</button>
+      </div>
+
+      <div class="posts-grid" id="guiasGrid"></div>
+
+    </div><!-- /page-guias -->
+
+  </div><!-- /app -->
+
+  <!-- Rodapé único e fixo — compartilhado por todas as páginas -->
+  <footer>
+    <div class="footer-social">
+      <a href="#" title="Discord">💬</a>
+      <a href="#" title="YouTube">▶</a>
+      <a href="#" title="Twitter">🐦</a>
+      <a href="#" title="Reddit">🔴</a>
+    </div>
+    <p class="footer-copy">© 2024 Drakantos – Todos os direitos reservados.</p>
+    <div class="footer-links">
+      <a href="#">Política de Privacidade</a>
+      <a href="#">Termos de Uso</a>
+    </div>
+  </footer>
+
+  <!-- ============================================================
+       MODAL DE AUTENTICAÇÃO (Login e Cadastro)
+       Janela flutuante que permite ao usuário entrar ou criar uma conta.
+       Começa oculta (classe "hidden") e aparece ao clicar em "Entrar".
+  ============================================================ -->
+  <div class="modal-backdrop hidden" id="authModal" onclick="closeModalOnBackdrop(event,'authModal')">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('authModal')">✕</button>
+
+      <!-- Abas para alternar entre os formulários de login e cadastro -->
+      <div class="modal-tabs">
+        <button class="modal-tab active" id="tabLogin"   onclick="switchAuthTab('login')">Entrar</button>
+        <button class="modal-tab"        id="tabRegister" onclick="switchAuthTab('register')">Cadastrar</button>
+      </div>
+
+      <!-- Formulário de login: aparece quando a aba "Entrar" está selecionada -->
+      <div id="formLogin">
+        <p class="modal-title" style="font-size:1rem;margin-bottom:1rem;">Bem-vindo de volta, Aventureiro!</p>
+        <div class="modal-form">
+          <div class="form-group">
+            <label class="form-label" for="loginEmail">E-mail</label>
+            <input class="input" type="email" id="loginEmail" placeholder="seu@email.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="loginPassword">Senha</label>
+            <input class="input" type="password" id="loginPassword" placeholder="••••••••" />
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:.5rem" onclick="handleLogin()">
+            ⚔️ Entrar no Jogo
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulário de cadastro: oculto por padrão, aparece ao clicar em "Cadastrar" -->
+      <div id="formRegister" class="hidden">
+        <p class="modal-title" style="font-size:1rem;margin-bottom:1rem;">Crie sua conta de Aventureiro</p>
+        <div class="modal-form">
+          <div class="form-group">
+            <label class="form-label" for="regName">Nome de Usuário</label>
+            <input class="input" type="text" id="regName" placeholder="DragonSlayer99" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regEmail">E-mail</label>
+            <input class="input" type="email" id="regEmail" placeholder="seu@email.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regPassword">Senha</label>
+            <input class="input" type="password" id="regPassword" placeholder="Mínimo 6 caracteres" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regConfirm">Confirmar Senha</label>
+            <input class="input" type="password" id="regConfirm" placeholder="Repita a senha" />
+          </div>
+          <button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:.5rem" onclick="handleRegister()">
+            🐉 Criar Conta
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL DE CRIAR POST (Novidades, Builds ou Guias)
+       O mesmo formulário serve para os três tipos de post.
+       O JavaScript muda o título e as opções de tags conforme a seção escolhida.
+  ============================================================ -->
+  <div class="modal-backdrop hidden" id="postModal" onclick="closeModalOnBackdrop(event,'postModal')">
+    <div class="modal modal-wide">
+      <button class="modal-close" onclick="closeModal('postModal')">✕</button>
+      <p class="modal-title" id="postModalTitle">✍️ Novo Post</p>
+
+      <div class="modal-form">
+
+        <!-- Campo "Seção" preenchido automaticamente (Novidades, Builds ou Guias) — não editável -->
+        <div class="form-group">
+          <label class="form-label">Seção</label>
+          <input class="input" type="text" id="postSection" readonly style="opacity:.6;cursor:default" />
+        </div>
+
+        <!-- Título do post: obrigatório, máximo de 80 caracteres -->
+        <div class="form-group">
+          <label class="form-label" for="postTitle">Título *</label>
+          <input class="input" type="text" id="postTitle" placeholder="Digite um título cativante..." maxlength="80" />
+        </div>
+
+        <!-- Descrição/conteúdo do post: área de texto com múltiplas linhas -->
+        <div class="form-group">
+          <label class="form-label" for="postDesc">Descrição *</label>
+          <textarea class="input" id="postDesc" rows="4" placeholder="Descreva seu post em detalhes..."></textarea>
+        </div>
+
+        <!-- Ícone do post: o usuário digita um emoji que representa o post visualmente -->
+        <div class="form-group">
+          <label class="form-label" for="postEmoji">Ícone (emoji)</label>
+          <input class="input" type="text" id="postEmoji" placeholder="⚔️ 🐉 📖 🔮 ..." maxlength="4" style="font-size:1.4rem;text-align:center" />
+        </div>
+
+        <!-- Tags clicáveis: o usuário seleciona as categorias do post.
+             As opções mudam dependendo da seção (Novidades, Builds ou Guias) -->
+        <div class="form-group">
+          <label class="form-label" for="postTags">Tags</label>
+          <div id="postTagsContainer" style="display:flex;gap:.4rem;flex-wrap:wrap;"></div>
+        </div>
+
+        <!-- Botões de ação -->
+        <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:.5rem">
+          <button class="btn btn-outline" onclick="closeModal('postModal')">Cancelar</button>
+          <button class="btn btn-primary" onclick="handleCreatePost()">
+            🐉 Publicar Post
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Área onde as notificações temporárias aparecem (sucesso, erro, info) -->
+  <div id="toast"></div>
+
+  <!-- ============================================================
+       JAVASCRIPT – TODA A LÓGICA DE FUNCIONAMENTO DO SITE
+       Este bloco de código controla tudo que "acontece" no site:
+       navegação entre páginas, login, criação de posts, busca, etc.
+       O JavaScript roda no navegador do usuário, sem precisar de servidor.
+  ============================================================ -->
+  <script src="backend.js"></script>
+</body>
+</html>

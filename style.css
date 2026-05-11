@@ -1,0 +1,1140 @@
+﻿/* ============================================================
+   VARIÁVEIS GLOBAIS DE DESIGN
+   Pense nas variáveis como "apelidos" para cores e tamanhos.
+   Em vez de repetir a mesma cor em 50 lugares do código,
+   damos um nome a ela aqui e usamos esse nome em todo o resto.
+   Se quiser mudar uma cor, basta alterar aqui nesta seção.
+============================================================ */
+:root {
+  --bg-void:        #060102;      /* cor de fundo mais escura, usada no rodapé */
+  --bg-deep:        #0e0304;      /* cor de fundo padrão de todas as páginas */
+  --bg-card:        #1c0608;      /* fundo dos cartões (cards) e painéis internos */
+  --bg-card-hover:  #280a0c;     /* fundo do card quando o mouse passa por cima */
+  --bg-overlay:     rgba(6,1,2,.85); /* camada semitransparente escura sobre imagens */
+
+  --magma-bright:   #800417;      /* vermelho royal vívido — cor principal de destaque do site */
+  --magma-mid:      #8b0014;      /* carmim profundo — usado em botões e fundos */
+  --magma-dark:     #4a0008;      /* vermelho sangue escuro — usado em gradientes de fundo */
+  --magma-glow:     rgba(200,0,30,.4); /* brilho vermelho royal semitransparente (efeito de luz) */
+
+  --gold:           #c9a84c;      /* dourado — usado no logo e nos títulos principais */
+  --gold-light:     #e8c97a;      /* dourado mais claro — variação de destaque */
+
+  --text-primary:   #f0e0e2;      /* cor do texto principal — branco com leve tom rosado */
+  --text-secondary: #a87878;      /* cor do texto secundário — tom rosado suave */
+  --text-muted:     #5a3035;      /* cor do texto "apagado" — datas, rodapés, placeholders */
+
+  --border:         rgba(200,0,30,.22);   /* borda vermelho-royal transparente nos cards e inputs */
+  --border-gold:    rgba(201,168,76,.25);  /* borda dourada transparente usada nos cards de guias */
+
+  --red:   #e05252;   /* vermelho — usado nas tags de PVP e nos botões de perigo/deletar */
+  --green: #52b788;   /* verde — usado nas tags de Farm e nas notificações de sucesso */
+  --blue:  #4ea8de;   /* azul — usado nas tags de PVE */
+  --orange:#e07c3a;   /* laranja âmbar — usado nas tags de Evento */
+
+  --radius: 6px;      /* arredondamento padrão das bordas dos elementos (botões, inputs) */
+  --radius-lg: 12px;  /* arredondamento maior — usado nos cards e modais */
+  --transition: .22s ease; /* velocidade das animações de hover (0,22 segundos suave) */
+
+  /* Sombra com brilho vermelho royal dramático — aparece ao passar o mouse nos cards */
+  --shadow-magma: 0 0 40px rgba(200,0,30,.2), 0 4px 20px rgba(0,0,0,.7);
+}
+
+/* ============================================================
+   RESET & BASE
+   Navegadores diferentes aplicam margens e espaços padrão
+   diferentes nos elementos, o que causa inconsistências visuais.
+   O "reset" remove esses padrões para termos controle total
+   sobre como cada elemento aparece na tela.
+============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Faz a rolagem da página ser suave ao clicar em links internos */
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Crimson Pro', Georgia, serif;
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;      /* garante que o fundo cubra pelo menos a altura da tela */
+  overflow-x: hidden;     /* impede rolagem horizontal indesejada */
+  /* Mapa do mundo como plano de fundo fixo, coberto por uma camada escura
+     semitransparente para manter a legibilidade do conteúdo */
+  background-image:
+    linear-gradient(rgba(14,3,4,.82), rgba(14,3,4,.82)),
+    url("mapa mundo.png");
+  background-size: cover;          /* estica a imagem para cobrir toda a tela */
+  background-position: center;     /* centraliza a imagem */
+  background-attachment: fixed;    /* fundo fixo — não rola junto com a página */
+  background-repeat: no-repeat;
+}
+
+/* ============================================================
+   UTILITÁRIOS
+   Classes genéricas reutilizáveis em qualquer parte do HTML.
+   Basta adicionar o nome da classe a um elemento para aplicar o estilo.
+============================================================ */
+/* Esconde completamente o elemento — usado pelo JavaScript para mostrar/ocultar */
+.hidden   { display: none !important; }
+/* Torna o elemento invisível mas ainda acessível para leitores de tela (acessibilidade) */
+.sr-only  { position: absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+
+/* Estilo base compartilhado por todos os botões do site */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem 1.4rem;
+  border-radius: var(--radius);
+  font-family: 'Cinzel', serif;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+/* Botão vermelho royal — ação principal, como "Entrar" e "Publicar Post" */
+.btn-primary {
+  background: linear-gradient(135deg, var(--magma-bright), var(--magma-mid));
+  color: #fff;
+  box-shadow: 0 0 18px var(--magma-glow);
+}
+.btn-primary:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 30px var(--magma-glow);
+  transform: translateY(-1px);
+}
+
+/* Botão contornado (só borda, sem preenchimento) — ação secundária, como "Ver Builds" */
+.btn-outline {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover {
+  border-color: var(--magma-bright);
+  color: var(--magma-bright);
+  background: rgba(200,0,30,.08);
+}
+
+/* Botão dourado — usado no cadastro de conta */
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold), #a07030);
+  color: #1a1000;
+  font-weight: 700;
+}
+.btn-gold:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+/* Botão de perigo (vermelho) — usado em ações destrutivas como deletar */
+.btn-danger {
+  background: rgba(224,82,82,.15);
+  color: var(--red);
+  border: 1px solid rgba(224,82,82,.3);
+}
+.btn-danger:hover { background: rgba(224,82,82,.25); }
+
+/* Estilo dos campos de texto, e-mail, senha e área de texto dos formulários */
+.input {
+  width: 100%;
+  padding: .65rem 1rem;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: 'Crimson Pro', serif;
+  font-size: 1rem;
+  transition: var(--transition);
+  outline: none;
+}
+.input:focus {
+  border-color: var(--magma-bright);
+  box-shadow: 0 0 0 3px var(--magma-glow);
+}
+.input::placeholder { color: var(--text-muted); }
+
+textarea.input { resize: vertical; min-height: 100px; }
+
+select.input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239b4dca' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+}
+select.input option { background: var(--bg-card); }
+
+/* Agrupa o rótulo (label) e o campo (input) em coluna com espaço entre eles */
+.form-group { display: flex; flex-direction: column; gap: .4rem; }
+/* Rótulo acima de cada campo do formulário (ex: "E-mail", "Senha") */
+.form-label {
+  font-family: 'Cinzel', serif;
+  font-size: .72rem;
+  letter-spacing: .1em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+/* Etiquetas coloridas que categorizam os posts (ex: PVE, EVENTO, FARM) */
+.tag {
+  display: inline-block;
+  padding: .15rem .55rem;
+  border-radius: 3px;
+  font-family: 'Cinzel', serif;
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.tag-pve     { background: rgba(78,168,222,.2); color: var(--blue); }
+.tag-pvp     { background: rgba(224,82,82,.2);  color: var(--red); }
+.tag-farm    { background: rgba(82,183,136,.2); color: var(--green); }
+.tag-endgame { background: rgba(155,77,202,.2); color: var(--magma-bright); }
+.tag-event   { background: rgba(224,124,58,.2); color: var(--orange); }
+.tag-news    { background: rgba(201,168,76,.2); color: var(--gold); }
+.tag-update  { background: rgba(155,77,202,.2); color: var(--magma-bright); }
+.tag-guide   { background: rgba(82,183,136,.2); color: var(--green); }
+
+/* Linha horizontal decorativa usada para separar seções dentro dos menus */
+.divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border), transparent);
+  margin: 1.5rem 0;
+}
+
+/* Área onde as notificações flutuantes (toasts) aparecem no canto inferior direito.
+   "Toast" é o nome dado a mensagens temporárias que aparecem e somem sozinhas. */
+#toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  pointer-events: none;
+}
+.toast-item {
+  padding: .75rem 1.25rem;
+  border-radius: var(--radius);
+  font-family: 'Cinzel', serif;
+  font-size: .78rem;
+  letter-spacing: .05em;
+  color: #fff;
+  pointer-events: none;
+  animation: toastIn .3s ease forwards;
+  max-width: 320px;
+}
+.toast-success { background: linear-gradient(135deg, #1e4a38, #0d2a1f); border-left: 3px solid var(--green); }
+.toast-error   { background: linear-gradient(135deg, #4a1e1e, #2a0d0d); border-left: 3px solid var(--red); }
+.toast-info    { background: linear-gradient(135deg, #1e1e4a, #0d0d2a); border-left: 3px solid var(--magma-bright); }
+@keyframes toastIn { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+@keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateX(30px); } }
+
+/* ============================================================
+   NAVBAR (BARRA DE NAVEGAÇÃO)
+   A barra presa no topo da tela que contém o logo, os links
+   das páginas, a busca e o botão de login. Ela fica fixada
+   mesmo quando o usuário rola a página para baixo.
+============================================================ */
+#navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+  gap: 2rem;
+  background: rgba(6,1,2,.95);
+  border-bottom: 1px solid var(--border);
+  /* Efeito de vidro embaçado */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Bloco do logo: ícone de dragão + texto "DRAKANTOS" — clicável, volta para a home */
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  text-decoration: none;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.nav-logo-icon {
+  width: 32px; height: 32px;
+  color: var(--magma-bright);
+  filter: drop-shadow(0 0 8px var(--magma-bright));
+}
+.nav-logo-text {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: .04em;
+  text-shadow: 0 0 20px rgba(201,168,76,.5);
+}
+
+/* Grupo de links de navegação: Início, Novidades, Builds, Guias */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  flex: 1;
+}
+.nav-link {
+  padding: .4rem .9rem;
+  font-family: 'Cinzel', serif;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius);
+  transition: var(--transition);
+  cursor: pointer;
+  text-transform: uppercase;
+  border: none;
+  background: none;
+  position: relative;
+}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 50%; right: 50%;
+  height: 2px;
+  background: var(--magma-bright);
+  transition: var(--transition);
+  border-radius: 2px;
+}
+.nav-link:hover { color: var(--text-primary); }
+.nav-link:hover::after,
+.nav-link.active::after { left: 10%; right: 10%; }
+.nav-link.active { color: var(--text-primary); }
+
+/* Área direita da navbar: contém a busca e o botão de login/avatar */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-left: auto;
+}
+
+/* Campo de busca na navbar — some em telas pequenas (celular) */
+.nav-search {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 .75rem;
+  gap: .4rem;
+  transition: var(--transition);
+}
+.nav-search:focus-within {
+  border-color: var(--magma-bright);
+  box-shadow: 0 0 0 3px var(--magma-glow);
+}
+.nav-search input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: 'Crimson Pro', serif;
+  font-size: .9rem;
+  width: 160px;
+  padding: .35rem 0;
+}
+.nav-search input::placeholder { color: var(--text-muted); }
+.nav-search svg { color: var(--text-muted); flex-shrink:0; }
+
+/* Círculo com a inicial do nome do usuário — aparece quando ele está logado */
+.user-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--magma-mid), var(--magma-dark));
+  border: 2px solid var(--magma-bright);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-size: .8rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+}
+.user-avatar:hover { box-shadow: 0 0 14px var(--magma-glow); }
+
+/* Menu suspenso que aparece ao passar o mouse sobre o avatar do usuário.
+   Contém opções como criar posts e sair da conta. */
+.user-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: .5rem;
+  min-width: 180px;
+  box-shadow: var(--shadow-magma);
+  display: none;
+  z-index: 100;
+}
+.user-avatar:hover .user-menu,
+.user-menu:hover { display: block; }
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .55rem .75rem;
+  border-radius: var(--radius);
+  font-family: 'Cinzel', serif;
+  font-size: .72rem;
+  letter-spacing: .05em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.user-menu-item:hover { color: var(--text-primary); background: rgba(255,255,255,.05); }
+.user-menu-item.danger:hover { color: var(--red); background: rgba(224,82,82,.08); }
+
+/* ============================================================
+   CONTEÚDO PRINCIPAL
+   O site não recarrega a página ao navegar — em vez disso,
+   temos várias "páginas" (divs) empilhadas, e o JavaScript
+   mostra apenas a ativa, ocultando todas as outras.
+============================================================ */
+#app {
+  margin-top: 64px; /* empurra o conteúdo para baixo da navbar fixa (que tem 64px de altura) */
+}
+
+/* Todas as páginas ficam ocultas por padrão */
+.page { display: none; }
+/* Apenas a página com a classe "active" fica visível */
+.page.active { display: block; }
+
+/* ============================================================
+   MODAL (JANELA FLUTUANTE)
+   Um modal é uma janela que aparece sobre o conteúdo principal,
+   escurecendo o fundo. Aqui usamos o mesmo modal para login,
+   cadastro e criação de posts — mudando apenas o conteúdo interno.
+============================================================ */
+/* Camada escura e borrada que cobre toda a tela atrás do modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: fadeIn .2s ease;
+}
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: var(--shadow-magma);
+  animation: slideUp .3s ease;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+@keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+.modal-wide { max-width: 640px; }
+
+.modal-close {
+  position: absolute;
+  top: 1rem; right: 1rem;
+  width: 28px; height: 28px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items:center; justify-content:center;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  transition: var(--transition);
+  line-height: 1;
+}
+.modal-close:hover { color: var(--red); border-color: var(--red); }
+
+.modal-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: .05em;
+  margin-bottom: 1.5rem;
+}
+
+.modal-form { display: flex; flex-direction: column; gap: 1rem; }
+
+/* Barra com as abas "Entrar" e "Cadastrar" dentro do modal de autenticação */
+.modal-tabs {
+  display: flex;
+  gap: .25rem;
+  background: rgba(0,0,0,.3);
+  border-radius: var(--radius);
+  padding: .25rem;
+  margin-bottom: 1.5rem;
+}
+.modal-tab {
+  flex: 1;
+  padding: .55rem;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: var(--transition);
+  border: none;
+  background: none;
+}
+.modal-tab.active {
+  background: var(--magma-mid);
+  color: #fff;
+}
+
+/* ============================================================
+   HOME – HERO (BANNER PRINCIPAL)
+   A grande seção de destaque no topo da página inicial,
+   com o título "DRAKANTOS", a descrição e os botões de ação.
+   Todo o fundo é criado com gradientes CSS — sem imagem externa.
+============================================================ */
+.hero {
+  position: relative;
+  min-height: 520px;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 4rem 4rem;
+  overflow: hidden;
+}
+
+/* Fundo do hero: três camadas de gradiente sobrepostas para simular
+   profundidade e iluminação mística, sem precisar de uma imagem real */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, rgba(6,1,2,.95) 30%, rgba(6,1,2,.4) 70%, rgba(6,1,2,.3) 100%),
+    radial-gradient(ellipse at 75% 40%, rgba(200,0,30,.3) 0%, transparent 65%),
+    linear-gradient(160deg, #150004 0%, #2a0008 40%, #100002 70%, #1e0005 100%);
+}
+
+/* Bolas de luz roxas animadas no fundo do hero — criadas apenas com CSS,
+   sem nenhuma imagem ou JavaScript. Usam o truque de ::before e ::after
+   para criar dois elementos extras a partir de um único div. */
+.hero-particles {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+}
+.hero-particles::before,
+.hero-particles::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  animation: float 8s ease-in-out infinite;
+}
+.hero-particles::before {
+  width: 400px; height: 400px;
+  right: 15%; top: -10%;
+  background: radial-gradient(circle, rgba(200,0,30,.15) 0%, transparent 70%);
+}
+.hero-particles::after {
+  width: 600px; height: 600px;
+  right: 25%; top: 5%;
+  background: radial-gradient(circle, rgba(140,0,20,.12) 0%, transparent 70%);
+  animation-delay: -4s;
+  animation-duration: 12s;
+}
+@keyframes float {
+  0%,100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-20px) scale(1.05); }
+}
+
+/* Imagem do dragão SVG à direita do hero — semitransparente e com animação de respiração */
+.hero-dragon {
+  position: absolute;
+  right: 8%; top: 50%;
+  transform: translateY(-50%);
+  width: 340px; opacity: .18;
+  filter: blur(.5px) drop-shadow(0 0 40px var(--magma-bright));
+  animation: breathe 6s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes breathe {
+  0%,100% { opacity:.18; transform:translateY(-50%) scale(1); }
+  50%      { opacity:.24; transform:translateY(-53%) scale(1.02); }
+}
+
+.hero-content { position: relative; z-index: 1; max-width: 560px; }
+
+.hero-eyebrow {
+  font-family: 'Cinzel', serif;
+  font-size: .72rem;
+  letter-spacing: .3em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: .75rem;
+  opacity: .8;
+}
+
+.hero-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--magma-bright);
+  text-shadow: 0 0 60px rgba(200,0,30,.75);
+  margin-bottom: .5rem;
+}
+
+.hero-sub {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 400px;
+  margin-bottom: 2rem;
+}
+
+.hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+/* ============================================================
+   HOME – GRADE DE SEÇÕES
+   Abaixo do hero, há três colunas lado a lado:
+   Novidades | Builds em Destaque | Guias Populares.
+   Em telas pequenas, elas empilham em coluna única.
+============================================================ */
+.sections-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2rem;
+  padding: 3rem 3rem 4rem;
+  background: var(--bg-void);
+  border-top: 1px solid var(--border);
+}
+
+.section-block {}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding-bottom: .6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: .85rem;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.section-title::before {
+  content: '';
+  width: 3px; height: 1em;
+  background: var(--magma-bright);
+  border-radius: 3px;
+}
+
+.section-link {
+  font-family: 'Cinzel', serif;
+  font-size: .68rem;
+  letter-spacing: .08em;
+  color: var(--magma-bright);
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.section-link:hover { color: var(--gold); }
+
+/* Card de novidade na home: ícone à esquerda + título e descrição à direita */
+.news-card {
+  display: flex;
+  gap: .85rem;
+  padding: .75rem;
+  border-radius: var(--radius);
+  transition: var(--transition);
+  cursor: pointer;
+  margin-bottom: .5rem;
+}
+.news-card:hover { background: var(--bg-card-hover); }
+.news-thumb {
+  width: 72px; height: 56px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--magma-dark), var(--bg-card));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  overflow: hidden;
+}
+.news-info { flex: 1; min-width: 0; }
+.news-title {
+  font-family: 'Cinzel', serif;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: .3rem 0 .25rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.news-desc {
+  font-size: .85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.news-date {
+  font-size: .75rem;
+  color: var(--text-muted);
+  margin-top: .25rem;
+}
+
+/* Card de build na home: ícone redondo + nome da build + seta à direita */
+.build-card {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  padding: .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  transition: var(--transition);
+  cursor: pointer;
+  margin-bottom: .5rem;
+}
+.build-card:hover {
+  border-color: var(--magma-bright);
+  background: var(--bg-card-hover);
+  box-shadow: 0 0 20px var(--magma-glow);
+}
+.build-icon {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--magma-dark), #1a0005);
+  border: 2px solid var(--border);
+  display: flex; align-items:center; justify-content:center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.build-info { flex: 1; min-width: 0; }
+.build-name {
+  font-family: 'Cinzel', serif;
+  font-size: .82rem;
+  font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.build-type { font-size: .8rem; color: var(--text-secondary); margin: .1rem 0 .3rem; }
+.build-tags { display: flex; gap: .3rem; flex-wrap: wrap; }
+.build-arrow { color: var(--text-muted); flex-shrink: 0; margin-left: auto; }
+
+/* Card de guia na home: ícone quadrado dourado + título e prévia da descrição */
+.guide-card {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  padding: .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  transition: var(--transition);
+  cursor: pointer;
+  margin-bottom: .5rem;
+}
+.guide-card:hover {
+  border-color: var(--gold);
+  background: var(--bg-card-hover);
+}
+.guide-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #1a1500, #302000);
+  border: 2px solid var(--border-gold);
+  display: flex; align-items:center; justify-content:center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.guide-info { flex: 1; min-width: 0; }
+.guide-name {
+  font-family: 'Cinzel', serif;
+  font-size: .82rem;
+  font-weight: 600;
+}
+.guide-desc { font-size: .8rem; color: var(--text-secondary); margin: .15rem 0; }
+
+/* Botão "Ver Todos" no rodapé de cada coluna da home */
+.section-footer {
+  margin-top: 1rem;
+}
+.section-footer .btn {
+  width: 100%;
+  justify-content: center;
+  font-size: .72rem;
+}
+
+/* ============================================================
+   PÁGINAS INTERNAS (Novidades, Builds, Guias)
+   Cada página interna tem: um cabeçalho com título e botão de criar,
+   uma barra de filtros por categoria, e uma grade de cards de posts.
+============================================================ */
+.page-header {
+  padding: 3rem 3rem 2rem;
+  background: linear-gradient(to bottom, rgba(200,0,30,.07) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-header-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: .05em;
+}
+
+.page-header-sub {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-top: .25rem;
+}
+
+/* Barra de filtros: botões arredondados para filtrar posts por categoria */
+.page-filters {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: 1.25rem 3rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: .35rem .85rem;
+  border-radius: 20px;
+  font-family: 'Cinzel', serif;
+  font-size: .68rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+}
+.filter-btn:hover,
+.filter-btn.active {
+  background: var(--magma-mid);
+  border-color: var(--magma-mid);
+  color: #fff;
+}
+
+/* Grade responsiva de cards — cria quantas colunas couberem na tela,
+   com no mínimo 300px por card */
+.posts-grid {
+  padding: 2rem 3rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Card completo de post — sobe levemente ao passar o mouse (efeito de elevação) */
+.post-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: var(--transition);
+  cursor: pointer;
+  position: relative;
+}
+.post-card:hover {
+  border-color: var(--magma-bright);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-magma);
+}
+
+.post-card-thumb {
+  width: 100%;
+  height: 160px;
+  background: linear-gradient(135deg, var(--magma-dark), #0d0002, #150005);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+.post-card-thumb::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--bg-card) 0%, transparent 50%);
+}
+
+.post-card-body { padding: 1rem 1.25rem 1.25rem; }
+
+.post-card-tags { display: flex; gap: .3rem; flex-wrap: wrap; margin-bottom: .6rem; }
+
+.post-card-title {
+  font-family: 'Cinzel', serif;
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: .4rem;
+  line-height: 1.3;
+}
+
+.post-card-desc {
+  font-size: .9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: .75rem;
+}
+
+.post-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  padding-top: .75rem;
+  font-size: .8rem;
+  color: var(--text-muted);
+}
+
+.post-card-author {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.post-card-avatar {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--magma-mid);
+  display: flex; align-items:center; justify-content:center;
+  font-size: .6rem;
+  color: #fff;
+  font-family: 'Cinzel', serif;
+}
+
+/* Botão "✕" que aparece no canto do card ao passar o mouse —
+   visível apenas para o autor do post, para que ele possa deletá-lo */
+.post-card-delete {
+  position: absolute;
+  top: .6rem; right: .6rem;
+  width: 26px; height: 26px;
+  background: rgba(224,82,82,.2);
+  border: 1px solid rgba(224,82,82,.4);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items:center; justify-content:center;
+  color: var(--red);
+  font-size: .75rem;
+  z-index: 10;
+  transition: var(--transition);
+  opacity: 0;
+}
+.post-card:hover .post-card-delete { opacity: 1; }
+.post-card-delete:hover { background: rgba(224,82,82,.4); }
+
+/* Mensagem centralizada exibida quando não há posts para mostrar na página */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+}
+.empty-state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: .5; }
+.empty-state-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: .5rem;
+  color: var(--text-secondary);
+}
+.empty-state p { font-size: .95rem; line-height: 1.5; }
+
+/* ============================================================
+   RODAPÉ
+   Barra fixa no fundo da tela — permanece visível em todas
+   as páginas mesmo ao rolar o conteúdo para cima.
+   z-index: 500 garante que fique acima do conteúdo mas
+   abaixo da navbar (z-index: 1000) e dos modais (z-index: 2000).
+============================================================ */
+footer {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 500;
+  background: rgba(6,1,2,.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
+  padding: 1rem 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+
+/* Empurra o conteúdo para cima para não ficar escondido atrás do rodapé fixo */
+#app { padding-bottom: 62px; }
+
+.footer-social {
+  display: flex;
+  gap: .6rem;
+}
+
+.footer-social a {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  display: flex; align-items:center; justify-content:center;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: var(--transition);
+  font-size: .8rem;
+}
+.footer-social a:hover {
+  border-color: var(--magma-bright);
+  color: var(--magma-bright);
+}
+
+.footer-copy {
+  font-size: .8rem;
+  color: var(--text-muted);
+}
+
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+}
+.footer-links a {
+  font-family: 'Cinzel', serif;
+  font-size: .68rem;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: var(--transition);
+}
+.footer-links a:hover { color: var(--text-secondary); }
+
+/* ============================================================
+   HAMBÚRGUER — BOTÃO DE MENU PARA TELAS PEQUENAS
+   Três linhas que se animam em "X" quando o menu está aberto.
+   Só aparece em telas menores que 900px.
+============================================================ */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  padding: 7px;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.nav-hamburger span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transition: var(--transition);
+}
+.nav-hamburger:hover { border-color: var(--magma-bright); }
+
+/* Animação do X quando o menu está aberto */
+.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ============================================================
+   RESPONSIVIDADE (ADAPTAÇÃO PARA TELAS MENORES)
+   As regras dentro de @media só se aplicam quando a tela
+   tiver menos de 900px de largura (tablets e celulares).
+   Aqui ajustamos espaçamentos e ocultamos elementos que
+   não cabem bem em telas pequenas.
+============================================================ */
+@media (max-width: 900px) {
+  .sections-grid { grid-template-columns: 1fr; padding: 2rem 1.5rem; }
+  .hero { padding: 2rem 1.5rem 3rem; }
+  .page-header { padding: 2rem 1.5rem 1.5rem; }
+  .page-filters { padding: 1rem 1.5rem; }
+  .posts-grid { padding: 1.5rem; }
+  footer { padding: .75rem 1rem; gap: .4rem; }
+  .nav-search { display: none; }
+  #navbar { padding: 0 1rem; gap: .75rem; }
+
+  /* Mostra o botão hambúrguer */
+  .nav-hamburger { display: flex; }
+
+  /* Os links somem da navbar e viram um painel dropdown */
+  .nav-links {
+    display: none;
+    position: fixed;
+    top: 64px;
+    left: 0; right: 0;
+    flex-direction: column;
+    background: rgba(6,1,2,.97);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: .5rem .75rem .75rem;
+    gap: 0;
+    z-index: 999;
+  }
+
+  /* Quando o menu está aberto */
+  .nav-links.open { display: flex; }
+
+  /* Links dentro do menu mobile ficam em linha cheia */
+  .nav-link {
+    padding: .75rem 1rem;
+    font-size: .8rem;
+    border-radius: var(--radius);
+    text-align: left;
+    width: 100%;
+  }
+  .nav-link::after { display: none; }
+  .nav-link.active,
+  .nav-link:hover {
+    background: rgba(200,0,30,.12);
+    color: var(--magma-bright);
+  }
+}
