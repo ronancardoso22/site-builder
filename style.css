@@ -1,4 +1,70 @@
-﻿/* ============================================================
+/* ============================================================
+   DRAKBUILDER — FOLHA DE ESTILOS (style.css)
+
+   O QUE É ESTE ARQUIVO?
+   CSS (do inglês "Cascading Style Sheets" = Folhas de Estilo em Cascata)
+   é a linguagem que cuida de TODA a aparência visual do site.
+   O HTML (index.html) monta a estrutura — é o "esqueleto" da página.
+   O CSS define como esse esqueleto se parece — é a "roupa e maquiagem".
+   Sem o CSS, o site seria texto puro sem cor, layout ou estilo.
+
+   POR QUE UM ARQUIVO SEPARADO?
+   Poderíamos escrever os estilos diretamente dentro do HTML usando o
+   atributo "style=". Mas separar em um arquivo .css traz vantagens:
+   — Um único lugar para encontrar e alterar qualquer estilo
+   — Reaproveitar o mesmo estilo em muitos elementos ao mesmo tempo
+   — O HTML fica limpo, focado apenas na estrutura do conteúdo
+
+   COMO FUNCIONA A "CASCATA"?
+   Regras definidas depois sobrescrevem as definidas antes.
+   Seletores mais específicos ganham sobre os mais genéricos.
+   Ex: ".btn-primary" (específico) ganha de ".btn" (genérico).
+
+   COMO LER CADA BLOCO DE CSS?
+   Formato padrão:
+     .nome-da-classe {        ← quem recebe o estilo (seletor)
+       propriedade: valor;    ← o que muda visualmente
+     }
+   Ao colocar essa classe num elemento HTML (ex: class="btn-primary"),
+   todas as regras do bloco são aplicadas a ele automaticamente.
+
+   ORGANIZAÇÃO DESTE ARQUIVO (de cima para baixo):
+   1.  Variáveis globais    — cores e tamanhos como "apelidos"
+   2.  Reset / Base         — neutraliza padrões dos navegadores
+   3.  Utilitários          — classes reutilizáveis em qualquer lugar
+   4.  Botões               — estilos para todos os botões do site
+   5.  Campos de formulário — inputs, selects, labels
+   6.  Etiquetas (tags)     — categorias coloridas dos posts
+   7.  Notificações         — mensagens flutuantes temporárias (toasts)
+   8.  Navbar               — barra de navegação fixa no topo
+   9.  Páginas              — área principal e controle de páginas
+   10. Modal                — janelas flutuantes (login, criar post)
+   11. Home: Hero           — banner de boas-vindas da página inicial
+   12. Home: Grade          — as 3 colunas de prévia da home
+   13. Páginas internas     — Novidades, Builds, Guias
+   14. Cards de post        — cartões individuais de cada post
+   15. Rodapé               — barra fixa na parte de baixo
+   16. Menu mobile          — hambúrguer para telas pequenas
+   17. Responsividade       — adaptações para celular / tablet
+   18. Página de detalhe    — visualização completa de um post
+   19. Editor de post       — formulário de criar / editar
+   20. Galeria / Lightbox   — visualizador de imagens em tela cheia
+   21. Minhas Postagens     — página pessoal do usuário
+   22. Configurações        — página de preferências do usuário
+
+   HIERARQUIA DE z-index (QUAL ELEMENTO FICA NA FRENTE DE QUAL)
+   Pense no z-index como a "altitude" dos elementos.
+   Quanto maior o número, mais na frente o elemento aparece:
+     — Conteúdo normal:  sem z-index (ordem natural do HTML)
+     — Rodapé fixo:      z-index 500
+     — Navbar fixa:      z-index 1000  (fica na frente do rodapé)
+     — Menus dropdown:   z-index 100   (relativo ao pai)
+     — Modais:           z-index 2000  (fica na frente da navbar)
+     — Lightbox:         z-index 9999  (fica na frente de tudo)
+     — Toast (avisos):   z-index 9999  (mesma prioridade do lightbox)
+============================================================ */
+
+/* ============================================================
    VARIÁVEIS GLOBAIS DE DESIGN
    Pense nas variáveis como "apelidos" para cores e tamanhos.
    Em vez de repetir a mesma cor em 50 lugares do código,
@@ -6,66 +72,145 @@
    Se quiser mudar uma cor, basta alterar aqui nesta seção.
 ============================================================ */
 :root {
-  --bg-void:        #060102;      /* cor de fundo mais escura, usada no rodapé */
-  --bg-deep:        #0e0304;      /* cor de fundo padrão de todas as páginas */
-  --bg-card:        #1c0608;      /* fundo dos cartões (cards) e painéis internos */
-  --bg-card-hover:  #280a0c;     /* fundo do card quando o mouse passa por cima */
-  --bg-overlay:     rgba(6,1,2,.85); /* camada semitransparente escura sobre imagens */
+  /* ============================================================
+     PALETA "FORJA DE ELDRAS" (redesenho 24/10/2026)
+     Cores tiradas da própria arte do jogo: fuligem da forja,
+     pergaminho, brasa e latão. Nada de roxo neon genérico.
+     Os nomes antigos (--magma-*) foram mantidos para não
+     quebrar o resto do CSS: agora eles apontam para a brasa.
+  ============================================================ */
+  --bg-void:        #0d0b09;      /* fundo mais escuro (rodapé) */
+  --bg-deep:        #15120f;      /* fundo padrão: fuligem quente */
+  --bg-card:        #1d1915;      /* painéis e cards */
+  --bg-card-hover:  #262019;      /* card com o mouse em cima */
+  --bg-overlay:     rgba(13,11,9,.9);
 
-  --magma-bright:   #800417;      /* vermelho royal vívido — cor principal de destaque do site */
-  --magma-mid:      #8b0014;      /* carmim profundo — usado em botões e fundos */
-  --magma-dark:     #4a0008;      /* vermelho sangue escuro — usado em gradientes de fundo */
-  --magma-glow:     rgba(200,0,30,.4); /* brilho vermelho royal semitransparente (efeito de luz) */
+  --magma-bright:   #e0782f;      /* brasa: cor de destaque principal (links, foco, botão) */
+  --magma-mid:      #c4621f;      /* brasa escura: botão primário */
+  --magma-dark:     #5a2c12;      /* brasa apagada: fundos de destaque */
+  --magma-glow:     rgba(224,120,47,.35);
 
-  --gold:           #c9a84c;      /* dourado — usado no logo e nos títulos principais */
-  --gold-light:     #e8c97a;      /* dourado mais claro — variação de destaque */
+  --gold:           #d9a441;      /* latão: títulos de seção e detalhes */
+  --gold-light:     #f0c96a;
 
-  --text-primary:   #f0e0e2;      /* cor do texto principal — branco com leve tom rosado */
-  --text-secondary: #a87878;      /* cor do texto secundário — tom rosado suave */
-  --text-muted:     #5a3035;      /* cor do texto "apagado" — datas, rodapés, placeholders */
+  --text-primary:   #ede4d3;      /* pergaminho */
+  --text-secondary: #b3a690;      /* pergaminho gasto */
+  --text-muted:     #847866;      /* datas e legendas (antes era quase invisível) */
 
-  --border:         rgba(200,0,30,.22);   /* borda vermelho-royal transparente nos cards e inputs */
-  --border-gold:    rgba(201,168,76,.25);  /* borda dourada transparente usada nos cards de guias */
+  --border:         #3a3129;      /* borda de ferro velho */
+  --border-gold:    rgba(217,164,65,.35);
 
-  --red:   #e05252;   /* vermelho — usado nas tags de PVP e nos botões de perigo/deletar */
-  --green: #52b788;   /* verde — usado nas tags de Farm e nas notificações de sucesso */
-  --blue:  #4ea8de;   /* azul — usado nas tags de PVE */
-  --orange:#e07c3a;   /* laranja âmbar — usado nas tags de Evento */
+  --red:   #d0564b;   /* PVP */
+  --green: #8aac5c;   /* Farm */
+  --blue:  #6f9fcb;   /* PVE */
+  --orange:#e0782f;   /* Evento */
+  --arcane:#a58bd6;   /* Endgame (a única cor "mágica" do site) */
 
-  --radius: 6px;      /* arredondamento padrão das bordas dos elementos (botões, inputs) */
-  --radius-lg: 12px;  /* arredondamento maior — usado nos cards e modais */
-  --transition: .22s ease; /* velocidade das animações de hover (0,22 segundos suave) */
+  --radius: 2px;      /* cantos quase retos, como a interface pixelada do jogo */
+  --radius-lg: 3px;
+  --transition: .15s ease;
 
-  /* Sombra com brilho vermelho royal dramático — aparece ao passar o mouse nos cards */
-  --shadow-magma: 0 0 40px rgba(200,0,30,.2), 0 4px 20px rgba(0,0,0,.7);
+  /* Sombra "pixel": dura, sem desfoque, como em UI de jogo 16-bit */
+  --shadow-magma: 4px 4px 0 #000;
+  --shadow-pixel: 4px 4px 0 #000;
+
+  /* Fontes: pixel só nos títulos (identidade do jogo), texto em fonte legível */
+  --font-display: 'Pixelify Sans', 'Courier New', monospace;
+  --font-ui:      'Alegreya Sans', 'Segoe UI', sans-serif;
+  --font-text:    'Alegreya Sans', 'Segoe UI', sans-serif;
 }
 
 /* ============================================================
    RESET & BASE
-   Navegadores diferentes aplicam margens e espaços padrão
-   diferentes nos elementos, o que causa inconsistências visuais.
-   O "reset" remove esses padrões para termos controle total
-   sobre como cada elemento aparece na tela.
-============================================================ */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+   Navegadores diferentes (Chrome, Firefox, Safari, Edge) aplicam
+   margens e espaços padrão diferentes nos elementos HTML.
+   Por exemplo, o Chrome coloca margem padrão no <body> que o
+   Firefox não coloca. Esse "reset" apaga todos esses padrões para
+   que o site apareça IGUAL em todos os navegadores — nós assumimos
+   controle total sobre cada pixel.
 
-/* Faz a rolagem da página ser suave ao clicar em links internos */
+   POR QUE "box-sizing: border-box"?
+   Por padrão (content-box), se você definir width: 200px num elemento
+   e adicionar padding: 20px, o elemento fica com 240px de largura total.
+   Com border-box, o padding É INCLUÍDO nos 200px — o tamanho definido
+   é sempre o tamanho final, facilitando muito os cálculos de layout.
+
+   O "*" (asterisco) significa "todos os elementos".
+   "::before" e "::after" são elementos invisíveis que o CSS pode criar
+   antes e depois de qualquer elemento para adicionar decorações.
+   Garantimos que eles também recebam o reset.
+============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* tamanho inclui bordas e padding (evita surpresas de largura) */
+  margin: 0;              /* remove espaço externo padrão de TODOS os elementos */
+  padding: 0;             /* remove espaço interno padrão de TODOS os elementos */
+}
+
+/* scroll-behavior: smooth faz a página deslizar suavemente ao clicar
+   em links que levam a um ID da página (ex: href="#secao"). Sem isso,
+   a página "pula" instantaneamente, o que desorenta o usuário. */
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Crimson Pro', Georgia, serif;
+  /* Fonte principal do site. 'Crimson Pro' é a fonte carregada do Google Fonts.
+     'Georgia' e 'serif' são fontes de FALLBACK — usadas caso o Google Fonts
+     não carregue (sem internet). O navegador tenta na ordem: Crimson Pro →
+     Georgia → qualquer serif disponível no sistema operacional. */
+  font-family: var(--font-text);
+
+  /* Define a cor de fundo padrão. Usamos a variável --bg-deep definida acima
+     em vez de escrever a cor diretamente — se quisermos mudar o fundo,
+     alteramos apenas a variável, e TODA a página atualiza automaticamente. */
   background-color: var(--bg-deep);
+
+  /* Cor padrão do texto. "color" no CSS define a cor das letras. */
   color: var(--text-primary);
-  min-height: 100vh;      /* garante que o fundo cubra pelo menos a altura da tela */
-  overflow-x: hidden;     /* impede rolagem horizontal indesejada */
-  /* Mapa do mundo como plano de fundo fixo, coberto por uma camada escura
-     semitransparente para manter a legibilidade do conteúdo */
+
+  /* "100vh" = 100% da altura da janela visível (viewport height).
+     Garante que o fundo escuro cubra no mínimo a tela toda, mesmo
+     quando o conteúdo for menor que a janela do navegador. */
+  min-height: 100vh;
+
+  /* Esconde a barra de rolagem horizontal se algum elemento acidentalmente
+     ultrapassar a largura da tela. "hidden" não permite rolar para os lados. */
+  overflow-x: hidden;
+
+  /* FUNDO COM DUAS CAMADAS SOBREPOSTAS:
+     A propriedade background-image aceita múltiplas camadas separadas por vírgula.
+     A PRIMEIRA camada (escrita primeiro) fica na frente; a ÚLTIMA fica atrás.
+
+     Camada 1 (na frente): gradiente escuro semitransparente (85% de opacidade).
+       — Por quê? Para escurecer a imagem de fundo, tornando o texto legível.
+       — linear-gradient() cria um degradê. Aqui é da mesma cor no topo e na base
+         (sem degradê visível), funcionando como um "filtro escurecedor".
+
+     Camada 2 (atrás): imagem do mapa do mundo como textura decorativa.
+       — Por quê mapa do mundo? Remete ao universo do jogo fantástico.
+
+     POR QUE GRADIENTE + IMAGEM EM VEZ DE EDITAR A IMAGEM NO PHOTOSHOP?
+     Porque podemos ajustar a opacidade do escurecimento diretamente no CSS,
+     sem precisar editar e re-exportar a imagem original. */
   background-image:
-    linear-gradient(rgba(14,3,4,.82), rgba(14,3,4,.82)),
-    url("mapa mundo.png");
-  background-size: cover;          /* estica a imagem para cobrir toda a tela */
-  background-position: center;     /* centraliza a imagem */
-  background-attachment: fixed;    /* fundo fixo — não rola junto com a página */
+    linear-gradient(rgba(13,11,9,.85), rgba(13,11,9,.85)),
+    url("imagens/mapa mundo.png");
+
+  /* "cover" estica ou encolhe a imagem para cobrir TODA a área,
+     mantendo proporção. Pode cortar bordas, mas sem espaços vazios. */
+  background-size: cover;
+
+  /* Centraliza a imagem na tela — quando cortada pelo "cover",
+     o corte acontece igualmente nos dois lados. */
+  background-position: center;
+
+  /* "fixed" faz o fundo ficar PARADO enquanto o conteúdo rola.
+     Cria um efeito chamado "parallax" — profundidade visual.
+     A alternativa "scroll" faria o fundo rolar junto com a página. */
+  background-attachment: fixed;
+
+  /* Sem isso, o navegador repetiria a imagem em mosaico para preencher
+     a tela. "no-repeat" garante que aparece apenas uma vez. */
   background-repeat: no-repeat;
 }
 
@@ -79,72 +224,136 @@ body {
 /* Torna o elemento invisível mas ainda acessível para leitores de tela (acessibilidade) */
 .sr-only  { position: absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
 
-/* Estilo base compartilhado por todos os botões do site */
+/* Estilo base compartilhado por todos os botões do site.
+   Ao definir esses estilos em ".btn", TODOS os botões herdam essas regras.
+   As variações (btn-primary, btn-outline, etc.) só precisam definir
+   o que é diferente — evitando repetição de código. */
 .btn {
+  /* "inline-flex" combina dois comportamentos:
+     - "inline": o botão não ocupa a linha inteira, fica ao lado de outros elementos
+     - "flex": o conteúdo interno (ícone + texto) se alinha automaticamente */
   display: inline-flex;
+
+  /* Alinha verticalmente o ícone e o texto no centro do botão */
   align-items: center;
+
+  /* Espaço de 0.5rem (≈8px) entre o ícone e o texto do botão */
   gap: .5rem;
+
+  /* Espaço interno: 0.55rem vertical (acima e abaixo) e 1.4rem horizontal (esquerda e direita)
+     Isso define o "tamanho" visual do botão — sem padding ele seria apenas o texto puro. */
   padding: .55rem 1.4rem;
+
+  /* Arredonda os cantos do botão. Usamos a variável --radius (6px) definida lá no :root */
   border-radius: var(--radius);
-  font-family: 'Cinzel', serif;
+
+  /* Fonte especial "Cinzel" para o texto dos botões — diferente da fonte
+     de leitura (Crimson Pro) do restante do site */
+  font-family: var(--font-ui);
+
+  /* Tamanho da letra: 0.78rem ≈ 12.5px (menor que o padrão de 16px).
+     Botões com letras menores parecem mais elegantes e sofisticados. */
   font-size: .78rem;
+
+  /* "700" é o peso negrito máximo da fonte Cinzel — deixa as letras bem fortes */
   font-weight: 700;
+
+  /* Espaçamento entre as letras: 0.08em. "em" é relativo ao tamanho da fonte.
+     Um pequeno espaçamento entre letras dá o visual de "inscrição" medieval. */
   letter-spacing: .08em;
+
+  /* Transforma o cursor do mouse em uma "mãozinha" ao passar sobre o botão,
+     indicando para o usuário que é clicável */
   cursor: pointer;
+
+  /* Remove a borda padrão que os navegadores adicionam em elementos <button>.
+     Cada variante de botão define sua própria borda depois. */
   border: none;
+
+  /* "transition" faz as mudanças de estilo (cor, sombra, posição) acontecerem
+     suavemente em vez de mudar instantaneamente. --transition = 0.22s ease.
+     Isso afeta o hover, o foco e qualquer outra mudança de estado. */
   transition: var(--transition);
+
+  /* Remove o sublinhado padrão de links. Alguns botões são criados com <a>,
+     e sem isso teriam sublinhado indesejado. */
   text-decoration: none;
 }
 
-/* Botão vermelho royal — ação principal, como "Entrar" e "Publicar Post" */
+/* Botão roxo — ação principal, como "Entrar" e "Publicar Post".
+   Deve ser o botão mais chamativo da tela para guiar o usuário. */
 .btn-primary {
-  background: linear-gradient(135deg, var(--magma-bright), var(--magma-mid));
-  color: #fff;
-  box-shadow: 0 0 18px var(--magma-glow);
+  background: var(--magma-bright);      /* fundo roxo vibrante */
+  color: #fff;                           /* texto branco puro */
+  border: 2px solid var(--magma-mid);   /* borda roxo-escuro cria profundidade */
+
+  /* box-shadow cria sombra. Os 4 valores são:
+     3px (deslocamento horizontal) 3px (deslocamento vertical)
+     0 (desfoque — 0 = sombra nítida) rgba(0,0,0,.8) (preto 80% opaco).
+     Uma sombra nítida e deslocada cria o efeito visual de botão "3D em relevo".
+     POR QUE ESSE EFEITO? Indica ao usuário que o botão pode ser "pressionado". */
+  box-shadow: 3px 3px 0 rgba(0,0,0,.8);
 }
 .btn-primary:hover {
-  filter: brightness(1.15);
-  box-shadow: 0 0 30px var(--magma-glow);
-  transform: translateY(-1px);
+  /* ":hover" aplica regras apenas quando o mouse está sobre o elemento.
+     Aqui simulamos o botão sendo "pressionado": a sombra encolhe e o botão
+     se move 2px para baixo e 2px para a direita — como se afundasse na tela. */
+  background: var(--magma-mid);
+  box-shadow: 1px 1px 0 rgba(0,0,0,.8); /* sombra menor = parece ter "descido" */
+  transform: translate(2px, 2px);        /* move o botão na direção da sombra */
 }
 
 /* Botão contornado (só borda, sem preenchimento) — ação secundária, como "Ver Builds" */
 .btn-outline {
   background: transparent;
   color: var(--text-primary);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
+  box-shadow: 3px 3px 0 rgba(0,0,0,.6);
 }
 .btn-outline:hover {
   border-color: var(--magma-bright);
   color: var(--magma-bright);
-  background: rgba(200,0,30,.08);
+  background: rgba(224,120,47,.08);
+  box-shadow: 1px 1px 0 rgba(0,0,0,.6);
+  transform: translate(2px, 2px);
 }
 
 /* Botão dourado — usado no cadastro de conta */
 .btn-gold {
-  background: linear-gradient(135deg, var(--gold), #a07030);
-  color: #1a1000;
+  background: var(--gold);
+  color: #0a0e1c;
   font-weight: 700;
+  border: 2px solid #cc9900;
+  box-shadow: 3px 3px 0 rgba(0,0,0,.8);
 }
-.btn-gold:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-gold:hover {
+  background: var(--gold-light);
+  box-shadow: 1px 1px 0 rgba(0,0,0,.8);
+  transform: translate(2px, 2px);
+}
 
 /* Botão de perigo (vermelho) — usado em ações destrutivas como deletar */
 .btn-danger {
-  background: rgba(224,82,82,.15);
+  background: rgba(255,68,68,.15);
   color: var(--red);
-  border: 1px solid rgba(224,82,82,.3);
+  border: 2px solid rgba(255,68,68,.4);
+  box-shadow: 3px 3px 0 rgba(0,0,0,.6);
 }
-.btn-danger:hover { background: rgba(224,82,82,.25); }
+.btn-danger:hover {
+  background: rgba(255,68,68,.3);
+  box-shadow: 1px 1px 0 rgba(0,0,0,.6);
+  transform: translate(2px, 2px);
+}
 
 /* Estilo dos campos de texto, e-mail, senha e área de texto dos formulários */
 .input {
   width: 100%;
   padding: .65rem 1rem;
-  background: rgba(255,255,255,.04);
+  background: rgba(255,255,255,.09);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  color: var(--text-primary);
-  font-family: 'Crimson Pro', serif;
+  color: #f0eaff;
+  font-family: var(--font-text);
   font-size: 1rem;
   transition: var(--transition);
   outline: none;
@@ -171,7 +380,7 @@ select.input option { background: var(--bg-card); }
 .form-group { display: flex; flex-direction: column; gap: .4rem; }
 /* Rótulo acima de cada campo do formulário (ex: "E-mail", "Senha") */
 .form-label {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .72rem;
   letter-spacing: .1em;
   color: var(--text-secondary);
@@ -183,7 +392,7 @@ select.input option { background: var(--bg-card); }
   display: inline-block;
   padding: .15rem .55rem;
   border-radius: 3px;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .6rem;
   font-weight: 700;
   letter-spacing: .08em;
@@ -192,10 +401,10 @@ select.input option { background: var(--bg-card); }
 .tag-pve     { background: rgba(78,168,222,.2); color: var(--blue); }
 .tag-pvp     { background: rgba(224,82,82,.2);  color: var(--red); }
 .tag-farm    { background: rgba(82,183,136,.2); color: var(--green); }
-.tag-endgame { background: rgba(155,77,202,.2); color: var(--magma-bright); }
+.tag-endgame { background: rgba(165,139,214,.2); color: var(--magma-bright); }
 .tag-event   { background: rgba(224,124,58,.2); color: var(--orange); }
 .tag-news    { background: rgba(201,168,76,.2); color: var(--gold); }
-.tag-update  { background: rgba(155,77,202,.2); color: var(--magma-bright); }
+.tag-update  { background: rgba(165,139,214,.2); color: var(--magma-bright); }
 .tag-guide   { background: rgba(82,183,136,.2); color: var(--green); }
 
 /* Linha horizontal decorativa usada para separar seções dentro dos menus */
@@ -220,7 +429,7 @@ select.input option { background: var(--bg-card); }
 .toast-item {
   padding: .75rem 1.25rem;
   border-radius: var(--radius);
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .78rem;
   letter-spacing: .05em;
   color: #fff;
@@ -239,24 +448,63 @@ select.input option { background: var(--bg-card); }
    A barra presa no topo da tela que contém o logo, os links
    das páginas, a busca e o botão de login. Ela fica fixada
    mesmo quando o usuário rola a página para baixo.
+
+   POR QUE USAR "position: fixed" EM VEZ DE "position: sticky"?
+   — "fixed": fica preso à janela do navegador, independente do scroll.
+     Sai completamente do fluxo do documento (outros elementos agem
+     como se ela não existisse — por isso precisamos de margin-top: 64px
+     no conteúdo para não ficar escondido atrás da navbar).
+   — "sticky": fica junto com o conteúdo e gruda no topo ao chegar lá.
+     Usamos "fixed" porque queremos que a navbar SEMPRE esteja visível,
+     inclusive antes de qualquer rolagem.
 ============================================================ */
 #navbar {
+  /* "fixed" gruda o elemento à janela do navegador — não rola com a página */
   position: fixed;
+
+  /* top: 0 + left: 0 + right: 0 posiciona a navbar no topo, ocupando
+     toda a largura da tela da borda esquerda até a borda direita */
   top: 0; left: 0; right: 0;
+
+  /* z-index: 1000 coloca a navbar na frente de quase tudo na página.
+     Veja a hierarquia completa no cabeçalho deste arquivo. */
   z-index: 1000;
+
+  /* Altura fixa de 64px. O conteúdo da página tem margin-top: 64px para
+     não ficar escondido ATRÁS da navbar (já que ela saiu do fluxo). */
   height: 64px;
+
+  /* Flex alinha logo, links, busca e avatar horizontalmente em uma linha */
   display: flex;
-  align-items: center;
+  align-items: center; /* centraliza verticalmente dentro da barra de 64px */
+
+  /* Espaço interno: sem espaço vertical (a altura é fixa), 2rem nos lados */
   padding: 0 2rem;
+
+  /* Espaço de 2rem entre o logo, os links e as ações da direita */
   gap: 2rem;
-  background: rgba(6,1,2,.95);
+
+  /* Fundo quase opaco (95%). Não é 100% opaco para que o backdrop-filter
+     funcione — ele precisa de alguma transparência para mostrar o borrão. */
+  background: rgba(13,11,9,.95);
+
+  /* Linha fina abaixo da navbar separando-a do conteúdo */
   border-bottom: 1px solid var(--border);
-  /* Efeito de vidro embaçado */
+
+  /* EFEITO DE VIDRO FOSCO (GLASS MORPHISM):
+     backdrop-filter borra tudo que está ATRÁS do elemento.
+     blur(12px) aplica um desfoque de 12 pixels no conteúdo por baixo,
+     criando aquele efeito de vidro translúcido com o fundo embaçado.
+
+     POR QUE DOIS PREFIXOS (-webkit-)?
+     "-webkit-backdrop-filter" é necessário para navegadores baseados em WebKit
+     (Safari no iPhone/Mac). O padrão sem prefixo funciona no Chrome/Firefox.
+     Escrevemos os dois para garantir compatibilidade com todos os navegadores. */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* Bloco do logo: ícone de dragão + texto "DRAKANTOS" — clicável, volta para a home */
+/* Bloco do logo: ícone de dragão + texto "DRAKBUILDER" — clicável, volta para a home */
 .nav-logo {
   display: flex;
   align-items: center;
@@ -266,12 +514,13 @@ select.input option { background: var(--bg-card); }
   cursor: pointer;
 }
 .nav-logo-icon {
-  width: 32px; height: 32px;
-  color: var(--magma-bright);
-  filter: drop-shadow(0 0 8px var(--magma-bright));
+  width: 36px; height: 36px;
+  object-fit: contain;
+  border-radius: 6px;
+  filter: none;
 }
 .nav-logo-text {
-  font-family: 'Cinzel Decorative', serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--gold);
@@ -288,7 +537,7 @@ select.input option { background: var(--bg-card); }
 }
 .nav-link {
   padding: .4rem .9rem;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .72rem;
   font-weight: 600;
   letter-spacing: .1em;
@@ -344,7 +593,7 @@ select.input option { background: var(--bg-card); }
   border: none;
   outline: none;
   color: var(--text-primary);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-text);
   font-size: .9rem;
   width: 160px;
   padding: .35rem 0;
@@ -359,7 +608,7 @@ select.input option { background: var(--bg-card); }
   background: linear-gradient(135deg, var(--magma-mid), var(--magma-dark));
   border: 2px solid var(--magma-bright);
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .8rem;
   font-weight: 700;
   color: #fff;
@@ -369,8 +618,14 @@ select.input option { background: var(--bg-card); }
 }
 .user-avatar:hover { box-shadow: 0 0 14px var(--magma-glow); }
 
-/* Menu suspenso que aparece ao passar o mouse sobre o avatar do usuário.
-   Contém opções como criar posts e sair da conta. */
+.user-avatar::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 220px;
+  height: 14px;
+}
 .user-menu {
   position: absolute;
   top: calc(100% + 10px);
@@ -381,18 +636,22 @@ select.input option { background: var(--bg-card); }
   padding: .5rem;
   min-width: 180px;
   box-shadow: var(--shadow-magma);
-  display: none;
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .18s ease, visibility .18s ease;
   z-index: 100;
 }
 .user-avatar:hover .user-menu,
-.user-menu:hover { display: block; }
+.user-menu:hover { opacity: 1; visibility: visible; pointer-events: auto; }
 .user-menu-item {
   display: flex;
   align-items: center;
   gap: .6rem;
   padding: .55rem .75rem;
   border-radius: var(--radius);
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .72rem;
   letter-spacing: .05em;
   color: var(--text-secondary);
@@ -404,19 +663,67 @@ select.input option { background: var(--bg-card); }
 .user-menu-item.danger:hover { color: var(--red); background: rgba(224,82,82,.08); }
 
 /* ============================================================
-   CONTEÚDO PRINCIPAL
-   O site não recarrega a página ao navegar — em vez disso,
-   temos várias "páginas" (divs) empilhadas, e o JavaScript
-   mostra apenas a ativa, ocultando todas as outras.
+   CONTEÚDO PRINCIPAL & SISTEMA DE PÁGINAS (SPA)
+   O site não recarrega ao navegar — em vez disso, temos várias
+   "páginas" (divs) empilhadas no HTML. O JavaScript controla
+   qual aparece adicionando/removendo a classe "active".
+
+   POR QUE ESSE PADRÃO EM VEZ DE PÁGINAS SEPARADAS?
+   Sites tradicionais têm arquivos separados (home.html, builds.html...).
+   Ao clicar num link, o navegador baixa e carrega a nova página —
+   o que causa um "flash" branco e atraso. Este padrão de SPA
+   (Single Page Application = Aplicação de Página Única) é mais rápido
+   porque todo o HTML já está carregado — só mudamos o que está visível.
 ============================================================ */
 #app {
-  margin-top: 64px; /* empurra o conteúdo para baixo da navbar fixa (que tem 64px de altura) */
+  /* Empurra todo o conteúdo 64px para baixo, exatamente a altura da navbar.
+     Sem isso, o topo de cada página ficaria escondido atrás da navbar fixa. */
+  margin-top: 64px;
 }
 
-/* Todas as páginas ficam ocultas por padrão */
+/* "display: none" esconde completamente o elemento — como se não existisse.
+   Não ocupa espaço, não é visível, não pode ser clicado. */
 .page { display: none; }
-/* Apenas a página com a classe "active" fica visível */
+
+/* Quando o JavaScript adiciona a classe "active" a uma página,
+   ela passa de "display: none" para "display: block" e se torna visível.
+   O "!important" no .hidden garante que o JavaScript também consiga
+   esconder outros elementos com mais prioridade. */
 .page.active { display: block; }
+
+/* #page-home precisa de position: relative para que o #homeBgFlash
+   absoluto se posicione em relação a ele e não ao viewport inteiro */
+#page-home { position: relative; }
+
+/* Segunda camada de fundo: capa2.png.
+   Fica por cima da capa.png mas por baixo de todo o conteúdo (hero, cards).
+   Opacity 0 = invisível por padrão. O JS aciona a animação no scroll. */
+#homeBgFlash {
+  position: absolute;
+  inset: 0;
+  background-image: url('imagens/capa2.png');
+  background-size: cover;
+  background-position: top right;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Conteúdo da home fica sempre acima das camadas de fundo */
+#page-home > .hero,
+#page-home > .sections-grid {
+  position: relative;
+  z-index: 1;
+}
+
+/* Animação: capa2 aparece rapidamente e desaparece com suavidade,
+   criando o flash de troca e retorno à imagem original */
+@keyframes capaFlash {
+  0%   { opacity: 0; }   /* início: invisível           */
+  30%  { opacity: 1; }   /* pico: capa2 totalmente visível */
+  70%  { opacity: 1; }   /* mantém um instante          */
+  100% { opacity: 0; }   /* fim: volta à invisibilidade */
+}
 
 /* ============================================================
    MODAL (JANELA FLUTUANTE)
@@ -434,8 +741,8 @@ select.input option { background: var(--bg-card); }
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   animation: fadeIn .2s ease;
 }
 @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
@@ -474,7 +781,7 @@ select.input option { background: var(--bg-card); }
 .modal-close:hover { color: var(--red); border-color: var(--red); }
 
 .modal-title {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--gold);
@@ -497,7 +804,7 @@ select.input option { background: var(--bg-card); }
   flex: 1;
   padding: .55rem;
   text-align: center;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .72rem;
   font-weight: 700;
   letter-spacing: .08em;
@@ -516,78 +823,112 @@ select.input option { background: var(--bg-card); }
 /* ============================================================
    HOME – HERO (BANNER PRINCIPAL)
    A grande seção de destaque no topo da página inicial,
-   com o título "DRAKANTOS", a descrição e os botões de ação.
+   com o título "DRAKBUILDER", a descrição e os botões de ação.
    Todo o fundo é criado com gradientes CSS — sem imagem externa.
 ============================================================ */
 .hero {
   position: relative;
-  min-height: 520px;
   display: flex;
-  align-items: flex-end;
-  padding: 0 4rem 4rem;
+  align-items: center;       /* centraliza o conteúdo verticalmente */
+  padding: 3rem 4rem;        /* margem igual acima e abaixo do conteúdo */
   overflow: hidden;
 }
 
-/* Fundo do hero: três camadas de gradiente sobrepostas para simular
-   profundidade e iluminação mística, sem precisar de uma imagem real */
+/* Overlay gradiente sobre a imagem de capa.
+   Escurece a esquerda (onde está o texto) e deixa a direita mais visível.
+   Também cobre o topo e rodapé para as transições ficarem suaves. */
 .hero-bg {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to right, rgba(6,1,2,.95) 30%, rgba(6,1,2,.4) 70%, rgba(6,1,2,.3) 100%),
-    radial-gradient(ellipse at 75% 40%, rgba(200,0,30,.3) 0%, transparent 65%),
-    linear-gradient(160deg, #150004 0%, #2a0008 40%, #100002 70%, #1e0005 100%);
+    /* Da esquerda para direita: escurece onde está o texto, abre à direita */
+    linear-gradient(to right, rgba(13,11,9,.72) 20%, rgba(13,11,9,.35) 55%, rgba(13,11,9,.10) 100%),
+    /* Funde suavemente com a seção abaixo — valor alinhado ao topo da seção inferior (0.15) */
+    linear-gradient(to top, rgba(13,11,9,.15) 0%, rgba(13,11,9,0) 40%),
+    /* Toque roxo/mágico para integrar ao tema */
+    radial-gradient(ellipse at 20% 50%, rgba(224,120,47,.12) 0%, transparent 60%);
 }
 
-/* Bolas de luz roxas animadas no fundo do hero — criadas apenas com CSS,
-   sem nenhuma imagem ou JavaScript. Usam o truque de ::before e ::after
-   para criar dois elementos extras a partir de um único div. */
+/* Bolas de luz animadas no fundo do hero — criadas apenas com CSS,
+   sem nenhuma imagem ou JavaScript.
+
+   COMO FUNCIONA O TRUQUE ::before E ::after?
+   No CSS, "::before" e "::after" são chamados de PSEUDO-ELEMENTOS.
+   Eles criam um elemento visual EXTRA antes e depois do conteúdo de um div,
+   sem precisar adicionar nada no HTML. É como se o CSS "inventasse" dois filhos
+   invisíveis para o .hero-particles. O "content: ''" é obrigatório para que
+   eles apareçam — sem ele, os pseudo-elementos não existem.
+
+   POR QUE ESSA ABORDAGEM PARA AS PARTÍCULAS?
+   Alternativas seriam: (1) imagens PNG de bolinhas (aumentaria o tamanho do site),
+   (2) JavaScript com canvas (código mais complexo). CSS puro é mais simples,
+   mais leve e funciona sem JavaScript ativo. */
 .hero-particles {
-  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+  position: absolute;
+  inset: 0;              /* atalho para top:0; right:0; bottom:0; left:0 (preenche o pai todo) */
+  overflow: hidden;      /* corta as bolinhas que ultrapassam os limites do hero */
+  pointer-events: none;  /* "none" faz o elemento ser ignorado pelo mouse — cliques
+                            passam direto para o que estiver atrás dele */
 }
 .hero-particles::before,
 .hero-particles::after {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
+  content: '';          /* obrigatório — sem isso, o pseudo-elemento não aparece */
+  position: absolute;   /* posicionado livremente dentro do .hero-particles */
+  border-radius: 50%;   /* 50% transforma o quadrado em um círculo perfeito */
+
+  /* ANIMAÇÃO:
+     "float" = nome da animação (definida no @keyframes abaixo)
+     "8s" = duração de um ciclo completo
+     "ease-in-out" = começa e termina devagar, vai rápido no meio
+     "infinite" = repete para sempre, criando movimento contínuo */
   animation: float 8s ease-in-out infinite;
 }
 .hero-particles::before {
-  width: 400px; height: 400px;
-  right: 15%; top: -10%;
-  background: radial-gradient(circle, rgba(200,0,30,.15) 0%, transparent 70%);
+  width: 400px; height: 400px;  /* circulo de 400x400 pixels */
+  right: 15%; top: -10%;         /* posicionado um pouco fora da tela pelo topo */
+  /* radial-gradient(circle, ...) cria um borrão circular que desaparece gradualmente.
+     O ponto central é roxo 15% opaco; nas bordas (70% do raio) vira transparente. */
+  background: radial-gradient(circle, rgba(224,120,47,.15) 0%, transparent 70%);
 }
 .hero-particles::after {
-  width: 600px; height: 600px;
+  width: 600px; height: 600px;   /* círculo maior para o segundo borrão */
   right: 25%; top: 5%;
   background: radial-gradient(circle, rgba(140,0,20,.12) 0%, transparent 70%);
+  /* "animation-delay: -4s" faz esta animação COMEÇAR no meio do ciclo.
+     Com delay negativo, parece que a animação já estava rodando há 4 segundos
+     antes de você abrir a página — as duas bolinhas ficam fora de sincronia,
+     o que parece mais orgânico e natural. */
   animation-delay: -4s;
-  animation-duration: 12s;
+  animation-duration: 12s;  /* este circulo é mais lento (12s vs 8s) */
 }
+
+/* @keyframes define COMO a animação muda ao longo do tempo.
+   Pense como um storyboard: em 0% (início) e 100% (fim), o elemento
+   está na posição original. Em 50% (meio do ciclo), ele subiu 20px e
+   ficou 5% maior. O navegador calcula automaticamente os quadros intermediários.
+
+   "transform: translateY(-20px)" move o elemento 20px para CIMA.
+   Valores negativos = cima; valores positivos = baixo.
+   "scale(1.05)" aumenta o elemento em 5%. */
 @keyframes float {
   0%,100% { transform: translateY(0) scale(1); }
   50%      { transform: translateY(-20px) scale(1.05); }
 }
 
-/* Imagem do dragão SVG à direita do hero — semitransparente e com animação de respiração */
-.hero-dragon {
-  position: absolute;
-  right: 8%; top: 50%;
-  transform: translateY(-50%);
-  width: 340px; opacity: .18;
-  filter: blur(.5px) drop-shadow(0 0 40px var(--magma-bright));
-  animation: breathe 6s ease-in-out infinite;
-  pointer-events: none;
-}
-@keyframes breathe {
-  0%,100% { opacity:.18; transform:translateY(-50%) scale(1); }
-  50%      { opacity:.24; transform:translateY(-53%) scale(1.02); }
+/* Página inicial: imagem de capa cobrindo toda a página (hero + seções abaixo).
+   background-position-y é atualizado pelo JavaScript durante o scroll,
+   criando o efeito parallax (imagem se move mais devagar que o conteúdo). */
+#page-home {
+  background-image: url('imagens/capa.png');
+  background-size: cover;
+  background-position: top right;
+  background-attachment: scroll;
 }
 
 .hero-content { position: relative; z-index: 1; max-width: 560px; }
 
 .hero-eyebrow {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .72rem;
   letter-spacing: .3em;
   color: var(--gold);
@@ -597,12 +938,21 @@ select.input option { background: var(--bg-card); }
 }
 
 .hero-title {
-  font-family: 'Cinzel Decorative', serif;
+  font-family: var(--font-display);
+  /* clamp(mínimo, preferido, máximo) é uma função CSS que ajusta o tamanho
+     automaticamente conforme a tela:
+     — Em telas pequenas (celular): nunca menor que 2.4rem (≈38px)
+     — Em telas médias: usa 5vw (5% da largura da tela — cresce com a tela)
+     — Em telas grandes: nunca maior que 4rem (≈64px)
+     POR QUE clamp() EM VEZ DE font-size fixo?
+     Porque um título grande (4rem) fica muito grande em celulares, mas
+     definir um tamanho pequeno fixo fica ruim em monitores grandes.
+     O clamp() resolve os dois problemas de uma vez só. */
   font-size: clamp(2.4rem, 5vw, 4rem);
   font-weight: 900;
   line-height: 1;
   color: var(--magma-bright);
-  text-shadow: 0 0 60px rgba(200,0,30,.75);
+  text-shadow: 0 0 60px rgba(224,120,47,.75);
   margin-bottom: .5rem;
 }
 
@@ -620,18 +970,36 @@ select.input option { background: var(--bg-card); }
    HOME – GRADE DE SEÇÕES
    Abaixo do hero, há três colunas lado a lado:
    Novidades | Builds em Destaque | Guias Populares.
-   Em telas pequenas, elas empilham em coluna única.
+   Em telas pequenas (celular), elas empilham em coluna única.
+
+   POR QUE USAR CSS GRID EM VEZ DE FLEXBOX?
+   — Flexbox é ideal para layouts em UMA dimensão (só linha ou só coluna).
+   — Grid é ideal para layouts em DUAS dimensões (linhas E colunas ao mesmo tempo).
+   Para as 3 colunas fixas da home, Grid é a ferramenta certa.
+   Para a barra de navegação (uma linha de itens), Flexbox é a ferramenta certa.
 ============================================================ */
 .sections-grid {
+  /* "grid" ativa o CSS Grid neste container.
+     Os filhos diretos deste div se tornam "itens de grid"
+     e se posicionam automaticamente nas células definidas. */
   display: grid;
+
+  /* "1fr 1fr 1fr" cria 3 colunas de largura IGUAL.
+     "fr" significa "fração" — o espaço disponível é dividido igualmente.
+     É equivalente a "33% 33% 33%" mas sem os problemas de arredondamento. */
   grid-template-columns: 1fr 1fr 1fr;
+
+  /* Espaço de 2rem entre as colunas e entre as linhas do grid */
   gap: 2rem;
+
   padding: 3rem 3rem 4rem;
-  background: var(--bg-void);
-  border-top: 1px solid var(--border);
+  /* Mesmo esquema do hero: escurece à esquerda, abre à direita,
+     com camada vertical que vai ficando mais densa ao descer */
+  background:
+    linear-gradient(to right, rgba(13,11,9,.72) 20%, rgba(13,11,9,.35) 55%, rgba(13,11,9,.10) 100%),
+    linear-gradient(to bottom, rgba(13,11,9,.15) 0%, rgba(13,11,9,.55) 40%, rgba(13,11,9,.78) 100%);
 }
 
-.section-block {}
 
 .section-header {
   display: flex;
@@ -643,7 +1011,7 @@ select.input option { background: var(--bg-card); }
 }
 
 .section-title {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .85rem;
   font-weight: 700;
   letter-spacing: .15em;
@@ -661,7 +1029,7 @@ select.input option { background: var(--bg-card); }
 }
 
 .section-link {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .68rem;
   letter-spacing: .08em;
   color: var(--magma-bright);
@@ -694,7 +1062,7 @@ select.input option { background: var(--bg-card); }
 }
 .news-info { flex: 1; min-width: 0; }
 .news-title {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .82rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -707,6 +1075,7 @@ select.input option { background: var(--bg-card); }
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -737,15 +1106,16 @@ select.input option { background: var(--bg-card); }
 .build-icon {
   width: 44px; height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--magma-dark), #1a0005);
+  background: linear-gradient(135deg, var(--magma-dark), #0b0f1e);
   border: 2px solid var(--border);
   display: flex; align-items:center; justify-content:center;
   font-size: 1.2rem;
   flex-shrink: 0;
+  overflow: hidden;
 }
 .build-info { flex: 1; min-width: 0; }
 .build-name {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .82rem;
   font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -774,15 +1144,23 @@ select.input option { background: var(--bg-card); }
 .guide-icon {
   width: 44px; height: 44px;
   border-radius: var(--radius);
-  background: linear-gradient(135deg, #1a1500, #302000);
+  background: linear-gradient(135deg, #16130a, #1e1a08);
   border: 2px solid var(--border-gold);
   display: flex; align-items:center; justify-content:center;
   font-size: 1.3rem;
   flex-shrink: 0;
+  overflow: hidden;
+}
+/* Imagem do card usada como thumbnail nas listas da home (novidades, builds, guias).
+   Preenche o container inteiro sem distorcer a proporção original. */
+.home-card-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .guide-info { flex: 1; min-width: 0; }
 .guide-name {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .82rem;
   font-weight: 600;
 }
@@ -805,7 +1183,7 @@ select.input option { background: var(--bg-card); }
 ============================================================ */
 .page-header {
   padding: 3rem 3rem 2rem;
-  background: linear-gradient(to bottom, rgba(200,0,30,.07) 0%, transparent 100%);
+  background: linear-gradient(to bottom, rgba(224,120,47,.07) 0%, transparent 100%);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: flex-end;
@@ -815,7 +1193,7 @@ select.input option { background: var(--bg-card); }
 }
 
 .page-header-title {
-  font-family: 'Cinzel Decorative', serif;
+  font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 700;
   color: var(--gold);
@@ -838,10 +1216,17 @@ select.input option { background: var(--bg-card); }
   flex-wrap: wrap;
 }
 
+/* Seletor de posts por página fixo à direita dentro da barra de filtros.
+   "margin-left: auto" consome todo o espaço livre após os botões de filtro,
+   empurrando o seletor para a extremidade direita da barra. */
+.page-filters .perpage-control {
+  margin-left: auto;
+}
+
 .filter-btn {
   padding: .35rem .85rem;
   border-radius: 20px;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .68rem;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -858,35 +1243,69 @@ select.input option { background: var(--bg-card); }
   color: #fff;
 }
 
-/* Grade responsiva de cards — cria quantas colunas couberem na tela,
-   com no mínimo 300px por card */
+/* Grade responsiva de cards.
+   Cria automaticamente quantas colunas couberem na tela,
+   garantindo que cada card tenha no mínimo 300px de largura.
+
+   COMO FUNCIONA "repeat(auto-fill, minmax(300px, 1fr))"?
+   É uma das partes mais poderosas do CSS Grid. Vamos destrinchar:
+   — "repeat()" repete um padrão de coluna N vezes
+   — "auto-fill" = "cria quantas colunas couberem na largura disponível"
+   — "minmax(300px, 1fr)" = cada coluna tem no mínimo 300px e no máximo 1fr
+     (ou seja, as colunas se expandem igualmente para preencher o espaço restante)
+
+   Na prática:
+   — Tela larga (1200px): cabe ~3 colunas de 380px cada
+   — Tela média (768px): cabe ~2 colunas de 360px cada
+   — Tela pequena (380px): cabe 1 coluna de 380px (toda a largura)
+
+   POR QUE ESSE PADRÃO EM VEZ DE @MEDIA QUERIES MANUAIS?
+   Teríamos que escrever "em telas abaixo de X use 1 coluna, abaixo de Y use 2..."
+   Com auto-fill + minmax, o grid descobre sozinho — sem nenhum @media query!
+*/
 .posts-grid {
   padding: 2rem 3rem;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.25rem;
+  gap: 1.25rem; /* espaço de 1.25rem entre os cards */
 }
 
-/* Card completo de post — sobe levemente ao passar o mouse (efeito de elevação) */
+/* Card completo de post — sobe levemente ao passar o mouse (efeito de elevação).
+
+   POR QUE "overflow: hidden" NO CARD?
+   A miniatura do post (post-card-thumb) tem cantos retos.
+   O card tem border-radius (cantos arredondados). Sem overflow: hidden,
+   a imagem ficaria saindo pelos cantos arredondados do card.
+   Com "hidden", qualquer conteúdo que ultrapasse o limite do card é cortado,
+   então a imagem respeita o arredondamento. */
 .post-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  transition: var(--transition);
+  border-radius: var(--radius-lg);   /* arredondamento maior (12px) que o padrão (6px) */
+  overflow: hidden;                   /* corta imagens nos cantos arredondados */
+  transition: var(--transition);      /* anima hover suavemente */
   cursor: pointer;
-  position: relative;
+  position: relative; /* necessário para posicionar o botão de deletar (position: absolute)
+                          dentro do card. Sem "position: relative" no pai, o filho com
+                          "position: absolute" se posicionaria relativo à tela toda. */
 }
 .post-card:hover {
   border-color: var(--magma-bright);
+
+  /* "translateY(-3px)" move o card 3 pixels para CIMA.
+     Junto com a sombra abaixo, cria o efeito de o card "flutuar" ao hover,
+     sugerindo que é interativo e clicável. */
   transform: translateY(-3px);
+
+  /* Sombra roxa dramática definida em --shadow-magma no :root.
+     Aparece só no hover para não poluir visualmente quando estático. */
   box-shadow: var(--shadow-magma);
 }
 
 .post-card-thumb {
   width: 100%;
   height: 160px;
-  background: linear-gradient(135deg, var(--magma-dark), #0d0002, #150005);
+  background: linear-gradient(135deg, var(--magma-dark), #0b0f1e, #111828);
   display: flex; align-items: center; justify-content: center;
   font-size: 3rem;
   position: relative;
@@ -904,7 +1323,7 @@ select.input option { background: var(--bg-card); }
 .post-card-tags { display: flex; gap: .3rem; flex-wrap: wrap; margin-bottom: .6rem; }
 
 .post-card-title {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .95rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -915,9 +1334,23 @@ select.input option { background: var(--bg-card); }
 .post-card-desc {
   font-size: .9rem;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.5; /* espaço entre linhas: 1.5× o tamanho da fonte = boa legibilidade */
+
+  /* TRUQUE PARA LIMITAR TEXTO A 2 LINHAS COM "..." NO FINAL:
+     Este é um padrão CSS específico do WebKit (Chrome, Safari, Edge).
+     Não existe uma forma padrão mais simples de fazer isso em CSS puro.
+
+     1. "display: -webkit-box" — ativa o modelo de caixa flexível do WebKit
+     2. "-webkit-line-clamp: 2" — limita o número de linhas visíveis a 2
+     3. "-webkit-box-orient: vertical" — configura o eixo de leitura como vertical
+     4. "overflow: hidden" — esconde o texto além do limite definido
+
+     Juntos, esses 4 valores fazem o texto aparecer com no máximo 2 linhas
+     e "..." ao final quando o texto é maior. Sem eles, descrições longas
+     quebraríam o layout do card. */
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin-bottom: .75rem;
@@ -945,11 +1378,10 @@ select.input option { background: var(--bg-card); }
   display: flex; align-items:center; justify-content:center;
   font-size: .6rem;
   color: #fff;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
 }
 
-/* Botão "✕" que aparece no canto do card ao passar o mouse —
-   visível apenas para o autor do post, para que ele possa deletá-lo */
+/* Botão "✕" que aparece no canto do card ao passar o mouse */
 .post-card-delete {
   position: absolute;
   top: .6rem; right: .6rem;
@@ -968,6 +1400,97 @@ select.input option { background: var(--bg-card); }
 .post-card:hover .post-card-delete { opacity: 1; }
 .post-card-delete:hover { background: rgba(224,82,82,.4); }
 
+/* Container de ações do administrador (múltiplos botões) */
+.post-card-actions {
+  position: absolute;
+  top: .6rem; right: .6rem;
+  display: flex;
+  gap: .25rem;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.post-card:hover .post-card-actions { opacity: 1; }
+.post-card.suspended .post-card-actions { opacity: 1; }
+
+/* Botão genérico de ação do admin */
+.post-card-action-btn {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items:center; justify-content:center;
+  font-size: .72rem;
+  transition: var(--transition);
+  line-height: 1;
+}
+.post-card-action-btn.btn-del {
+  background: rgba(224,82,82,.2);
+  border: 1px solid rgba(224,82,82,.4);
+  color: var(--red);
+}
+.post-card-action-btn.btn-del:hover  { background: rgba(224,82,82,.4); }
+.post-card-action-btn.btn-sus {
+  background: rgba(201,168,76,.15);
+  border: 1px solid rgba(201,168,76,.3);
+  color: var(--gold);
+}
+.post-card-action-btn.btn-sus:hover  { background: rgba(201,168,76,.3); }
+.post-card-action-btn.btn-res {
+  background: rgba(82,183,136,.15);
+  border: 1px solid rgba(82,183,136,.3);
+  color: var(--green);
+}
+.post-card-action-btn.btn-res:hover  { background: rgba(82,183,136,.3); }
+
+/* Card suspenso — visível só para admin */
+.post-card.suspended {
+  border-color: rgba(224,120,47,.45) !important;
+  opacity: .72;
+}
+.suspended-badge {
+  position: absolute;
+  top: .55rem; left: .55rem;
+  background: rgba(224,120,47,.85);
+  color: #fff;
+  font-size: .56rem;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  letter-spacing: .07em;
+  padding: .12rem .4rem;
+  border-radius: 3px;
+  z-index: 10;
+}
+
+/* Avatar do administrador: borda dourada */
+.user-avatar.is-admin { border-color: var(--gold); }
+
+/* Banner de suspensão na página de detalhe */
+.detail-suspended-banner {
+  margin: 0 2rem .5rem;
+  padding: .6rem 1rem;
+  background: rgba(224,120,47,.1);
+  border: 1px solid rgba(224,120,47,.35);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: .75rem;
+  color: var(--red);
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+.detail-suspended-banner button {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid rgba(82,183,136,.4);
+  color: var(--green);
+  border-radius: var(--radius);
+  padding: .25rem .6rem;
+  font-size: .72rem;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.detail-suspended-banner button:hover { background: rgba(82,183,136,.15); }
+
 /* Mensagem centralizada exibida quando não há posts para mostrar na página */
 .empty-state {
   text-align: center;
@@ -976,7 +1499,7 @@ select.input option { background: var(--bg-card); }
 }
 .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: .5; }
 .empty-state-title {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: 1rem;
   font-weight: 600;
   margin-bottom: .5rem;
@@ -988,14 +1511,27 @@ select.input option { background: var(--bg-card); }
    RODAPÉ
    Barra fixa no fundo da tela — permanece visível em todas
    as páginas mesmo ao rolar o conteúdo para cima.
-   z-index: 500 garante que fique acima do conteúdo mas
-   abaixo da navbar (z-index: 1000) e dos modais (z-index: 2000).
+
+   POR QUE O RODAPÉ É "position: fixed" (E NÃO "sticky")?
+   — "sticky" só funciona para elementos dentro do fluxo normal
+     e quando você chega perto deles ao rolar. Como queremos que
+     o rodapé SEMPRE apareça na base da tela, "fixed" é a escolha certa.
+
+   POR QUE z-index: 500 (EM VEZ DE 9999)?
+   Cada camada da hierarquia de z-index serve a um propósito:
+   — 500: rodapé — fica na frente do conteúdo da página
+   — 1000: navbar — fica na frente do rodapé
+   — 2000: modais — fica na frente da navbar (quando um modal abre,
+     a navbar continua visível mas o modal está na frente de tudo)
+   — 9999: lightbox e toasts — máxima prioridade, na frente de tudo
+   Usar 9999 em tudo criaria conflitos; usar valores escalonados
+   dá controle preciso sobre a ordem de sobreposição.
 ============================================================ */
 footer {
   position: fixed;
   bottom: 0; left: 0; right: 0;
   z-index: 500;
-  background: rgba(6,1,2,.96);
+  background: rgba(13,11,9,.96);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-top: 1px solid var(--border);
@@ -1040,7 +1576,7 @@ footer {
   gap: 1.5rem;
 }
 .footer-links a {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-ui);
   font-size: .68rem;
   letter-spacing: .08em;
   color: var(--text-muted);
@@ -1086,10 +1622,24 @@ footer {
 
 /* ============================================================
    RESPONSIVIDADE (ADAPTAÇÃO PARA TELAS MENORES)
-   As regras dentro de @media só se aplicam quando a tela
-   tiver menos de 900px de largura (tablets e celulares).
-   Aqui ajustamos espaçamentos e ocultamos elementos que
-   não cabem bem em telas pequenas.
+
+   O QUE É UM @MEDIA QUERY?
+   "@media (max-width: 900px) { ... }" é uma condicional do CSS.
+   Ela diz: "aplique estas regras SOMENTE quando a largura da tela
+   for 900 pixels ou menos". Fora desse bloco, as regras são ignoradas.
+
+   POR QUE 900px?
+   Esse valor foi escolhido empiricamente — é o ponto em que o layout
+   de 3 colunas começa a ficar espremido. Poderíamos ter escolhido
+   768px (breakpoint padrão de tablet) ou 1024px, mas 900px se adequa
+   melhor ao design específico do Drakbuilder.
+
+   O QUE É "MOBILE FIRST" VS "DESKTOP FIRST"?
+   — "Desktop First" (nosso caso): estilos padrão são para telas grandes,
+     e ajustamos para telas menores com "max-width".
+   — "Mobile First": estilos padrão são para telas pequenas, e ajustamos
+     para telas maiores com "min-width". É considerado melhor prática hoje,
+     mas ambas as abordagens funcionam.
 ============================================================ */
 @media (max-width: 900px) {
   .sections-grid { grid-template-columns: 1fr; padding: 2rem 1.5rem; }
@@ -1111,7 +1661,7 @@ footer {
     top: 64px;
     left: 0; right: 0;
     flex-direction: column;
-    background: rgba(6,1,2,.97);
+    background: rgba(13,11,9,.97);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--border);
@@ -1134,7 +1684,2251 @@ footer {
   .nav-link::after { display: none; }
   .nav-link.active,
   .nav-link:hover {
-    background: rgba(200,0,30,.12);
+    background: rgba(224,120,47,.12);
     color: var(--magma-bright);
   }
+}
+
+/* ============================================================
+   MODAL ESTENDIDO – scroll quando há muitas seções
+============================================================ */
+.modal-wide { max-height: 90vh; overflow-y: auto; }
+
+/* ============================================================
+   PÁGINA DE DETALHE (Builds e Guias)
+============================================================ */
+.detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: 1.5rem 2rem .5rem;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: .78rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: color var(--transition);
+}
+.detail-back:hover { color: var(--gold); }
+
+.detail-hero {
+  padding: 1.25rem 2rem 1.75rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  background: linear-gradient(to bottom, rgba(224,120,47,.06) 0%, transparent 100%);
+}
+
+.detail-emoji { font-size: 3rem; line-height: 1; flex-shrink: 0; padding-top: .2rem; }
+
+.detail-hero-info { flex: 1; min-width: 0; }
+
+.detail-title {
+  font-family: var(--font-ui);
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: .5rem;
+  line-height: 1.3;
+}
+
+.detail-meta {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  flex-wrap: wrap;
+  margin-bottom: .6rem;
+}
+
+.detail-author {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .8rem;
+  color: var(--text-secondary);
+}
+
+.detail-author-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--magma-bright);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: .62rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.detail-date { font-size: .73rem; color: var(--text-muted); }
+
+.detail-hero-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+  flex-shrink: 0;
+}
+
+.btn-edit {
+  background: transparent;
+  border: 1px solid var(--border-gold);
+  color: var(--gold);
+  border-radius: var(--radius);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+.btn-edit:hover { background: rgba(201,168,76,.12); border-color: var(--gold); }
+
+.detail-layout {
+  display: flex;
+  align-items: flex-start;
+  min-height: 400px;
+}
+
+/* ---- Sidebar de navegação ----
+   O índice lateral que mostra as seções do post (Introdução, Builds, etc.)
+   e permite navegar rapidamente clicando em cada item.
+
+   POR QUE "position: sticky" AQUI EM VEZ DE "position: fixed"?
+   — "fixed" prenderia a sidebar à janela do navegador, independente do scroll.
+     Isso causaria problemas porque a sidebar ficaria sobreposta ao conteúdo
+     em telas menores e não seguiria o layout da página.
+   — "sticky" mantém a sidebar no fluxo normal da página, mas quando o usuário
+     rola a página e a sidebar chegaria a "sair" da tela pelo topo, ela "gruda"
+     em "top: 80px" (abaixo da navbar de 64px + margem) e permanece visível.
+     Assim, a sidebar acompanha o scroll sem sair da tela.
+
+   "calc(100vh - 110px)" é uma função CSS que faz cálculos:
+   A altura máxima da sidebar é 100% da altura da janela MENOS 110px.
+   Esse desconto reserva espaço para a navbar e um pequeno padding. */
+.detail-sidebar {
+  width: 210px;
+  flex-shrink: 0; /* impede que o flex reduza a largura da sidebar ao espremida */
+  position: sticky;
+  top: 80px;       /* gruda aqui quando chegar perto do topo ao rolar */
+  padding: 1.75rem 1rem 2rem 2rem;
+  border-right: 1px solid var(--border);
+  max-height: calc(100vh - 110px); /* não cresce além da janela (permite scroll interno) */
+  overflow-y: auto;  /* se o índice for muito longo, adiciona barra de rolagem interna */
+}
+
+.detail-sidebar-title {
+  font-family: var(--font-ui);
+  font-size: .62rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: .75rem;
+}
+
+.detail-nav-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  padding: .42rem .6rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-family: var(--font-text);
+  font-size: .92rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  margin-bottom: .1rem;
+}
+.detail-nav-item:hover {
+  background: rgba(224,120,47,.08);
+  color: var(--text-primary);
+  border-left-color: var(--magma-bright);
+}
+.detail-nav-item.active {
+  background: rgba(224,120,47,.12);
+  color: var(--gold);
+  border-left-color: var(--gold);
+}
+
+/* ---- Conteúdo principal ---- */
+.detail-main {
+  flex: 1;
+  padding: 2rem 2.5rem;
+  min-width: 0;
+}
+
+.detail-section {
+  margin-bottom: 3rem;
+  scroll-margin-top: 90px;
+}
+
+.detail-section-title {
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 1rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--border-gold);
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+}
+
+.detail-section-content {
+  font-family: var(--font-text);
+  font-size: 1.05rem;
+  line-height: 1.85;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---- Galeria de imagens ---- */
+.images-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+
+.images-grid img {
+  max-width: 80%;
+  height: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  cursor: zoom-in;
+  transition: transform var(--transition), border-color var(--transition);
+  display: block;
+}
+.images-grid img:hover { transform: scale(1.02); border-color: var(--gold); }
+
+/* ---- YouTube embed (vídeo incorporado) ----
+   O vídeo ocupa 50% da largura total da página e fica centralizado.
+
+   POR QUE "aspect-ratio" AO INVÉS DO TRUQUE ANTIGO DE padding-bottom?
+   O truque antigo usava "padding-bottom: 56.25%; height: 0" para simular
+   proporção 16:9, mas o percentual do padding é calculado em relação à
+   largura do ELEMENTO PAI — não do próprio contêiner. Isso tornava
+   impossível combinar com "width: 50%" sem quebrar a proporção.
+
+   A propriedade moderna "aspect-ratio: 16 / 9" diz diretamente ao navegador:
+   "mantenha esta proporção entre largura e altura" — independente de qual
+   for a largura definida. Suportada em todos os navegadores desde 2021.
+
+   "margin: 0 auto" centraliza o bloco horizontalmente na página. */
+.youtube-wrapper {
+  position: relative;          /* necessário para o iframe (position:absolute) se posicionar aqui */
+  width: 60%;                  /* ocupa 60% da largura total da área de conteúdo */
+  margin: 0 auto;              /* centraliza o contêiner horizontalmente */
+  aspect-ratio: 16 / 9;       /* mantém a proporção de vídeo HD automaticamente */
+  overflow: hidden;            /* corta qualquer conteúdo que ultrapasse os limites */
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+/* O <div> criado como container pela YouTube IFrame API precisa preencher o wrapper */
+.youtube-wrapper > div {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+/* O <iframe> que a YouTube IFrame API insere dentro do <div> */
+.youtube-wrapper iframe {
+  position: absolute; /* posiciona dentro do .youtube-wrapper (que tem position:relative) */
+  top: 0; left: 0;
+  width: 100%; height: 100%; /* preenche todo o espaço do contêiner */
+  border: none;              /* remove a borda padrão do iframe */
+}
+
+/* ---- Lightbox (Visualizador de imagem em tela cheia) ----
+   Quando o usuário clica em uma imagem da galeria, o JavaScript
+   cria dinamicamente este elemento, cobrindo toda a tela com
+   a imagem ampliada sobre um fundo escuro quase opaco.
+
+/* ---- Status de verificação do embed do YouTube ----
+   Aparece abaixo do campo de URL no formulário de criação de post.
+   Cada variante de classe representa um estado diferente da verificação. */
+
+/* Alerta fixo acima do campo de URL do YouTube no formulário de post */
+.yt-embed-alert {
+  padding:       .5rem .75rem;
+  margin-bottom: .5rem;
+  border-radius: var(--radius);
+  border:        1px solid rgba(234,179,8,.35);
+  background:    rgba(234,179,8,.07);
+  color:         #fbbf24;
+  font-size:     .75rem;
+  font-family:   var(--font-ui);
+  line-height:   1.5;
+}
+
+/* Estilo base comum a todos os estados */
+.yt-check-status {
+  margin-top: .4rem;
+  padding: .4rem .75rem;
+  border-radius: var(--radius);
+  font-size: .75rem;
+  font-family: var(--font-ui);
+  border: 1px solid transparent;
+}
+/* Verificando... */
+.yt-check-loading {
+  background: rgba(255,255,255,.05);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+/* Incorporação permitida */
+.yt-check-ok {
+  background: rgba(34,197,94,.1);
+  border-color: rgba(34,197,94,.4);
+  color: #4ade80;
+}
+/* Incorporação bloqueada — exibirá como miniatura clicável */
+.yt-check-warn {
+  background: rgba(234,179,8,.08);
+  border-color: rgba(234,179,8,.4);
+  color: #facc15;
+}
+/* URL inválida ou vídeo não encontrado */
+.yt-check-error {
+  background: rgba(239,68,68,.08);
+  border-color: rgba(239,68,68,.4);
+  color: #f87171;
+}
+
+/* ---- Fallback para vídeos sem permissão de incorporação ----
+   Mostra a miniatura real do YouTube com um botão de play por cima.
+   Ao clicar, abre o vídeo no YouTube em nova aba.
+
+   POR QUE MINIATURA DO YOUTUBE E NÃO IFRAME?
+   O YouTube disponibiliza as miniaturas publicamente em:
+     https://img.youtube.com/vi/VIDEO_ID/hqdefault.jpg
+   Isso funciona para qualquer vídeo público — mesmo os que bloqueiam embed.
+   É mais leve que um iframe e não gera nenhum erro de player. */
+.youtube-fallback {
+  width: 60%;                    /* mesmo tamanho do .youtube-wrapper */
+  margin: 0 auto;                /* centraliza horizontalmente */
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  cursor: pointer;
+}
+.youtube-fallback a {
+  display: block;
+  position: relative;            /* necessário para posicionar o overlay de play por cima */
+  text-decoration: none;
+}
+.youtube-fallback img {
+  width: 100%;
+  aspect-ratio: 16 / 9;         /* mantém proporção de vídeo HD */
+  object-fit: cover;             /* preenche o espaço sem distorcer */
+  display: block;
+}
+/* Overlay semitransparente com o botão de play */
+.yt-play-btn {
+  position: absolute;
+  inset: 0;                      /* equivale a top/right/bottom/left: 0 — preenche o pai */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  background: rgba(0,0,0,.45);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  transition: background var(--transition);
+}
+.yt-play-btn:hover {
+  background: rgba(0,0,0,.65);  /* escurece um pouco no hover para indicar clicabilidade */
+}
+
+/* ---- Link simples para vídeos sem incorporação permitida ----
+   Exibido quando "youtubeEmbeddable" não é true — vídeo bloqueado ou não verificado.
+   POR QUE NÃO USAR IFRAME NESSES CASOS?
+   Videos bloqueados exibem "Erro 153" dentro do player do YouTube.
+   Um link de texto é mais limpo e honesto com o usuário. */
+.yt-link {
+  display:         inline-flex;
+  align-items:     center;
+  gap:             .5rem;
+  padding:         .6rem 1.2rem;
+  border-radius:   var(--radius);
+  border:          1px solid var(--border);
+  background:      rgba(255,255,255,.04);
+  color:           var(--text-secondary);
+  font-family:     var(--font-ui);
+  font-size:       .85rem;
+  font-weight:     600;
+  text-decoration: none;
+  transition:      var(--transition);
+}
+.yt-link:hover {
+  border-color: var(--magma-bright);
+  color:        var(--magma-bright);
+  background:   rgba(224,120,47,.08);
+}
+
+/* ---- Lightbox (Visualizador de imagem em tela cheia) ----
+   LIGHTBOX = caixa de luz — o nome vem dos painéis de luz usados
+   para ver negativos fotográficos em tamanho real.
+
+   POR QUE z-index: 9999?
+   Este é o elemento que deve ficar NA FRENTE DE ABSOLUTAMENTE TUDO.
+   Navbar (1000), modais (2000), rodapé (500) — todos ficam atrás.
+   O lightbox é a prioridade máxima de exibição. */
+.lightbox-backdrop {
+  position: fixed; /* cobre a janela toda, independente do scroll */
+  inset: 0;        /* top:0; right:0; bottom:0; left:0 — preenche a tela inteira */
+  background: rgba(0,0,0,.93); /* preto 93% opaco — escurece tudo atrás */
+  z-index: 9999;   /* fica na frente de TODOS os outros elementos */
+  display: flex;
+  align-items: center;     /* centraliza a imagem verticalmente */
+  justify-content: center; /* centraliza a imagem horizontalmente */
+  cursor: zoom-out; /* cursor de "zoom out" indica que clicar vai fechar */
+}
+.lightbox-backdrop img {
+  max-width: 92vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: var(--radius-lg);
+}
+.lightbox-close {
+  position: absolute;
+  top: 1rem; right: 1.5rem;
+  color: #fff;
+  font-size: 2rem;
+  cursor: pointer;
+  line-height: 1;
+  opacity: .7;
+  transition: opacity .2s;
+  user-select: none;
+}
+.lightbox-close:hover { opacity: 1; }
+
+/* ============================================================
+   EDITOR DE POST ESTENDIDO (seções, imagens, youtube)
+============================================================ */
+.section-editor-list {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  margin-bottom: .5rem;
+}
+
+.section-editor-block {
+  background: rgba(255,255,255,.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .7rem;
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+}
+
+.section-editor-header {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+}
+
+.section-editor-name {
+  flex: 1;
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .3rem .55rem;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: .78rem;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.section-editor-name::placeholder { color: var(--text-muted); }
+.section-editor-name:focus { border-color: var(--magma-bright); }
+
+.section-editor-remove {
+  background: transparent;
+  border: 1px solid rgba(224,120,47,.3);
+  color: var(--red);
+  border-radius: var(--radius);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: .8rem;
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+.section-editor-remove:hover { background: rgba(224,120,47,.15); }
+
+.section-editor-content {
+  resize: vertical;
+  min-height: 80px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .4rem .55rem;
+  color: var(--text-primary);
+  font-family: var(--font-text);
+  font-size: .95rem;
+  line-height: 1.6;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.section-editor-content::placeholder { color: var(--text-muted); }
+.section-editor-content:focus { border-color: var(--magma-bright); }
+
+.btn-add-section {
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--text-secondary);
+  border-radius: var(--radius);
+  padding: .4rem .75rem;
+  font-size: .76rem;
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+.btn-add-section:hover { border-color: var(--magma-bright); color: var(--text-primary); }
+
+/* ---- Imagem do card no thumb ---- */
+.post-card-thumb .card-thumb-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+/* ---- Área "Imagem do Card" no modal ---- */
+.card-image-area {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  flex-wrap: wrap;
+}
+.card-image-preview {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.card-image-preview img { width: 100%; height: 100%; object-fit: cover; }
+.card-image-preview .image-preview-remove {
+  position: absolute;
+  top: 2px; right: 2px;
+}
+
+/* ---- Imagens por seção no editor ---- */
+.section-images-row {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  margin-top: .4rem;
+  padding-top: .4rem;
+  border-top: 1px solid var(--border);
+}
+.section-images-label {
+  font-size: .65rem;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  letter-spacing: .04em;
+}
+/* Texto de dica exibido ao lado do label quando há imagens */
+.img-drag-hint {
+  font-style: normal;
+  font-weight: 400;
+  font-size: .67rem;
+  color: var(--text-muted);
+}
+
+/* ---- Grade visual de imagens no editor (igual ao leitor, com drag-and-drop) ---- */
+/*
+  O layout usa auto-fill com minmax para adaptar o número de colunas
+  automaticamente: 2 imagens por linha se o modal for estreito,
+  3+ se tiver mais largura. Igual ao images-grid do leitor.
+*/
+.sec-img-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: .5rem;
+  margin-top: .3rem;
+}
+/* Cada item ocupa proporção 16:9, igual às imagens no post publicado */
+.sec-img-item {
+  position: relative;
+  aspect-ratio: 16/9;
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: grab;
+  border: 2px solid transparent;
+  transition: border-color .15s, opacity .15s;
+  user-select: none;
+}
+.sec-img-item:active { cursor: grabbing; }
+/* Imagem sendo arrastada fica semitransparente para indicar que saiu do lugar */
+.sec-img-item.img-dragging {
+  opacity: .3;
+  border-color: var(--magma-bright);
+}
+/* Destino do drop recebe destaque com borda e brilho */
+.sec-img-item.img-drop-over {
+  border-color: var(--magma-bright);
+  box-shadow: 0 0 0 3px var(--magma-glow);
+}
+.sec-img-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* pointer-events:none impede que o <img> intercepte os eventos de drag do container */
+  pointer-events: none;
+}
+/* Botão de remover aparece no hover, discreto para não poluir a visualização */
+.sec-img-remove {
+  position: absolute;
+  top: 4px; right: 4px;
+  background: rgba(0,0,0,.72);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 22px; height: 22px;
+  font-size: .68rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .15s;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; line-height: 1;
+}
+.sec-img-item:hover .sec-img-remove { opacity: 1; }
+/* Zona de drop abaixo da grade — recebe imagem arrastada para o final da seção */
+.sec-img-dropzone {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: .72rem;
+  padding: .3rem .6rem;
+  text-align: center;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.sec-img-dropzone.img-drop-over {
+  border-color: var(--magma-bright);
+  background: rgba(224,120,47,.07);
+  color: var(--magma-bright);
+}
+
+/* ---- Upload de imagens no modal ---- */
+.image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: .4rem;
+}
+
+.image-preview-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.image-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+
+.image-preview-remove {
+  position: absolute;
+  top: 2px; right: 2px;
+  background: rgba(0,0,0,.75);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: .62rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.image-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .38rem .7rem;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: .76rem;
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition);
+}
+.image-upload-btn:hover { border-color: var(--magma-bright); color: var(--text-primary); }
+
+/* ============================================================
+   EDIÇÃO INLINE — editor sobre a própria página de detalhe
+============================================================ */
+/*
+  Barra fixa no topo que aparece durante a edição.
+  position:sticky mantém ela visível enquanto o admin rola a página
+  para editar seções mais abaixo sem perder o botão "Salvar".
+*/
+.ie-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, rgba(40,33,27,.97), rgba(29,25,21,.97));
+  border-bottom: 1px solid var(--magma-bright);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .6rem 1.5rem;
+  gap: 1rem;
+}
+.ie-toolbar-label {
+  font-family: var(--font-ui);
+  font-size: .78rem;
+  color: rgba(255,255,255,.82);
+  letter-spacing: .05em;
+}
+.ie-toolbar-btns { display: flex; gap: .45rem; }
+
+/*
+  Placeholder para campos contenteditable vazios — só aparece quando o campo
+  está completamente vazio (:empty). Funciona como o placeholder do <input>,
+  mas para elementos editáveis. Útil no modo de criação de post.
+*/
+.ie-ce[data-placeholder]:empty:before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  pointer-events: none;
+  font-style: italic;
+  opacity: .7;
+}
+
+/* Estilo base para todos os campos editáveis via contenteditable.
+   Borda pontilhada sutil aparece no hover — indica que é clicável para editar.
+   Ao focar, a borda fica sólida com o brilho roxo característico do site. */
+.ie-ce {
+  border: 1px dashed transparent;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color .15s, background .15s;
+  cursor: text;
+}
+.ie-ce:hover {
+  border-color: rgba(224,120,47,.4);
+  background: rgba(224,120,47,.04);
+}
+.ie-ce:focus {
+  border-color: var(--magma-bright);
+  background: rgba(224,120,47,.06);
+  box-shadow: 0 0 0 2px var(--magma-glow);
+}
+
+/* Emoji editável — mesmo tamanho do .detail-emoji, mas com contenteditable */
+.ie-emoji-ce {
+  font-size: 3rem;
+  line-height: 1;
+  flex-shrink: 0;
+  padding-top: .2rem;
+  display: inline-block;
+  min-width: 1em;
+  border: 1px dashed transparent;
+  border-radius: 4px;
+  outline: none;
+  cursor: text;
+  transition: border-color .15s;
+}
+.ie-emoji-ce:hover { border-color: rgba(224,120,47,.4); }
+.ie-emoji-ce:focus { border-color: var(--magma-bright); }
+
+/* Nome de seção editável — ocupa o espaço restante ao lado do ◆ */
+.ie-sec-name { flex: 1; min-width: 2rem; }
+
+/*
+  Wrapper de cada seção no modo Word-style.
+  A borda esquerda roxa aparece suavemente quando o mouse está sobre a seção,
+  sinalizando que ela está "selecionada" e os controles flutuantes aparecem.
+*/
+.ie-section-wrap {
+  position: relative;
+  border-left: 3px solid transparent;
+  padding-left: .5rem;
+  margin-bottom: 2rem;
+  transition: border-color .18s;
+}
+.ie-section-wrap:hover { border-left-color: rgba(224,120,47,.4); }
+
+/*
+  Controles flutuantes da seção (deletar, adicionar imagem).
+  Ficam completamente invisíveis até o mouse entrar na seção.
+  pointer-events: none → a área invisível não "bloqueia" cliques no texto.
+  Ao fazer hover, aparecem no canto superior direito da seção.
+*/
+.ie-sec-controls {
+  position: absolute;
+  top: 0; right: 0;
+  display: flex;
+  gap: .3rem;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s;
+  background: rgba(18,12,48,.9);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .22rem .4rem;
+  z-index: 5;
+}
+.ie-section-wrap:hover .ie-sec-controls {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Botão "Remover seção" dentro do painel flutuante */
+.ie-del-sec-btn {
+  background: transparent;
+  border: none;
+  color: var(--red);
+  font-size: .7rem;
+  cursor: pointer;
+  padding: .15rem .3rem;
+  border-radius: 3px;
+  white-space: nowrap;
+  transition: background .12s;
+}
+.ie-del-sec-btn:hover { background: rgba(200,0,30,.18); }
+
+/*
+  Botão "+ Adicionar seção" no final do documento.
+  Visual minimalista para não poluir — se comporta como uma linha tracejada.
+*/
+.ie-add-sec-btn {
+  display: block;
+  width: 100%;
+  padding: .65rem;
+  background: transparent;
+  border: 1px dashed rgba(224,120,47,.25);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: .82rem;
+  margin-top: 1.5rem;
+  transition: border-color .15s, color .15s;
+  text-align: center;
+}
+.ie-add-sec-btn:hover {
+  border-color: var(--magma-bright);
+  color: var(--magma-bright);
+}
+
+/* Label de campo — pequeno rótulo acima dos itens no painel de configurações */
+.ie-field-label {
+  font-size: .63rem;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  letter-spacing: .05em;
+  margin-bottom: .2rem;
+}
+
+/*
+  Painel de configurações — oculto por padrão, aparece ao clicar em ⚙️ Config.
+  Contém tags, imagem de capa e URL do YouTube — informações que não fazem
+  parte do texto do documento, mas que precisam ser editáveis.
+  POR QUE esconder e não mostrar sempre?
+  → Mantém o documento limpo (estilo Word/Notion), sem fileiras de formulário.
+*/
+.ie-settings-panel {
+  display: none;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  padding: .75rem 2rem;
+  background: rgba(18,12,48,.7);
+  border-bottom: 1px solid var(--border);
+}
+.ie-settings-panel.ie-sp-open { display: flex; }
+
+/* Grupo dentro do painel (ex: "Tags" ou "Imagem de capa") */
+.ie-settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+}
+
+/* Miniatura da imagem de capa no hero de edição */
+.ie-cover-thumb {
+  height: 38px;
+  width: 56px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+/* Botão pequeno de ação (adicionar/remover imagem, etc.) */
+.ie-small-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .72rem;
+  padding: .24rem .52rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,.04);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+  white-space: nowrap;
+}
+.ie-small-btn:hover {
+  border-color: var(--magma-bright);
+  color: var(--text-primary);
+}
+
+/* Input de YouTube no editor inline */
+.ie-yt-input {
+  font-size: .78rem;
+  padding: .22rem .45rem;
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  outline: none;
+  width: 260px;
+  max-width: 100%;
+  transition: border-color .15s;
+}
+.ie-yt-input:focus { border-color: var(--magma-bright); }
+
+/* Barra de salvar ao final — evita que o admin precise rolar até o topo */
+.ie-save-bottom {
+  display: flex;
+  justify-content: flex-end;
+  gap: .6rem;
+  padding: 1rem 2rem 2.5rem;
+  border-top: 1px solid var(--border);
+  margin-top: .5rem;
+}
+
+/* ---- Responsividade para detail ---- */
+@media (max-width: 900px) {
+  .detail-sidebar { display: none; }
+  .detail-main { padding: 1.25rem 1.25rem 2rem; }
+  .detail-hero { padding: 1rem 1.25rem 1.25rem; flex-wrap: wrap; }
+  .detail-title { font-size: 1.2rem; }
+  .detail-back { padding: 1.25rem 1.25rem .5rem; }
+
+  .image-preview-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ============================================================
+   PÁGINA: MINHAS POSTAGENS
+============================================================ */
+.myposts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 2rem 0 1.75rem;
+  flex-wrap: wrap;
+}
+.myposts-tabs {
+  display: flex;
+  gap: .5rem;
+}
+.myposts-tab {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .55rem 1.3rem;
+  font-family: var(--font-ui);
+  font-size: .75rem;
+  letter-spacing: .06em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.myposts-tab:hover {
+  border-color: var(--magma-mid);
+  color: var(--text-primary);
+}
+.myposts-tab.active {
+  background: linear-gradient(135deg, var(--magma-dark), var(--magma-mid));
+  border-color: var(--magma-bright);
+  color: #fff;
+}
+
+/* ============================================================
+   PÁGINA: CONFIGURAÇÕES
+============================================================ */
+.settings-header {
+  margin: 2rem 0 2rem;
+}
+.settings-title {
+  font-family: var(--font-ui);
+  font-size: 1.6rem;
+  color: var(--text-primary);
+  margin-bottom: .4rem;
+}
+.settings-subtitle {
+  color: var(--text-secondary);
+  font-size: .9rem;
+}
+.settings-sections {
+  display: grid;
+  gap: 1rem;
+  max-width: 700px;
+}
+.settings-section {
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow:      hidden;           /* garante que o corpo não vaze durante a animação */
+  transition:    border-color var(--transition);
+}
+.settings-section:hover {
+  border-color: var(--magma-dark);
+}
+
+/* Header clicável de cada seção — contém título e seta */
+.settings-section-header {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         1.1rem 1.75rem;
+  cursor:          pointer;
+  user-select:     none;           /* impede seleção de texto ao clicar */
+  transition:      background var(--transition);
+}
+.settings-section-header:hover {
+  background: rgba(255,255,255,.03);
+}
+
+.settings-section-title {
+  font-family:    var(--font-ui);
+  font-size:      .88rem;
+  color:          var(--text-primary);
+  letter-spacing: .04em;
+  margin:         0;
+}
+
+/* Seta indicadora — gira 90° quando a seção está aberta.
+   POR QUE usar "›" e rotação CSS em vez de dois ícones?
+   Um único caractere + transform é mais simples e a animação fica suave. */
+.settings-section-arrow {
+  font-size:       1.3rem;
+  color:           var(--text-secondary);
+  transition:      transform .25s ease, color .2s;
+  display:         inline-block;
+  line-height:     1;
+}
+.settings-section-arrow.open {
+  transform: rotate(90deg);  /* aponta para baixo quando expandido */
+  color:     var(--magma-bright);
+}
+
+/* Corpo da seção — fechado por padrão via max-height: 0.
+   POR QUE max-height E NÃO display:none?
+   display:none não permite transição CSS (o elemento some instantaneamente).
+   max-height é um valor numérico, então o CSS consegue animar entre 0 e o
+   valor máximo, criando o efeito de deslizamento suave. */
+.settings-section-body {
+  max-height: 0;
+  overflow:   hidden;
+  padding:    0 1.75rem;
+  transition: max-height .35s ease, padding .25s ease;
+}
+.settings-section-body.open {
+  max-height: 9999px;          /* valor grande o suficiente para qualquer conteúdo */
+  padding:    0 1.75rem 1.5rem;
+}
+.settings-placeholder {
+  color: var(--text-secondary);
+  font-size: .84rem;
+  font-style: italic;
+}
+
+/*
+  ── TOGGLE DE OPÇÃO NAS CONFIGURAÇÕES ─────────────────────────
+  Linha com label + descrição à esquerda e o interruptor à direita.
+  Usada na aba de Notificações para o botão "Silenciar".
+
+  POR QUE justify-content: space-between?
+  → Empurra o texto para a esquerda e o toggle para o canto direito,
+    como nos painéis de configurações de apps modernos (iOS/Android).
+*/
+.settings-toggle-row {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  gap:             1.5rem;
+  padding:         .25rem 0;
+}
+.settings-toggle-info {
+  flex: 1;
+}
+.settings-toggle-label {
+  font-size:   .95rem;
+  font-weight: 600;
+  color:       var(--text-primary);
+  margin-bottom: .25rem;
+}
+.settings-toggle-desc {
+  font-size:   .82rem;
+  color:       var(--text-secondary);
+  line-height: 1.45;
+}
+
+/*
+  ── INTERRUPTOR VISUAL (SWITCH) ────────────────────────────────
+  Técnica clássica: esconde o <input type="checkbox"> real e usa
+  o <label> + <span> para criar um interruptor bonito.
+
+  COMO FUNCIONA?
+  - O <input> fica invisível (opacity: 0; width: 0; height: 0)
+  - O <label> envolve o input E o <span class="settings-toggle-thumb">
+  - Quando o input está :checked, o CSS muda a cor do label e
+    move o "polegar" (thumb) para a direita via translateX
+  - O clique no label ativa/desativa o checkbox invisível automaticamente
+
+  POR QUE esta técnica?
+  → É a mais acessível: funciona com teclado (Tab + Espaço),
+    leitores de tela e todos os browsers modernos.
+*/
+.settings-toggle-switch {
+  position:    relative;
+  display:     inline-block;
+  width:       48px;
+  height:      26px;
+  flex-shrink: 0;
+  cursor:      pointer;
+}
+.settings-toggle-switch input {
+  opacity:  0;
+  width:    0;
+  height:   0;
+  position: absolute;
+}
+.settings-toggle-switch .settings-toggle-thumb {
+  position:      absolute;
+  inset:         0;
+  background:    rgba(255,255,255,.15);
+  border-radius: 999px;
+  transition:    background .25s ease;
+}
+.settings-toggle-switch .settings-toggle-thumb::after {
+  content:       '';
+  position:      absolute;
+  top:           3px;
+  left:          3px;
+  width:         20px;
+  height:        20px;
+  background:    #fff;
+  border-radius: 50%;
+  transition:    transform .25s ease;
+  box-shadow:    0 1px 4px rgba(0,0,0,.35);
+}
+.settings-toggle-switch input:checked + .settings-toggle-thumb {
+  background: var(--accent);
+}
+.settings-toggle-switch input:checked + .settings-toggle-thumb::after {
+  transform: translateX(22px);
+}
+
+/* ── Foto de perfil no avatar da navbar ──
+   O #userAvatar é um círculo posicionado com position:relative.
+   A imagem precisa preencher exatamente esse círculo. */
+#userAvatarImg {
+  position:     absolute;  /* sobrepõe a inicial */
+  inset:        0;
+  width:        100%;
+  height:       100%;
+  object-fit:   cover;     /* preenche o círculo sem distorcer */
+  border-radius: 50%;      /* mantém o formato circular */
+}
+
+/* ── Área do avatar na página de configurações de perfil ── */
+.profile-avatar-area {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            .6rem;
+  padding:        .5rem 0 .25rem;
+}
+
+/* Círculo clicável que mostra a foto atual ou a inicial */
+.profile-avatar-preview {
+  position:      relative;
+  width:         96px;
+  height:        96px;
+  border-radius: 50%;
+  overflow:      hidden;
+  cursor:        pointer;
+  background:    var(--magma-dark);
+  border:        2px solid var(--border);
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  font-family:   var(--font-ui);
+  font-size:     2rem;
+  font-weight:   700;
+  color:         var(--gold);
+  transition:    border-color var(--transition);
+}
+.profile-avatar-preview:hover {
+  border-color: var(--magma-bright);
+}
+/* Imagem de avatar dentro do preview */
+.profile-avatar-preview img {
+  position:   absolute;
+  inset:      0;
+  width:      100%;
+  height:     100%;
+  object-fit: cover;
+}
+/* Overlay escuro com ícone de câmera — aparece no hover */
+.profile-avatar-overlay {
+  position:        absolute;
+  inset:           0;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  background:      rgba(0,0,0,.55);
+  color:           #fff;
+  font-size:       .75rem;
+  font-family:     var(--font-ui);
+  font-weight:     600;
+  opacity:         0;               /* invisível por padrão */
+  transition:      opacity var(--transition);
+  letter-spacing:  .04em;
+}
+.profile-avatar-preview:hover .profile-avatar-overlay {
+  opacity: 1; /* aparece ao passar o mouse */
+}
+
+/* Texto de dica abaixo do avatar */
+.profile-avatar-hint {
+  font-size:  .72rem;
+  color:      var(--text-secondary);
+  font-family: var(--font-ui);
+}
+
+/* Textarea do campo de bio — herda estilos de .input mas precisa redimensionar */
+.profile-bio-input {
+  resize:     vertical;  /* usuário pode aumentar a altura verticalmente */
+  min-height: 90px;
+  line-height: 1.6;
+}
+
+/* Contador de caracteres da bio — exibido ao lado do label */
+.bio-counter {
+  font-size:   .7rem;
+  color:       var(--text-secondary);
+  margin-left: .4rem;
+  font-family: monospace;
+}
+
+/* ============================================================
+   PAGINAÇÃO
+   Barra abaixo da grade de cards com:
+   — informação de resultados ("Exibindo 1–12 de 47 posts")
+   — botões de navegação entre páginas (← Anterior [1][2][3] Próxima →)
+   — seletor de quantos posts por página (12 / 24 / 36)
+
+   POR QUE "justify-content: space-between"?
+   Distribui os três grupos (info, botões de página, por-página) igualmente
+   nas extremidades e no centro da barra, sem precisar de margens manuais.
+============================================================ */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;           /* em telas estreitas, os grupos empilham em linhas */
+  gap: .85rem;
+  padding: .75rem 3rem 2.5rem;
+}
+
+/* Texto "Exibindo X–Y de Z posts" — informativo, sem interação */
+.pagination-info {
+  font-family: var(--font-ui);
+  font-size: .72rem;
+  letter-spacing: .05em;
+  color: var(--text-secondary);
+  white-space: nowrap;       /* impede que o texto quebre no meio */
+}
+
+/* Grupo central: ← botões de página → */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+}
+
+/* Botão de página individual (número ou "Anterior"/"Próxima") */
+.page-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 .75rem;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: .72rem;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 rgba(0,0,0,.5);
+}
+.page-btn:hover:not(:disabled) {
+  border-color: var(--magma-bright);
+  color: var(--magma-bright);
+  background: rgba(224,120,47,.08);
+  box-shadow: 1px 1px 0 rgba(0,0,0,.5);
+  transform: translate(1px, 1px);
+}
+/* Página atualmente ativa — destaque em roxo */
+.page-btn.active {
+  background: var(--magma-mid);
+  border-color: var(--magma-bright);
+  color: #fff;
+  box-shadow: none;
+  cursor: default;
+}
+/* Botão desativado (ex: "Anterior" na primeira página) */
+.page-btn:disabled {
+  opacity: .28;
+  cursor: default;
+  box-shadow: none;
+}
+
+/* "…" entre grupos de páginas (ex: 1 … 4 5 6 … 10) */
+.page-ellipsis {
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: .8rem;
+  padding: 0 .2rem;
+  line-height: 36px;
+  user-select: none;  /* impede seleção acidental ao clicar */
+}
+
+/* Grupo direito: "Por página: [12] [24] [36]" */
+.perpage-control {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-family: var(--font-ui);
+  font-size: .68rem;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Botão de quantidade de posts por página */
+.perpage-btn {
+  min-width: 36px;
+  height: 30px;
+  padding: 0 .55rem;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: .68rem;
+  font-weight: 700;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.perpage-btn:hover {
+  border-color: var(--magma-bright);
+  color: var(--magma-bright);
+}
+/* Opção atualmente selecionada */
+.perpage-btn.active {
+  background: rgba(224,120,47,.15);
+  border-color: var(--magma-bright);
+  color: var(--magma-bright);
+}
+
+/* Em telas pequenas: agrupa tudo centralizado */
+@media (max-width: 900px) {
+  .pagination-bar {
+    padding: .75rem 1.5rem 2rem;
+    justify-content: center;
+  }
+  .pagination-info { width: 100%; text-align: center; }
+  .pagination-controls { flex-wrap: wrap; justify-content: center; }
+}
+
+
+/* ============================================================
+   SINO DE NOTIFICAÇÕES
+   O sino fica na navbar (canto superior direito) e mostra um
+   badge vermelho com o número de notificações não lidas.
+   Ao clicar abre um painel flutuante com a lista.
+   ============================================================ */
+
+/* Botão do sino — posição relativa para o badge se posicionar sobre ele */
+.notif-bell {
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: .3rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  border-radius: 50%;
+}
+.notif-bell:hover { color: var(--magma-bright); background: rgba(224,120,47,.1); }
+.notif-bell svg   { width: 1.4rem; height: 1.4rem; }
+
+/* Badge vermelho com número de não-lidas (posicionado sobre o canto do sino) */
+.notif-badge {
+  position: absolute;
+  top: .05rem;
+  right: .05rem;
+  background: #e53e3e;
+  color: #fff;
+  font-size: .6rem;
+  font-weight: 700;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 .2rem;
+  line-height: 1;
+  pointer-events: none; /* cliques passam pelo badge e chegam no botão */
+}
+
+/* Painel flutuante com a lista de notificações */
+.notif-panel {
+  position: absolute;
+  top: calc(100% + .5rem); /* logo abaixo da navbar */
+  right: 1rem;
+  width: 340px;
+  max-width: calc(100vw - 2rem);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(0,0,0,.45);
+  z-index: 1200;
+  overflow: hidden;
+}
+
+/* Cabeçalho do painel */
+.notif-header {
+  padding: .75rem 1rem;
+  font-family: var(--font-ui);
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--magma-bright);
+  border-bottom: 1px solid var(--border);
+  letter-spacing: .04em;
+}
+
+/* Lista rolável de itens */
+.notif-list {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+/* Cada item de notificação */
+.notif-item {
+  display: flex;
+  gap: .75rem;
+  align-items: flex-start;
+  padding: .75rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  transition: background .15s;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: rgba(224,120,47,.08); }
+
+/* Ícone da notificação (emoji) */
+.notif-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-top: .1rem;
+}
+
+/* Texto da notificação */
+.notif-text {
+  flex: 1;
+  font-size: .82rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+.notif-time {
+  font-size: .72rem;
+  color: var(--text-secondary);
+  margin-top: .25rem;
+}
+
+/* Mensagem quando não há notificações */
+.notif-empty {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  font-size: .85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+
+/* ============================================================
+   AUTOR CLICÁVEL (nos cards de post e na página de detalhe)
+   Adicionar cursor pointer e sublinhado sutil ao passar o mouse.
+   event.stopPropagation() no JS evita abrir o post ao clicar no autor.
+   ============================================================ */
+.clickable-author {
+  cursor: pointer;
+  transition: color .15s;
+}
+.clickable-author:hover { color: var(--magma-bright); }
+
+
+/* ============================================================
+   PÁGINA DE PERFIL PÚBLICO
+   Layout: cabeçalho com avatar + info + botão seguir,
+   barra de estatísticas, e grades de builds/guias.
+   ============================================================ */
+
+/* Wrapper geral da página de perfil */
+.profile-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* Cabeçalho: avatar à esquerda, info à direita */
+.profile-header {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Área do avatar (exibição, não edição) */
+.profile-avatar-display {
+  width: 6rem;
+  height: 6rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--border);
+}
+
+/* Avatar com imagem */
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Avatar com inicial (sem foto) */
+.profile-avatar-initial {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(224,120,47,.25);
+  color: var(--magma-bright);
+  font-family: var(--font-ui);
+  font-size: 2rem;
+  font-weight: 700;
+  border-radius: 50%;
+}
+
+/* Coluna de texto ao lado do avatar */
+.profile-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+/* Nome do usuário */
+.profile-name {
+  font-family: var(--font-ui);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Bio */
+.profile-bio {
+  font-family: var(--font-text);
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+.profile-bio--empty { font-style: italic; opacity: .6; }
+
+/* Botão de seguir / seguindo */
+.follow-btn {
+  display: inline-block;
+  margin-top: .5rem;
+  padding: .45rem 1.2rem;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid var(--magma-bright);
+  color: var(--magma-bright);
+  background: transparent;
+  width: fit-content;
+}
+.follow-btn:hover {
+  background: rgba(224,120,47,.15);
+}
+/* Estado "já seguindo" — fundo preenchido */
+.follow-btn.following {
+  background: rgba(224,120,47,.2);
+  border-color: rgba(224,120,47,.5);
+  color: var(--text-secondary);
+}
+.follow-btn.following:hover {
+  background: rgba(200,0,30,.12);
+  border-color: rgba(200,0,30,.4);
+  color: #e57373;
+}
+
+/* Barra de estatísticas (posts / seguidores / seguindo) */
+.profile-stats {
+  display: flex;
+  gap: 1px;
+  margin-bottom: 2rem;
+  background: var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+/* Cada célula de estatística */
+.profile-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: var(--surface);
+  gap: .2rem;
+}
+
+.profile-stat-value {
+  font-family: var(--font-ui);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--magma-bright);
+}
+
+.profile-stat-label {
+  font-size: .72rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* Seção (Builds / Guias) dentro do perfil */
+.profile-section {
+  margin-bottom: 2.5rem;
+}
+
+.profile-section-title {
+  font-family: var(--font-ui);
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: .05em;
+  margin-bottom: 1rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Grade de posts do perfil */
+.profile-posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+/* Card de post na grade do perfil */
+.profile-post-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: var(--transition);
+}
+.profile-post-card:hover {
+  border-color: rgba(224,120,47,.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+
+/* Thumbnail do card */
+.ppc-thumb {
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  background: rgba(224,120,47,.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ppc-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ppc-thumb-emoji {
+  font-size: 2rem;
+}
+
+/* Informações abaixo da thumbnail */
+.ppc-info {
+  padding: .6rem .75rem;
+}
+.ppc-title {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ppc-date {
+  font-size: .72rem;
+  color: var(--text-secondary);
+  margin-top: .25rem;
+}
+
+/* Texto quando não há posts na seção */
+.profile-empty {
+  color: var(--text-secondary);
+  font-size: .85rem;
+  font-style: italic;
+  padding: .5rem 0;
+}
+
+/* Mobile: cabeçalho do perfil em coluna */
+@media (max-width: 600px) {
+  .profile-header { flex-direction: column; align-items: center; text-align: center; }
+  .profile-info   { align-items: center; }
+  .follow-btn     { width: 100%; text-align: center; }
+  .profile-posts-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+}
+
+/* ##################################################################
+   REDESENHO "FORJA DE ELDRAS" — 24/10/2026
+   ------------------------------------------------------------------
+   Esta camada fica no FIM do arquivo de propósito: no CSS, a regra
+   que vem por último vence. Assim o visual novo substitui o antigo
+   sem precisar apagar centenas de linhas. Para voltar ao visual
+   antigo, basta apagar daqui para baixo (e a paleta no :root).
+
+   Regras do redesenho (para o site não ter "cara de IA"):
+   1. Cores da arte do jogo (fuligem, brasa, latão), sem roxo neon.
+   2. Sem gradientes decorativos e sem brilho (glow). Sombra dura de
+      pixel art (4px 4px 0 preto), como na interface do jogo.
+   3. Cantos retos. Botões com "canto cortado" de pixel.
+   4. Fonte pixelada só nos títulos; texto longo em fonte legível.
+   5. Sem emoji como ícone. Sem MAIÚSCULAS espaçadas em todo lugar.
+   ################################################################## */
+
+body {
+  font-family: var(--font-text);
+  font-size: 17px;
+  background-image: none;          /* o mapa no fundo deixava o texto difícil de ler */
+  background-color: var(--bg-deep);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Títulos com a fonte pixelada */
+.hero-title, .page-header-title, .detail-title, .section-title,
+.detail-section-title, .nav-logo-text, .modal-title,
+.settings-title, .profile-name, .empty-state-title, .profile-section-title {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+  text-transform: none;
+  text-shadow: none;
+}
+
+/* Canto cortado de pixel (usado em botões e brasões) */
+.btn, .monogram, .filter-btn, .page-btn, .perpage-btn {
+  clip-path: polygon(3px 0, calc(100% - 3px) 0, 100% 3px, 100% calc(100% - 3px),
+                     calc(100% - 3px) 100%, 3px 100%, 0 calc(100% - 3px), 0 3px);
+}
+
+/* ---------- Botões ---------- */
+.btn {
+  font-family: var(--font-ui);
+  font-size: .95rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: .6rem 1.25rem;
+  border-radius: 0;
+  box-shadow: none;
+}
+.btn-primary {
+  background: var(--magma-mid);
+  border: 2px solid #7a3a10;
+  color: #1a0d04;
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,.25), inset 0 2px 0 rgba(255,220,180,.35);
+}
+.btn-primary:hover { background: var(--magma-bright); transform: none; box-shadow: inset 0 -3px 0 rgba(0,0,0,.25), inset 0 2px 0 rgba(255,220,180,.35); }
+.btn-primary:active { transform: translateY(1px); box-shadow: inset 0 3px 0 rgba(0,0,0,.25); }
+.btn-outline {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  color: var(--text-primary);
+}
+.btn-outline:hover { background: var(--bg-card-hover); border-color: var(--text-muted); color: var(--text-primary); transform: none; box-shadow: none; }
+.btn-gold { background: var(--gold); border-color: #8a6420; color: #1a1205; box-shadow: none; }
+.btn:focus-visible, .filter-btn:focus-visible, .nav-link:focus-visible, .detail-nav-item:focus-visible {
+  outline: 2px solid var(--gold-light);
+  outline-offset: 2px;
+}
+
+/* ---------- Tags (PVE, PVP...) ---------- */
+.tag {
+  font-family: var(--font-ui);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  padding: .1rem .45rem;
+  border-radius: 0;
+  border: 1px solid currentColor;
+  background: transparent;
+}
+.tag-pve { color: var(--blue); }
+.tag-pvp { color: var(--red); }
+.tag-farm { color: var(--green); }
+.tag-endgame { color: var(--arcane); }
+.tag-evento, .tag-event { color: var(--orange); }
+.tag-noticias, .tag-news { color: var(--gold); }
+.tag-atualizacao, .tag-update { color: var(--blue); }
+.tag-iniciante { color: var(--green); }
+.tag-avancado { color: var(--red); }
+.tag-economia { color: var(--gold); }
+.tag-dungeon { color: var(--arcane); }
+
+/* ---------- Brasão com a inicial (substitui o emoji) ----------
+   --mono é a cor da categoria. Nos ícones pequenos ela vira o fundo;
+   nos cards grandes ela vira a cor da letra sobre um fundo de "dither"
+   (o xadrezinho de pixel art), para não ficar um bloco chapado. */
+.monogram {
+  --mono: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--bg-deep);
+  background: var(--mono);
+}
+.mono-pve, .mono-atualizacao { --mono: var(--blue); }
+.mono-pvp, .mono-avancado { --mono: var(--red); }
+.mono-farm, .mono-iniciante { --mono: var(--green); }
+.mono-endgame, .mono-dungeon { --mono: var(--arcane); }
+.mono-evento { --mono: var(--orange); }
+.mono-noticias, .mono-economia { --mono: var(--gold); }
+
+/* ---------- Barra de navegação ---------- */
+#navbar {
+  background: var(--bg-void);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border-bottom: 2px solid #000;
+  box-shadow: 0 2px 0 var(--border);
+}
+.nav-logo-text { font-size: 1.35rem; color: var(--gold); text-shadow: none; }
+.nav-logo-icon { border-radius: 0; image-rendering: auto; }
+.nav-link {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-secondary);
+}
+.nav-link::after { height: 3px; border-radius: 0; background: var(--magma-bright); bottom: -1px; box-shadow: none; }
+.nav-search { border-radius: 0; background: var(--bg-deep); border: 2px solid var(--border); }
+.nav-search input { font-family: var(--font-ui); font-size: .95rem; }
+.user-avatar { border-radius: 0; box-shadow: none; background: var(--magma-dark); }
+.user-avatar:hover { box-shadow: none; outline: 2px solid var(--magma-bright); }
+.user-menu, .notif-panel { border-radius: 0; box-shadow: var(--shadow-pixel); border: 2px solid var(--border); background: var(--bg-card); }
+.user-menu-item { font-family: var(--font-ui); font-size: .95rem; letter-spacing: 0; text-transform: none; }
+
+/* ---------- Home ---------- */
+#homeBgFlash { display: none; }   /* removido o "piscar" da capa ao rolar a página */
+#page-home { background-image: none; }
+.hero {
+  min-height: 380px;
+  padding: 3.5rem 3rem;
+  align-items: flex-end;
+  border-bottom: 2px solid #000;
+  /* Captura oficial da Steam (templo à direita, lado esquerdo escuro para o título) */
+  background: url('imagens/capa-jogo.jpg') right 20% / cover no-repeat;
+}
+.hero-bg {
+  /* Faixa escura só atrás do texto, para ler bem. Não é decoração. */
+  background: linear-gradient(to right, rgba(13,11,9,.94) 0%, rgba(13,11,9,.8) 38%, rgba(13,11,9,0) 70%);
+}
+.hero-particles { display: none; }
+.hero-content { max-width: 520px; }
+.hero-title {
+  font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--text-primary);
+  margin-bottom: .9rem;
+}
+.hero-sub { font-size: 1.15rem; max-width: 460px; color: var(--text-secondary); margin-bottom: 1.6rem; }
+
+.sections-grid {
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  grid-template-areas: "builds news" "guides news";
+  align-items: start;
+  gap: 2.5rem 3rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 3.5rem;
+  background: none;
+}
+.block-builds { grid-area: builds; }
+.block-news { grid-area: news; }
+.block-guides { grid-area: guides; }
+.section-header { border-bottom: 2px solid var(--border); margin-bottom: .25rem; }
+.section-title { font-size: 1.35rem; font-weight: 700; color: var(--text-primary); }
+.section-title::before { display: none; }
+.section-link { font-family: var(--font-ui); font-size: .95rem; letter-spacing: 0; color: var(--magma-bright); }
+.section-link:hover { color: var(--gold-light); text-decoration: underline; }
+.section-footer { margin-top: .75rem; }
+.section-footer .btn { width: auto; font-size: .9rem !important; }
+
+/* Listas da home: linhas separadas por traço, não "cards" iguais empilhados */
+.build-card, .guide-card, .news-card {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  margin: 0;
+  padding: .9rem .25rem;
+  box-shadow: none;
+}
+.build-card:hover, .guide-card:hover, .news-card:hover {
+  background: var(--bg-card);
+  box-shadow: none;
+  border-color: var(--border);
+}
+.build-card:hover .build-name, .guide-card:hover .guide-name, .news-card:hover .news-title { color: var(--gold-light); }
+.build-icon, .guide-icon, .news-thumb {
+  border-radius: 0;
+  border: 2px solid #000;
+  background: var(--bg-card);
+  box-shadow: 2px 2px 0 #000;
+}
+.build-icon { width: 96px; height: 54px; }
+.guide-icon { width: 44px; height: 44px; }
+.news-thumb { width: 88px; height: 56px; }
+.build-name, .guide-name, .news-title {
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  white-space: normal;
+}
+.build-name { font-size: 1.15rem; margin-bottom: .3rem; }
+.guide-desc, .news-desc { font-size: .92rem; color: var(--text-secondary); }
+.news-date { font-size: .85rem; color: var(--text-muted); }
+.news-info .tag { margin-bottom: .15rem; }
+.build-arrow { color: var(--text-muted); font-size: 1.3rem; }
+
+/* ---------- Páginas de lista (Builds, Notícias, Guias) ---------- */
+.page-header {
+  background: none;
+  border-bottom: 2px solid var(--border);
+  padding: 2.5rem 2rem 1.5rem;
+  max-width: 1280px; margin: 0 auto;
+}
+.page-header-title { font-size: 2.3rem; color: var(--text-primary); }
+.page-header-sub { font-size: 1.05rem; }
+.page-filters { padding: 1rem 2rem; max-width: 1280px; margin: 0 auto; border-bottom: none; }
+.filter-btn {
+  font-family: var(--font-ui);
+  font-size: .9rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  border-radius: 0;
+  border: 2px solid var(--border);
+  background: var(--bg-card);
+  padding: .35rem .8rem;
+}
+.filter-btn:hover { background: var(--bg-card-hover); border-color: var(--text-muted); color: var(--text-primary); }
+.filter-btn.active { background: var(--magma-mid); border-color: #7a3a10; color: #1a0d04; font-weight: 700; }
+.posts-grid { max-width: 1280px; margin: 0 auto; padding: .5rem 2rem 2.5rem; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+.pagination-bar { max-width: 1280px; margin: 0 auto; }
+
+.post-card {
+  border-radius: 0;
+  border: 2px solid #000;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-pixel);
+}
+.post-card:hover { transform: none; border-color: var(--magma-bright); box-shadow: var(--shadow-pixel); }
+.post-card-thumb { height: auto; aspect-ratio: 16 / 9; background: var(--bg-deep); font-size: 2.6rem; border-bottom: 2px solid #000; }
+.post-card-thumb::after { display: none; }
+.post-card-thumb .monogram {
+  font-size: 4.5rem;
+  clip-path: none;
+  color: var(--mono);
+  background-color: var(--bg-void);
+  background-image:
+    linear-gradient(45deg, rgba(255,255,255,.035) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.035) 75%),
+    linear-gradient(45deg, rgba(255,255,255,.035) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.035) 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+  text-shadow: 4px 4px 0 #000;
+}
+.post-card-title { font-family: var(--font-ui); font-size: 1.25rem; font-weight: 700; line-height: 1.2; letter-spacing: 0; }
+.post-card-desc { font-size: .95rem; color: var(--text-secondary); }
+.post-card-footer { font-size: .85rem; color: var(--text-muted); }
+.post-card-avatar, .detail-author-avatar, .profile-avatar-initial {
+  border-radius: 0;
+  background: var(--magma-dark);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+}
+
+/* ---------- Página da build (detalhe) ---------- */
+.bp { max-width: 1280px; margin: 0 auto; position: relative; }
+.bp-cover {
+  height: 300px;
+  border-bottom: 2px solid #000;
+  overflow: hidden;
+  background: var(--bg-void);
+}
+.bp-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bp.has-cover .bp-top { margin-top: -140px; position: relative; }
+.bp.has-cover .bp-top::before {
+  /* escurece só a parte de baixo da capa, para o título ficar legível */
+  content: ''; position: absolute; left: 0; right: 0; top: -160px; height: 300px;
+  background: linear-gradient(to bottom, rgba(21,18,15,0) 0%, rgba(21,18,15,.85) 55%, var(--bg-deep) 100%);
+  pointer-events: none;
+}
+.bp-top > * { position: relative; }
+.detail-back {
+  font-family: var(--font-ui);
+  font-size: .95rem;
+  letter-spacing: 0;
+  padding: 1.25rem 2rem .25rem;
+}
+.detail-hero {
+  background: none;
+  border-bottom: 2px solid var(--border);
+  padding: .75rem 2rem 1.75rem;
+  gap: 2rem;
+}
+.detail-tags { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: .75rem; }
+.detail-title { font-size: clamp(1.9rem, 4vw, 2.8rem); font-weight: 700; line-height: 1.1; margin-bottom: .6rem; }
+.detail-summary { font-size: 1.15rem; line-height: 1.55; color: var(--text-secondary); max-width: 68ch; margin-bottom: 1rem; }
+.detail-meta { gap: 1rem; margin: 0; }
+.detail-author { font-size: .95rem; color: var(--text-primary); }
+.detail-author-avatar { width: 26px; height: 26px; font-size: .8rem; }
+.detail-date { font-size: .9rem; color: var(--text-muted); }
+.detail-hero-actions .btn, .btn-edit {
+  font-family: var(--font-ui);
+  font-size: .9rem !important;
+  width: auto; height: auto;
+  padding: .4rem .9rem !important;
+  border-radius: 0;
+}
+.btn-edit { border: 2px solid var(--border-gold); }
+
+.detail-layout { gap: 0; }
+.detail-sidebar {
+  width: 220px;
+  padding: 2rem 1rem 2rem 2rem;
+  border-right: none;
+  top: 84px;
+}
+.detail-sidebar-title {
+  font-family: var(--font-ui);
+  font-size: .85rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-muted);
+}
+.detail-nav-item {
+  font-family: var(--font-ui);
+  font-size: .98rem;
+  border-left: 3px solid var(--border);
+  border-radius: 0;
+  padding: .4rem .75rem;
+  margin: 0;
+}
+.detail-nav-item:hover { background: transparent; border-left-color: var(--text-muted); color: var(--text-primary); }
+.detail-nav-item.active { background: transparent; border-left-color: var(--magma-bright); color: var(--text-primary); }
+
+.detail-main { padding: 2rem 2rem 3rem 2.5rem; max-width: 820px; }
+.detail-section { margin-bottom: 2.75rem; }
+.detail-section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: .9rem;
+  display: block;
+}
+.detail-section-title::after {
+  /* pequena barra de brasa embaixo do título (marca do site) */
+  content: ''; display: block; width: 32px; height: 4px; margin-top: .45rem; background: var(--magma-bright);
+}
+.detail-section-content.rich { white-space: normal; font-size: 1.1rem; line-height: 1.7; }
+.rich p { margin: 0 0 1rem; max-width: 68ch; }
+.rich ol, .rich ul { margin: 0 0 1rem 1.4rem; max-width: 68ch; }
+.rich li { margin-bottom: .35rem; padding-left: .25rem; }
+.rich ol li::marker { color: var(--gold); font-family: var(--font-display); }
+.rich ul li::marker { color: var(--magma-bright); }
+
+/* "Ficha" de atributos/equipamentos: linhas Nome: valor */
+.stat-table {
+  margin: 0 0 1.25rem;
+  border: 2px solid #000;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-pixel);
+  max-width: 560px;
+}
+.stat-table > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 38%) 1fr;
+  border-bottom: 1px solid var(--border);
+}
+.stat-table > div:last-child { border-bottom: none; }
+.stat-table dt { padding: .5rem .85rem; color: var(--text-secondary); background: rgba(0,0,0,.18); font-size: 1rem; }
+.stat-table dd { padding: .5rem .85rem; color: var(--text-primary); font-weight: 500; font-size: 1rem; }
+
+/* Imagens das seções */
+.images-grid { display: grid; gap: .75rem; margin: .25rem 0 1rem; }
+.images-grid.n-1 { grid-template-columns: 1fr; }
+.images-grid.n-2 { grid-template-columns: 1fr 1fr; }
+.images-grid.n-3 { grid-template-columns: repeat(3, 1fr); }
+.images-grid img {
+  max-width: 100%;
+  width: 100%;
+  border-radius: 0;
+  border: 2px solid #000;
+  box-shadow: var(--shadow-pixel);
+}
+.images-grid.n-2 img, .images-grid.n-3 img { aspect-ratio: 16 / 10; object-fit: cover; }
+.images-grid img:hover { transform: none; border-color: var(--magma-bright); }
+
+/* Vídeo: largura total da coluna (antes era 60%, ficava pequeno) */
+.youtube-wrapper { width: 100%; border-radius: 0; border: 2px solid #000; box-shadow: var(--shadow-pixel); }
+.yt-link { border-radius: 0; }
+.detail-empty { color: var(--text-muted); font-size: 1.05rem; padding: 1rem 0; }
+.lightbox-backdrop img { border-radius: 0; border: 2px solid #000; }
+
+/* ---------- Modais, campos, avisos ---------- */
+.modal { border-radius: 0; border: 2px solid #000; box-shadow: 6px 6px 0 #000; background: var(--bg-card); }
+.modal-tab { font-family: var(--font-ui); letter-spacing: 0; text-transform: none; font-size: 1rem; }
+.form-label { font-family: var(--font-ui); letter-spacing: 0; text-transform: none; font-size: .9rem; }
+.input { border-radius: 0; border: 2px solid var(--border); background: var(--bg-deep); font-family: var(--font-text); font-size: 1rem; }
+.input:focus { border-color: var(--magma-bright); box-shadow: none; }
+.toast-item { border-radius: 0; box-shadow: var(--shadow-pixel); font-family: var(--font-ui); }
+.toast-success, .toast-error, .toast-info { background: var(--bg-card); }
+.ie-toolbar { background: var(--bg-void); border-bottom: 2px solid var(--magma-mid); }
+.divider { background: var(--border); }
+
+/* ---------- Rodapé: agora no fim da página, não fixo ---------- */
+footer {
+  position: static;
+  background: var(--bg-void);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border-top: 2px solid #000;
+  box-shadow: 0 -2px 0 var(--border) inset;
+  padding: 1.5rem 2rem;
+}
+/* O rodapé fica sempre embaixo, mesmo em páginas curtas */
+body { display: flex; flex-direction: column; min-height: 100vh; }
+#app { padding-bottom: 2rem; flex: 1 0 auto; }
+.footer-copy { color: var(--text-muted); font-size: .9rem; }
+.footer-links a { font-family: var(--font-ui); letter-spacing: 0; text-transform: none; font-size: .9rem; color: var(--text-secondary); }
+.footer-links a:hover { color: var(--magma-bright); }
+
+/* ---------- Celular ---------- */
+@media (max-width: 900px) {
+  .hero { min-height: 340px; padding: 2rem 1rem; background-position: 70% center; }
+  .hero-bg { background: linear-gradient(to top, rgba(13,11,9,.96) 0%, rgba(13,11,9,.75) 55%, rgba(13,11,9,.2) 100%); }
+  .sections-grid { grid-template-columns: 1fr; grid-template-areas: "builds" "news" "guides"; padding: 1.75rem 1rem 2.5rem; gap: 2.25rem; }
+  .build-icon { width: 76px; height: 44px; }
+  .page-header, .page-filters, .posts-grid { padding-left: 1rem; padding-right: 1rem; }
+  .bp-cover { height: 200px; }
+  .bp.has-cover .bp-top { margin-top: -90px; }
+  .detail-back { padding: 1rem 1rem .25rem; }
+  .detail-hero { padding: .5rem 1rem 1.25rem; flex-direction: column; gap: 1rem; }
+  .detail-layout { flex-direction: column; }
+  /* O índice vira uma fileira de atalhos que rola para o lado */
+  .detail-sidebar {
+    position: sticky; top: 64px; z-index: 5;
+    width: 100%; max-height: none;
+    display: flex; gap: .4rem; overflow-x: auto;
+    padding: .6rem 1rem;
+    background: var(--bg-deep);
+    border-bottom: 2px solid var(--border);
+  }
+  .detail-sidebar-title { display: none; }
+  .detail-nav-item { flex-shrink: 0; width: auto; white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; padding: .3rem .6rem; }
+  .detail-nav-item.active { border-bottom-color: var(--magma-bright); }
+  .detail-main { padding: 1.5rem 1rem 2.5rem; }
+  .detail-section { scroll-margin-top: 120px; }
+  .images-grid.n-3 { grid-template-columns: 1fr 1fr; }
+  footer { padding: 1.25rem 1rem; flex-direction: column; align-items: flex-start; }
 }

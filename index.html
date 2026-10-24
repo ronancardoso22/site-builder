@@ -1,19 +1,139 @@
-﻿<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Drakantos – Tudo sobre o universo do jogo</title>
+<!DOCTYPE html>
+<!--
+  =============================================================
+  DRAKBUILDER — index.html (Página Principal)
 
-  <!-- ===== FONTES (LETRAS ESPECIAIS) =====
-       Aqui carregamos fontes externas do Google Fonts para deixar o site bonito.
-       Cinzel Decorative: fonte grande e ornamentada usada no logo "DRAKANTOS"
-       Cinzel: fonte elegante usada nos títulos e botões
-       Crimson Pro: fonte de leitura fácil usada nos textos do corpo do site -->
+  O QUE É ESTE ARQUIVO?
+  HTML (HyperText Markup Language = Linguagem de Marcação de Hipertexto)
+  é a estrutura de toda página web. Pense no HTML como o "esqueleto"
+  do site — ele define QUAIS elementos existem e em que ordem aparecem.
+  A aparência (cores, tamanhos) fica no style.css.
+  A lógica (o que acontece ao clicar) fica no backend.js.
+
+  COMO O HTML FUNCIONA?
+  Cada elemento é delimitado por TAGS: uma de abertura <tag> e uma de
+  fechamento </tag>. O conteúdo fica entre elas:
+    <h1>Título</h1>    ← título grande
+    <p>Parágrafo</p>   ← bloco de texto
+    <button>Clique</button> ← botão clicável
+
+  COMO ESTE ARQUIVO ESTÁ ORGANIZADO?
+  A) <head> — informações sobre a página (não visíveis na tela):
+     - charset (codificação de texto)
+     - viewport (adaptação mobile)
+     - title (nome na aba do navegador)
+     - links para fontes e estilos CSS
+     - ícone da aba (favicon)
+
+  B) <body> — tudo que aparece na tela:
+     1. #navbar        — barra de navegação fixa no topo
+     2. #app           — todas as páginas do site (home, novidades, builds, guias...)
+        - #page-home      — página inicial
+        - #page-novidades — lista de novidades
+        - #page-builds    — lista de builds
+        - #page-guias     — lista de guias
+        - #page-detail    — detalhe de um post (preenchido pelo JavaScript)
+        - #page-myposts   — minhas postagens (preenchido pelo JavaScript)
+        - #page-settings  — configurações (preenchido pelo JavaScript)
+     3. <footer>       — rodapé fixo na base
+     4. #authModal     — modal de login/cadastro (oculto por padrão)
+     5. #postModal     — modal de criar/editar post (oculto por padrão)
+     6. #toast         — área de notificações flutuantes
+     7. <script>       — carrega o backend.js (toda a lógica do site)
+
+  SOBRE A ORDEM DO <script> NO FINAL:
+  O backend.js é carregado DEPOIS de todo o HTML por uma razão importante:
+  o JavaScript precisa encontrar os elementos HTML (como o #navbar) para
+  manipulá-los. Se o script viesse antes, os elementos ainda não existiriam
+  e o JavaScript daria erro ao tentar encontrá-los.
+  =============================================================
+-->
+<html lang="pt-BR">
+<!--
+  lang="pt-BR" informa aos navegadores e leitores de tela que o conteúdo
+  está em Português do Brasil. Isso melhora a acessibilidade (ex: leitores
+  para deficientes visuais usam a pronúncia correta) e o SEO (motores de
+  busca entendem melhor o idioma do conteúdo).
+-->
+<head>
+  <!--
+    charset="UTF-8" define a codificação de texto da página.
+    UTF-8 suporta TODOS os caracteres do mundo: ç, ã, á, é, emojis, etc.
+    Sem isso, caracteres especiais aparecem como símbolos estranhos (ex: "Ã©").
+    SEMPRE deve ser a PRIMEIRA tag do <head> para funcionar corretamente.
+  -->
+  <meta charset="UTF-8" />
+
+  <!--
+    SEGURANÇA (24/10/2026) — Content Security Policy (CSP)
+    É uma lista de sites de onde o navegador pode carregar coisas.
+    Se alguém conseguir injetar código que tente buscar um script ou
+    mandar dados para um site estranho, o navegador bloqueia.
+      default-src 'self'  → por padrão, só coisas deste próprio site
+      script-src          → scripts deste site e do player do YouTube
+                            ('unsafe-inline' é necessário porque os botões
+                            usam onclick="..." direto no HTML)
+      style-src/font-src  → estilos daqui + fontes do Google Fonts
+      img-src             → imagens daqui, enviadas (data:), YouTube e Steam
+      frame-src           → só o player do YouTube pode aparecer embutido
+      connect-src         → só conversa com este site e o YouTube (oEmbed)
+      object-src 'none'   → bloqueia plugins antigos (Flash etc.)
+      base-uri/form-action → impedem trocar o endereço base ou desviar formulários
+    Se um dia adicionar outro serviço externo, inclua o endereço aqui.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://img.youtube.com https://i.ytimg.com https://*.steamstatic.com https://*.steamusercontent.com https://*.akamaihd.net; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' https://www.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <!-- Não envia o endereço completo da página para outros sites (só o domínio) -->
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+  <!--
+    viewport controla como a página é exibida em telas de celular.
+    Sem esta tag, celulares renderizam a página como se fosse uma tela
+    de desktop e diminuem tudo para caber — ficando ilegível.
+
+    width=device-width: a largura da "janela virtual" é a largura real da tela
+    initial-scale=1.0: não aplica nenhum zoom inicial — mostra em tamanho normal
+
+    POR QUE É NECESSÁRIO?
+    Antes desta meta tag existir, sites mobile eram um pesadelo.
+    Ela é essencial para qualquer site responsivo moderno.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Título que aparece na aba do navegador e nos resultados de busca (SEO) -->
+  <title>Drakbuilder – Tudo sobre o universo do jogo</title>
+
+  <!-- ===== FONTES EXTERNAS DO GOOGLE FONTS =====
+       Carregamos três fontes especiais que não estão instaladas no
+       computador do usuário — elas vêm dos servidores do Google.
+
+       POR QUE DUAS TAGS "preconnect" ANTES DAS FONTES?
+       "preconnect" é uma dica ao navegador para ABRIR A CONEXÃO com o
+       servidor antes de precisar do recurso. Isso reduz o tempo de espera.
+       São dois servidores diferentes: fonts.googleapis.com (fornece o CSS
+       das fontes) e fonts.gstatic.com (fornece os arquivos de fonte reais).
+       O atributo "crossorigin" em fonts.gstatic.com é necessário para que
+       o navegador pré-conecte corretamente a esse servidor específico.
+
+       Fontes carregadas:
+       — Cinzel Decorative: ornamentada, usada no logo "DRAKBUILDER" (hero e navbar)
+       — Cinzel: elegante, usada em títulos, botões e menus
+       — Crimson Pro: serifada de leitura, usada no corpo do texto e parágrafos
+         (ital,wght = carrega variantes itálica e os pesos 300, 400, 600) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet" />
+  <!-- Redesenho 24/10/2026: Pixelify Sans (títulos, combina com a pixel art do jogo)
+       e Alegreya Sans (texto, fácil de ler em textos longos de build). -->
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet" />
+
+  <!-- Carrega o arquivo de estilos CSS. O navegador aplica TODOS os estilos
+       de style.css a esta página. "rel=stylesheet" informa que é uma folha
+       de estilos (não um link de navegação ou outro tipo de recurso). -->
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Favicon: o ícone pequeno que aparece na aba do navegador e nos favoritos.
+       "type=image/png" informa que é uma imagem PNG.
+       "rel=icon" informa que é o ícone da página (não uma imagem de conteúdo). -->
+  <link rel="icon" type="image/png" href="imagens/favicon.png" />
 </head>
 <body>
 
@@ -21,41 +141,67 @@
        NAVBAR FIXA (BARRA DE NAVEGAÇÃO NO TOPO)
        Esta barra aparece em todas as páginas e nunca some ao rolar.
        Contém: logo clicável, links de navegação, busca e login.
+
+       POR QUE <nav> EM VEZ DE <div>?
+       <nav> é uma tag SEMÂNTICA — seu significado vai além do visual.
+       Ela informa a navegadores, leitores de tela e mecanismos de busca
+       que esse bloco contém links de navegação principal. Um <div> seria
+       equivalente visualmente, mas sem esse significado implícito.
+       HTML semântico melhora acessibilidade e SEO.
   ============================================================ -->
   <nav id="navbar">
 
-    <!-- Logo: ao clicar, o usuário volta para a página inicial -->
+    <!-- Logo: ao clicar, o usuário volta para a página inicial.
+         "onclick" é um atributo de evento do HTML — define qual função
+         JavaScript executar quando o elemento é clicado.
+         showPage('home') é uma função do backend.js que troca a página ativa. -->
     <div class="nav-logo" onclick="showPage('home')">
-      <!-- Ícone de dragão desenhado em SVG (formato vetorial — não é uma imagem, é código) -->
-      <svg class="nav-logo-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M24 4C14 4 6 12 6 22c0 4 1.5 7.5 4 10.5L4 44l12-4c2.5 1.3 5.2 2 8 2 10 0 18-8 18-18S34 4 24 4z" fill="currentColor" opacity=".15"/>
-        <path d="M32 14l-8 6-4-4-6 8 4 2-2 6 6-2 2 6 4-8 6 2-4-6 4-4-2-6z" fill="currentColor" opacity=".9"/>
-        <circle cx="18" cy="20" r="2" fill="white" opacity=".8"/>
-        <path d="M36 10c2-1 4 1 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>
-      </svg>
-      <span class="nav-logo-text">DRAKANTOS</span>
+      <!-- "alt" (texto alternativo) descreve a imagem para leitores de tela
+           e aparece quando a imagem não carrega. Importante para acessibilidade. -->
+      <img src="imagens/favicon.png" class="nav-logo-icon" alt="Drakbuilder logo" />
+      <!-- <span> é um container inline genérico — não quebra a linha, só envolve texto -->
+      <span class="nav-logo-text">DRAKBUILDER</span>
     </div>
 
-    <!-- Botão hambúrguer — fica ao lado do logo, visível apenas em telas pequenas -->
+    <!-- Botão hambúrguer (☰) — aparece apenas em celulares (telas < 900px).
+         Três <span> vazios são estilizados pelo CSS como três linhas horizontais.
+         Ao clicar, o menu de links abre/fecha em modo mobile.
+
+         aria-label="Abrir menu": fornece uma descrição textual do botão para
+         leitores de tela, pois o botão não tem texto visível — só linhas CSS.
+         Sem isso, um deficiente visual ouviria apenas "botão" sem saber o que faz. -->
     <button class="nav-hamburger" id="navHamburger" onclick="toggleMobileMenu()" aria-label="Abrir menu">
-      <span></span>
-      <span></span>
-      <span></span>
+      <span></span> <!-- linha 1 do ícone hambúrguer -->
+      <span></span> <!-- linha 2 (some ao abrir, formando o "X") -->
+      <span></span> <!-- linha 3 -->
     </button>
 
-    <!-- Botões que levam para as diferentes seções do site.
-         O "data-page" guarda o nome da página para o JavaScript usar. -->
+    <!-- Links de navegação entre as seções do site.
+         SOBRE "data-page":
+         Atributos que começam com "data-" são ATRIBUTOS DE DADOS PERSONALIZADOS.
+         O HTML padrão não define o que "data-page" faz — criamos esse atributo
+         para armazenar uma informação extra (o nome da página) que o JavaScript
+         pode ler. O backend.js usa data-page para destacar o link ativo.
+         SOBRE "active":
+         A classe "active" é adicionada ao link da página atual pelo JavaScript
+         (em backend.js, na função showPage). O CSS usa .nav-link.active para
+         mostrar a linha decorativa abaixo do link selecionado. -->
     <nav class="nav-links">
       <button class="nav-link active" data-page="home"      onclick="showPage('home')">Início</button>
-      <button class="nav-link"        data-page="novidades" onclick="showPage('novidades')">Novidades</button>
+      <button class="nav-link"        data-page="novidades" onclick="showPage('novidades')">Notícias</button>
       <button class="nav-link"        data-page="builds"    onclick="showPage('builds')">Builds</button>
       <button class="nav-link"        data-page="guias"     onclick="showPage('guias')">Guias</button>
     </nav>
 
-    <!-- Lado direito da navbar: campo de busca e botão de login (ou avatar quando logado) -->
+    <!-- Lado direito da navbar: campo de busca e controle de usuário -->
     <div class="nav-actions">
 
-      <!-- Campo de busca: filtra posts em tempo real enquanto o usuário digita -->
+      <!-- Campo de busca: filtra posts em tempo real enquanto o usuário digita.
+           "oninput" dispara a função handleSearch() a CADA TECLA pressionada,
+           não apenas ao enviar o formulário. Isso permite filtragem instantânea
+           sem precisar pressionar Enter.
+           SVG (Scalable Vector Graphics) é o ícone de lupa desenhado em código —
+           não é uma imagem externa, então nunca "quebra" por falta de arquivo. -->
       <div class="nav-search">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
           <path d="M11.7 10.3l3 3-1.4 1.4-3-3A6 6 0 1 1 13 6a6 6 0 0 1-1.3 4.3zM6 10A4 4 0 1 0 6 2a4 4 0 0 0 0 8z"/>
@@ -63,34 +209,82 @@
         <input type="text" placeholder="Buscar..." id="searchInput" oninput="handleSearch()" />
       </div>
 
-      <!-- Botão "Entrar" — visível quando nenhum usuário está logado -->
+      <!-- Botão "Entrar" — visível por padrão (usuário não logado).
+           O JavaScript o oculta após o login e mostra o avatar no lugar. -->
       <button class="btn btn-primary" id="btnEntrar" onclick="openAuthModal()">Entrar</button>
 
-      <!-- Avatar circular com a inicial do usuário — oculto até o login ser feito.
-           Ao passar o mouse, abre o menu com opções de criar posts e sair. -->
-      <div class="user-avatar hidden" id="userAvatar">
-        <span id="userInitial">?</span>
-        <!-- Menu que aparece ao passar o mouse sobre o avatar -->
-        <div class="user-menu" id="userMenu">
-          <div class="user-menu-item" style="color:var(--gold);font-size:.65rem;pointer-events:none" id="userMenuName"></div>
-          <div class="divider" style="margin:.4rem 0"></div>
-          <div class="user-menu-item" onclick="openNewPostModal('novidades')">
-            📰 Nova Notícia
-          </div>
-          <div class="user-menu-item" onclick="openNewPostModal('builds')">
-            ⚔️ Nova Build
-          </div>
-          <div class="user-menu-item" onclick="openNewPostModal('guias')">
-            📖 Novo Guia
-          </div>
-          <div class="divider" style="margin:.4rem 0"></div>
-          <div class="user-menu-item danger" onclick="logout()">
-            🚪 Sair
-          </div>
-        </div>
-      </div>
+      <!-- Sino de notificações — só aparece quando logado.
+           O badge vermelho mostra a contagem de notificações não lidas. -->
+      <button class="notif-bell hidden" id="notifBell" onclick="toggleNotifPanel()" aria-label="Notificações">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2zm6-6V11a6 6 0 0 0-5-5.91V4a1 1 0 0 0-2 0v1.09A6 6 0 0 0 6 11v5l-2 2v1h16v-1l-2-2z"/>
+        </svg>
+        <span class="notif-badge hidden" id="notifBadge">0</span>
+      </button>
 
-    </div>
+      <!-- Painel de notificações — aparece ao clicar no sino -->
+      <div class="notif-panel hidden" id="notifPanel"></div>
+
+      <!-- Avatar circular com a inicial do usuário.
+           A classe "hidden" (do CSS) o oculta inicialmente (display: none).
+           Após o login, o JavaScript remove "hidden" para exibi-lo.
+
+           COMO O MENU DROPDOWN FUNCIONA SEM JAVASCRIPT?
+           Apenas com CSS hover! O .user-menu tem opacity: 0 por padrão.
+           Quando o mouse passa sobre .user-avatar, o CSS muda para opacity: 1.
+           Isso funciona porque .user-menu é um FILHO de .user-avatar,
+           então o hover do pai afeta o filho. -->
+      <div class="user-avatar hidden" id="userAvatar">
+        <!-- Inicial do nome — visível quando não há foto de perfil -->
+        <span id="userInitial">?</span>
+        <!-- Foto de perfil — visível quando o usuário faz upload de uma imagem -->
+        <img id="userAvatarImg" class="hidden" alt="Foto de perfil" />
+
+        <!-- Menu dropdown — aparece ao passar o mouse no avatar (via CSS puro) -->
+        <div class="user-menu" id="userMenu">
+
+          <!-- Nome do usuário logado — preenchido pelo JavaScript.
+               "pointer-events: none" impede que esse item seja clicado
+               (é apenas informativo, não é um link). -->
+          <div class="user-menu-item"
+               style="color:var(--gold);font-size:.65rem;pointer-events:none"
+               id="userMenuName"></div>
+
+          <!-- Linha divisória decorativa -->
+          <div class="divider" style="margin:.4rem 0"></div>
+
+          <!-- "Nova Notícia" — só aparece para o administrador.
+               Fica oculto por padrão (classe "hidden") e o JavaScript remove
+               "hidden" apenas quando o admin está logado. -->
+          <div class="user-menu-item hidden" id="menuItemNovidades" onclick="openNewPostModal('novidades')">
+            Nova notícia
+          </div>
+
+          <!-- Minhas Builds e Meus Guias — disponíveis para todos os usuários logados -->
+          <div class="user-menu-item" onclick="showMyPosts('builds')">
+            Minhas builds
+          </div>
+          <div class="user-menu-item" onclick="showMyPosts('guias')">
+            Meus guias
+          </div>
+
+          <div class="divider" style="margin:.4rem 0"></div>
+
+          <div class="user-menu-item" onclick="showSettings()">
+            Configurações
+          </div>
+
+          <div class="divider" style="margin:.4rem 0"></div>
+
+          <!-- Item de sair com estilo de "perigo" (vermelho ao hover).
+               A classe "danger" é definida no CSS (.user-menu-item.danger:hover). -->
+          <div class="user-menu-item danger" onclick="logout()">
+            Sair
+          </div>
+        </div><!-- /user-menu -->
+      </div><!-- /user-avatar -->
+
+    </div><!-- /nav-actions -->
   </nav>
 
   <!-- ============================================================
@@ -106,91 +300,86 @@
     ===================================================== -->
     <div class="page active" id="page-home">
 
-      <!-- Banner principal da home: fundo gradiente, dragão decorativo e texto de boas-vindas -->
-      <section class="hero">
-        <div class="hero-bg"></div>
-        <div class="hero-particles"></div>
+      <!-- Segunda camada de fundo (capa2.png) — fica invisível normalmente.
+           O JavaScript a faz aparecer e desaparecer suavemente a cada scroll,
+           criando o efeito de transição entre as duas imagens de capa. -->
+      <div id="homeBgFlash"></div>
 
-        <!-- Dragão grande em SVG no lado direito do hero — semitransparente e animado -->
-        <svg class="hero-dragon" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="200" cy="300" rx="120" ry="160" fill="url(#drg)" opacity=".6"/>
-          <path d="M200 60 C150 100 80 160 100 240 C120 300 160 320 200 340 C240 320 280 300 300 240 C320 160 250 100 200 60Z" fill="url(#drg)" opacity=".8"/>
-          <path d="M200 60 L130 20 L160 80Z M200 60 L270 20 L240 80Z" fill="url(#drg)"/>
-          <circle cx="170" cy="160" r="12" fill="white" opacity=".6"/>
-          <circle cx="230" cy="160" r="12" fill="white" opacity=".6"/>
-          <path d="M160 240 Q200 280 240 240" stroke="url(#drg)" stroke-width="3" fill="none"/>
-          <path d="M100 240 C60 200 40 160 80 140" stroke="url(#drg)" stroke-width="4" fill="none"/>
-          <path d="M300 240 C340 200 360 160 320 140" stroke="url(#drg)" stroke-width="4" fill="none"/>
-          <defs>
-            <linearGradient id="drg" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#c8001e"/>
-              <stop offset="100%" stop-color="#4a0008"/>
-            </linearGradient>
-          </defs>
-        </svg>
+      <!-- Banner principal da home.
+           <section> é uma tag semântica que agrupa conteúdo relacionado.
+           Diferente de <div> (genérico), <section> indica que é um bloco
+           independente com tema próprio — neste caso, o banner de boas-vindas. -->
+      <section class="hero">
+        <!-- Gradiente escuro por cima da imagem de fundo do #page-home —
+             garante que o texto seja legível sobre a foto da capa. -->
+        <div class="hero-bg"></div>
+
+        <!-- Bolinhas de luz animadas — decoração sobre o gradiente -->
+        <div class="hero-particles"></div>
 
         <!-- Texto do banner: subtítulo, título principal, descrição e botões de ação -->
         <div class="hero-content">
-          <p class="hero-eyebrow">✦ Portal Oficial ✦</p>
-          <div style="font-family:'Cinzel',serif;font-size:.9rem;color:var(--text-secondary);margin-bottom:.3rem">TUDO SOBRE</div>
-          <h1 class="hero-title">DRAKANTOS</h1>
+          <!-- Texto direto, sem "Portal Oficial": o site é de fã, não da desenvolvedora. -->
+          <h1 class="hero-title">Builds de Drakantos</h1>
           <p class="hero-sub">
-            Fique por dentro das novidades, descubra builds poderosas
-            e aprenda com guias completos sobre o universo do jogo.
+            Builds montadas e testadas por jogadores, com prints e vídeo
+            de cada uma. E as notícias do jogo em português.
           </p>
           <div class="hero-actions">
-            <button class="btn btn-primary" onclick="showPage('novidades')">
-              🔔 Ver Novidades
-            </button>
-            <button class="btn btn-outline" onclick="showPage('builds')">
-              ⚔️ Ver Builds
-            </button>
+            <button class="btn btn-primary" onclick="showPage('builds')">Ver builds</button>
+            <button class="btn btn-outline" onclick="showPage('novidades')">Últimas notícias</button>
           </div>
         </div>
       </section>
 
       <!-- Grade com as 3 colunas de prévia da home.
-           Cada coluna mostra os 3 itens mais recentes de cada seção. -->
+           Cada coluna mostra os 3 itens mais recentes de cada seção.
+           O CSS Grid posiciona as colunas lado a lado em telas grandes
+           e as empilha em coluna única em celulares (ver style.css @media). -->
       <div class="sections-grid" id="homeSections">
 
-        <!-- COLUNA 1: Prévia das últimas novidades -->
-        <div class="section-block">
+        <!-- COLUNA 1: Prévia das últimas novidades
+             <h2> é o segundo nível de título (hierarquia: h1 > h2 > h3...).
+             O hero usa h1 implicitamente, então as colunas usam h2. -->
+        <div class="section-block block-builds">
           <div class="section-header">
-            <h2 class="section-title">Novidades</h2>
-            <span class="section-link" onclick="showPage('novidades')">Ver todas</span>
-          </div>
-          <div id="homeNewsList">
-            <!-- Este espaço é preenchido automaticamente pelo JavaScript
-                 com os posts salvos no navegador (localStorage) -->
-          </div>
-          <div class="section-footer">
-            <button class="btn btn-outline" onclick="showPage('novidades')" style="font-size:.68rem;">Ver Todas as Novidades</button>
-          </div>
-        </div>
-
-        <!-- COLUNA 2: Prévia das builds em destaque -->
-        <div class="section-block">
-          <div class="section-header">
-            <h2 class="section-title">Builds em Destaque</h2>
+            <h2 class="section-title">Builds recentes</h2>
             <span class="section-link" onclick="showPage('builds')">Ver todas</span>
           </div>
           <div id="homeBuildsList">
           </div>
           <div class="section-footer">
-            <button class="btn btn-outline" onclick="showPage('builds')" style="font-size:.68rem;">Ver Todos os Builds</button>
+            <button class="btn btn-outline" onclick="showPage('builds')" style="font-size:.68rem;">Ver todas as builds</button>
           </div>
         </div>
 
         <!-- COLUNA 3: Prévia dos guias mais populares -->
-        <div class="section-block">
+        <div class="section-block block-news">
           <div class="section-header">
-            <h2 class="section-title">Guias Populares</h2>
+            <h2 class="section-title">Notícias</h2>
+            <span class="section-link" onclick="showPage('novidades')">Ver todas</span>
+          </div>
+          <div id="homeNewsList">
+            <!-- Este espaço é preenchido automaticamente pelo JavaScript.
+                 A função renderHome() no backend.js lê os posts do localStorage
+                 e insere o HTML dos cards aqui. Quando a página carrega, este div
+                 está vazio — o JavaScript o preenche depois. -->
+          </div>
+          <div class="section-footer">
+            <button class="btn btn-outline" onclick="showPage('novidades')" style="font-size:.68rem;">Ver todas as notícias</button>
+          </div>
+        </div>
+
+        <!-- COLUNA 2: Prévia das builds em destaque -->
+        <div class="section-block block-guides">
+          <div class="section-header">
+            <h2 class="section-title">Guias</h2>
             <span class="section-link" onclick="showPage('guias')">Ver todos</span>
           </div>
           <div id="homeGuidesList">
           </div>
           <div class="section-footer">
-            <button class="btn btn-outline" onclick="showPage('guias')" style="font-size:.68rem;">Ver Todos os Guias</button>
+            <button class="btn btn-outline" onclick="showPage('guias')" style="font-size:.68rem;">Ver todos os guias</button>
           </div>
         </div>
 
@@ -204,10 +393,10 @@
     <div class="page" id="page-novidades">
       <div class="page-header">
         <div>
-          <h1 class="page-header-title">📰 Novidades</h1>
-          <p class="page-header-sub">Atualizações, eventos e notícias do universo Drakantos</p>
+          <h1 class="page-header-title">Notícias</h1>
+          <p class="page-header-sub">Patches, eventos e anúncios de Drakantos, traduzidos da Steam.</p>
         </div>
-        <!-- Botão para criar uma nova notícia — só aparece se o usuário estiver logado -->
+        <!-- Botão visível somente para o administrador -->
         <button class="btn btn-primary hidden" id="btnNewNovidade" onclick="openNewPostModal('novidades')">
           + Nova Notícia
         </button>
@@ -219,10 +408,16 @@
         <button class="filter-btn" data-filter="ATUALIZAÇÃO" onclick="filterPosts('novidades','ATUALIZAÇÃO',this)">Atualização</button>
         <button class="filter-btn" data-filter="EVENTO" onclick="filterPosts('novidades','EVENTO',this)">Evento</button>
         <button class="filter-btn" data-filter="NOTÍCIAS" onclick="filterPosts('novidades','NOTÍCIAS',this)">Notícias</button>
+        <!-- Seletor de posts por página — fixo à direita, preenchido pelo JavaScript -->
+        <div class="perpage-control" id="novidadesPerPage"></div>
       </div>
 
       <!-- Grade de cards preenchida pelo JavaScript com todos os posts de novidades -->
       <div class="posts-grid" id="novidadesGrid"></div>
+
+      <!-- Barra de paginação: preenchida pelo JavaScript com
+           info de resultados, botões de página e seletor de posts por página -->
+      <div class="pagination-bar" id="novidadesPagination"></div>
 
     </div><!-- /page-novidades -->
 
@@ -232,8 +427,8 @@
     <div class="page" id="page-builds">
       <div class="page-header">
         <div>
-          <h1 class="page-header-title">⚔️ Builds</h1>
-          <p class="page-header-sub">Construções poderosas criadas pela comunidade</p>
+          <h1 class="page-header-title">Builds</h1>
+          <p class="page-header-sub">Montagens de heróis enviadas por jogadores, com prints e vídeo.</p>
         </div>
         <button class="btn btn-primary hidden" id="btnNewBuild" onclick="openNewPostModal('builds')">
           + Nova Build
@@ -246,9 +441,11 @@
         <button class="filter-btn" data-filter="PVP" onclick="filterPosts('builds','PVP',this)">PVP</button>
         <button class="filter-btn" data-filter="FARM" onclick="filterPosts('builds','FARM',this)">Farm</button>
         <button class="filter-btn" data-filter="ENDGAME" onclick="filterPosts('builds','ENDGAME',this)">Endgame</button>
+        <div class="perpage-control" id="buildsPerPage"></div>
       </div>
 
       <div class="posts-grid" id="buildsGrid"></div>
+      <div class="pagination-bar" id="buildsPagination"></div>
 
     </div><!-- /page-builds -->
 
@@ -258,8 +455,8 @@
     <div class="page" id="page-guias">
       <div class="page-header">
         <div>
-          <h1 class="page-header-title">📖 Guias</h1>
-          <p class="page-header-sub">Aprenda com guias escritos pelos mestres da comunidade</p>
+          <h1 class="page-header-title">Guias</h1>
+          <p class="page-header-sub">Masmorras, economia e o básico para quem está começando.</p>
         </div>
         <button class="btn btn-primary hidden" id="btnNewGuia" onclick="openNewPostModal('guias')">
           + Novo Guia
@@ -272,24 +469,67 @@
         <button class="filter-btn" data-filter="AVANÇADO" onclick="filterPosts('guias','AVANÇADO',this)">Avançado</button>
         <button class="filter-btn" data-filter="ECONOMIA" onclick="filterPosts('guias','ECONOMIA',this)">Economia</button>
         <button class="filter-btn" data-filter="DUNGEON" onclick="filterPosts('guias','DUNGEON',this)">Masmorras</button>
+        <div class="perpage-control" id="guiasPerPage"></div>
       </div>
 
       <div class="posts-grid" id="guiasGrid"></div>
+      <div class="pagination-bar" id="guiasPagination"></div>
 
     </div><!-- /page-guias -->
 
+    <!-- =====================================================
+         PÁGINA: DETALHE (Builds e Guias)
+         Esta div está COMPLETAMENTE VAZIA no HTML.
+         Quando o usuário clica em um card, a função renderPostDetail()
+         do backend.js GERA o HTML desta página dinamicamente e insere
+         aqui dentro. Isso significa que o HTML do detalhe não existe
+         no arquivo — ele é criado pelo JavaScript em tempo real,
+         personalizado para o post específico que foi clicado.
+
+         POR QUE CRIAR HTML PELO JAVASCRIPT EM VEZ DE TER TUDO NO HTML?
+         Porque cada post é diferente — títulos, seções, imagens, autores.
+         Seria impossível ter uma página estática para cada combinação.
+         O JavaScript lê o post do localStorage e monta o HTML sob demanda.
+    ===================================================== -->
+    <div class="page" id="page-detail"></div>
+
+    <!-- =====================================================
+         PÁGINA: MINHAS POSTAGENS
+         Também gerada dinamicamente por renderMyPosts() no backend.js.
+         Mostra os posts criados pelo usuário logado, separados por
+         seção (Builds / Guias), com opção de editar ou deletar cada um.
+    ===================================================== -->
+    <div class="page" id="page-myposts"></div>
+
+    <!-- =====================================================
+         PÁGINA: CONFIGURAÇÕES
+         Também gerada dinamicamente por renderSettings() no backend.js.
+         Mostra as configurações disponíveis para o usuário logado.
+    ===================================================== -->
+    <div class="page" id="page-settings"></div>
+
+    <!-- =====================================================
+         PÁGINA: PERFIL PÚBLICO DE USUÁRIO
+         Gerada por renderProfile() ao clicar no nome de um autor.
+    ===================================================== -->
+    <div class="page" id="page-profile"></div>
+
   </div><!-- /app -->
 
-  <!-- Rodapé único e fixo — compartilhado por todas as páginas -->
+  <!-- Rodapé fixo — compartilhado por todas as páginas do site.
+       Diferente dos rodapés tradicionais (que ficam no final do conteúdo),
+       este é "position: fixed" no CSS — fica SEMPRE visível na base da tela,
+       independente de qual página está aberta ou quanto o usuário rolou.
+
+       POR QUE "href='#'" NOS LINKS SOCIAIS?
+       O "#" é um placeholder — não leva a lugar nenhum (apenas rola ao topo).
+       Esses links seriam substituídos pelas URLs reais das redes sociais
+       quando o projeto entrar em produção. -->
+  <!-- Rodapé simples (não fica mais fixo na tela, porque cobria o conteúdo). -->
   <footer>
-    <div class="footer-social">
-      <a href="#" title="Discord">💬</a>
-      <a href="#" title="YouTube">▶</a>
-      <a href="#" title="Twitter">🐦</a>
-      <a href="#" title="Reddit">🔴</a>
-    </div>
-    <p class="footer-copy">© 2024 Drakantos – Todos os direitos reservados.</p>
+    <p class="footer-copy">Drakbuilder é um site de fã, sem ligação oficial com a desenvolvedora de Drakantos.</p>
     <div class="footer-links">
+      <a href="https://store.steampowered.com/app/2454980/" target="_blank" rel="noopener">Drakantos na Steam</a>
       <a href="#">Política de Privacidade</a>
       <a href="#">Termos de Uso</a>
     </div>
@@ -297,130 +537,270 @@
 
   <!-- ============================================================
        MODAL DE AUTENTICAÇÃO (Login e Cadastro)
-       Janela flutuante que permite ao usuário entrar ou criar uma conta.
-       Começa oculta (classe "hidden") e aparece ao clicar em "Entrar".
+
+       O QUE É UM MODAL?
+       Um "modal" (do inglês "modal dialog") é uma janela flutuante que
+       aparece SOBRE o conteúdo principal, bloqueando a interação com o
+       resto da página até ser fechada. O fundo escurece para focar o
+       usuário na janela.
+
+       COMO FUNCIONA?
+       — A classe "hidden" (display: none) mantém o modal invisível inicialmente.
+       — Ao clicar em "Entrar", o JavaScript remove a classe "hidden" do backdrop.
+       — O backdrop (fundo escuro) cobre toda a tela; o modal (caixa branca)
+         aparece centralizado sobre o backdrop.
+       — "onclick" no backdrop fecha o modal ao clicar FORA da caixa.
+         A função closeModalOnBackdrop verifica se o clique foi no backdrop
+         (e não dentro do modal) antes de fechar.
+
+       POR QUE UM MODAL EM VEZ DE UMA PÁGINA SEPARADA DE LOGIN?
+       O modal mantém o usuário no contexto onde estava. Se ele estava
+       lendo um post e precisou fazer login, após o login ele volta
+       exatamente ao mesmo lugar. Com uma página separada, perderia o contexto.
   ============================================================ -->
   <div class="modal-backdrop hidden" id="authModal" onclick="closeModalOnBackdrop(event,'authModal')">
+    <!-- A caixa do modal em si (não o fundo escuro, mas a "janela" central) -->
     <div class="modal">
+      <!-- Botão ✕ no canto superior direito para fechar o modal -->
       <button class="modal-close" onclick="closeModal('authModal')">✕</button>
 
-      <!-- Abas para alternar entre os formulários de login e cadastro -->
+      <!-- Abas para alternar entre os formulários de login e cadastro.
+           Funcionam como botões de rádio: clicar em um ativa-o e desativa o outro.
+           O JavaScript gerencia qual formulário está visível via switchAuthTab(). -->
       <div class="modal-tabs">
-        <button class="modal-tab active" id="tabLogin"   onclick="switchAuthTab('login')">Entrar</button>
+        <button class="modal-tab active" id="tabLogin"    onclick="switchAuthTab('login')">Entrar</button>
         <button class="modal-tab"        id="tabRegister" onclick="switchAuthTab('register')">Cadastrar</button>
       </div>
 
-      <!-- Formulário de login: aparece quando a aba "Entrar" está selecionada -->
+      <!-- Formulário de login: visível por padrão (sem a classe "hidden") -->
       <div id="formLogin">
-        <p class="modal-title" style="font-size:1rem;margin-bottom:1rem;">Bem-vindo de volta, Aventureiro!</p>
+        <p class="modal-title" style="font-size:1rem;margin-bottom:1rem;">Entrar na sua conta</p>
         <div class="modal-form">
+
+          <!-- <label> associa um texto descritivo ao campo de entrada.
+               O atributo "for" deve ter o mesmo valor do "id" do input correspondente.
+               Com isso, clicar no texto "E-mail" foca automaticamente o campo. -->
           <div class="form-group">
             <label class="form-label" for="loginEmail">E-mail</label>
+            <!-- type="email": o navegador valida o formato (precisa ter "@") antes de enviar
+                 placeholder: texto cinza que aparece quando o campo está vazio -->
             <input class="input" type="email" id="loginEmail" placeholder="seu@email.com" />
           </div>
+
           <div class="form-group">
             <label class="form-label" for="loginPassword">Senha</label>
+            <!-- type="password": esconde os caracteres digitados com bolinhas (••••)
+                 Isso é feito pelo próprio navegador — não precisamos implementar. -->
             <input class="input" type="password" id="loginPassword" placeholder="••••••••" />
           </div>
+
+          <!-- Botão que chama handleLogin() do backend.js ao ser clicado.
+               "width:100%" faz o botão ocupar toda a largura do modal.
+               "justify-content:center" centraliza o texto dentro do botão flex. -->
           <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:.5rem" onclick="handleLogin()">
-            ⚔️ Entrar no Jogo
+            Entrar
           </button>
         </div>
       </div>
 
-      <!-- Formulário de cadastro: oculto por padrão, aparece ao clicar em "Cadastrar" -->
+      <!-- Formulário de cadastro: oculto inicialmente (classe "hidden").
+           O JavaScript mostra este formulário e oculta o de login ao
+           clicar na aba "Cadastrar" (via switchAuthTab('register')). -->
       <div id="formRegister" class="hidden">
-        <p class="modal-title" style="font-size:1rem;margin-bottom:1rem;">Crie sua conta de Aventureiro</p>
+        <p class="modal-title" style="font-size:1rem;margin-bottom:1rem;">Criar conta</p>
         <div class="modal-form">
+
           <div class="form-group">
             <label class="form-label" for="regName">Nome de Usuário</label>
+            <!-- type="text": aceita qualquer texto (em vez de validar email, número, etc.) -->
             <input class="input" type="text" id="regName" placeholder="DragonSlayer99" />
           </div>
+
           <div class="form-group">
             <label class="form-label" for="regEmail">E-mail</label>
             <input class="input" type="email" id="regEmail" placeholder="seu@email.com" />
           </div>
+
           <div class="form-group">
             <label class="form-label" for="regPassword">Senha</label>
             <input class="input" type="password" id="regPassword" placeholder="Mínimo 6 caracteres" />
           </div>
+
+          <!-- Campo de confirmação de senha — o JavaScript verifica se os dois
+               campos têm o mesmo valor antes de criar a conta. -->
           <div class="form-group">
             <label class="form-label" for="regConfirm">Confirmar Senha</label>
             <input class="input" type="password" id="regConfirm" placeholder="Repita a senha" />
           </div>
+
+          <!-- btn-gold em vez de btn-primary para diferenciar visualmente
+               a ação de "criar conta" da ação de "entrar" -->
           <button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:.5rem" onclick="handleRegister()">
-            🐉 Criar Conta
+            Criar conta
           </button>
         </div>
       </div>
 
-    </div>
-  </div>
+    </div><!-- /modal -->
+  </div><!-- /authModal -->
 
   <!-- ============================================================
-       MODAL DE CRIAR POST (Novidades, Builds ou Guias)
-       O mesmo formulário serve para os três tipos de post.
-       O JavaScript muda o título e as opções de tags conforme a seção escolhida.
+       MODAL DE CRIAR / EDITAR POST
+       Um único modal serve para os três tipos de post: Novidades, Builds e Guias.
+       O JavaScript adapta o formulário conforme o tipo: para Builds e Guias,
+       campos extras (seções, imagens por seção, YouTube) ficam visíveis.
+       Para Novidades, esses campos extras permanecem ocultos.
+
+       POR QUE UM MODAL ÚNICO PARA TRÊS TIPOS EM VEZ DE TRÊS MODAIS SEPARADOS?
+       Reduz duplicação de código: o CSS, o comportamento de abrir/fechar,
+       os campos comuns (título, descrição) — tudo é compartilhado. Só os
+       campos específicos são mostrados/ocultados conforme necessário.
   ============================================================ -->
   <div class="modal-backdrop hidden" id="postModal" onclick="closeModalOnBackdrop(event,'postModal')">
+    <!-- modal-wide: versão mais larga do modal (max-width: 640px vs 460px padrão)
+         necessária porque o formulário de post tem mais campos do que o de login -->
     <div class="modal modal-wide">
       <button class="modal-close" onclick="closeModal('postModal')">✕</button>
-      <p class="modal-title" id="postModalTitle">✍️ Novo Post</p>
+
+      <!-- Título do modal — alterado pelo JavaScript conforme o contexto:
+           "✍️ Nova Notícia", "✍️ Nova Build", "✍️ Novo Guia", "✏️ Editar Post" -->
+      <p class="modal-title" id="postModalTitle">Novo post</p>
 
       <div class="modal-form">
 
-        <!-- Campo "Seção" preenchido automaticamente (Novidades, Builds ou Guias) — não editável -->
+        <!-- Campo "Seção" é somente-leitura (readonly) — mostra qual seção
+             receberá o post. O usuário não pode editar; é preenchido automaticamente
+             pelo JavaScript quando o modal é aberto.
+             "opacity: .6" deixa o campo visivelmente desativado; "cursor: default"
+             remove a seta de seleção que campos de texto normalmente mostram. -->
         <div class="form-group">
           <label class="form-label">Seção</label>
           <input class="input" type="text" id="postSection" readonly style="opacity:.6;cursor:default" />
         </div>
 
-        <!-- Título do post: obrigatório, máximo de 80 caracteres -->
+        <!-- "maxlength="80"" impede que o título tenha mais de 80 caracteres.
+             Títulos longos quebrariam o layout dos cards na grade de posts.
+             O "* " (asterisco) após "Título" indica campo obrigatório — convenção
+             visual amplamente reconhecida pelos usuários de formulários web. -->
         <div class="form-group">
           <label class="form-label" for="postTitle">Título *</label>
           <input class="input" type="text" id="postTitle" placeholder="Digite um título cativante..." maxlength="80" />
         </div>
 
-        <!-- Descrição/conteúdo do post: área de texto com múltiplas linhas -->
+        <!-- <textarea> é um campo de texto MULTILINHA (diferente de <input>,
+             que é sempre uma linha). "rows='3'" define a altura inicial em linhas.
+             O usuário pode redimensionar verticalmente (resize: vertical no CSS). -->
         <div class="form-group">
           <label class="form-label" for="postDesc">Descrição *</label>
-          <textarea class="input" id="postDesc" rows="4" placeholder="Descreva seu post em detalhes..."></textarea>
+          <textarea class="input" id="postDesc" rows="3" placeholder="Resumo do post..."></textarea>
         </div>
 
-        <!-- Ícone do post: o usuário digita um emoji que representa o post visualmente -->
+        <!-- Campo de imagem do card: o usuário escolhe uma imagem OU um emoji.
+             A imagem fica como miniatura no topo do card; o emoji aparece quando
+             não há imagem.
+
+             TRUQUE DO LABEL COMO BOTÃO DE UPLOAD:
+             O <input type="file"> tem aparência nativa feia e difícil de estilizar.
+             A solução é esconder o input (display:none) e envolver um <label>
+             estilizado que faz referência ao input. Ao clicar no label, o navegador
+             abre o seletor de arquivo como se o input tivesse sido clicado.
+             O atributo "accept='image/*'" filtra para mostrar apenas imagens. -->
         <div class="form-group">
-          <label class="form-label" for="postEmoji">Ícone (emoji)</label>
-          <input class="input" type="text" id="postEmoji" placeholder="⚔️ 🐉 📖 🔮 ..." maxlength="4" style="font-size:1.4rem;text-align:center" />
+          <label class="form-label">Imagem do Card</label>
+          <div class="card-image-area">
+            <!-- Preenchido pelo JavaScript com a prévia da imagem escolhida -->
+            <div id="cardImagePreview"></div>
+            <label class="image-upload-btn" id="cardImageLabel">
+              Escolher imagem
+              <!-- "display:none" esconde o input feio; clicar no label o ativa.
+                   "onchange" chama handleCardImageUpload() quando um arquivo é escolhido. -->
+              <input type="file" accept="image/*" id="cardImageInput" style="display:none" onchange="handleCardImageUpload(event)" />
+            </label>
+            <span style="font-size:.73rem;color:var(--text-muted)">ou emoji:</span>
+            <!-- Campo para o emoji — maxlength="4" permite 1 emoji moderno
+                 (alguns emojis usam 2 caracteres Unicode, então 4 = margem de segurança) -->
+            <input class="input" type="text" id="postEmoji" placeholder="⚔️" maxlength="4"
+              style="font-size:1.3rem;text-align:center;width:66px;flex-shrink:0;padding:.3rem" />
+          </div>
+          <p style="font-size:.67rem;color:var(--text-muted);margin-top:.3rem">
+            A imagem tem prioridade sobre o emoji. Sem imagem, o emoji aparece no card.
+          </p>
         </div>
 
-        <!-- Tags clicáveis: o usuário seleciona as categorias do post.
-             As opções mudam dependendo da seção (Novidades, Builds ou Guias) -->
+        <!-- Tags: preenchidas dinamicamente pelo JavaScript conforme o tipo de post.
+             Novidades recebe opções diferentes de Builds, que recebe diferentes de Guias.
+             O usuário clica para selecionar/desselecionar cada tag. -->
         <div class="form-group">
-          <label class="form-label" for="postTags">Tags</label>
+          <label class="form-label">Tags</label>
           <div id="postTagsContainer" style="display:flex;gap:.4rem;flex-wrap:wrap;"></div>
         </div>
 
-        <!-- Botões de ação -->
-        <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:.5rem">
+        <!-- Seções de conteúdo — visíveis apenas para Builds e Guias (não para Novidades).
+             "display:none" as oculta por padrão; o JavaScript as mostra conforme o tipo.
+             Cada seção é um bloco de título + conteúdo + imagens, permitindo estrutura
+             mais rica do que uma simples descrição. -->
+        <div class="form-group" id="sectionsGroup" style="display:none">
+          <label class="form-label">Seções de Conteúdo</label>
+          <!-- Preenchido pelo JavaScript com blocos de editor de seção -->
+          <div class="section-editor-list" id="sectionEditorList"></div>
+          <!-- Botão para adicionar uma nova seção ao post -->
+          <button class="btn-add-section" type="button" onclick="addSection()">+ Adicionar Seção</button>
+        </div>
+
+        <!-- Campo de URL do YouTube — também apenas para Builds e Guias.
+             O JavaScript extrai o ID do vídeo da URL e gera o embed. -->
+        <div class="form-group" id="youtubeGroup" style="display:none">
+          <!-- Alerta fixo sobre a política de exibição de vídeos -->
+          <div class="yt-embed-alert">
+            ⚠️ Vídeos sem incorporação ativa no YouTube serão exibidos apenas como link.
+          </div>
+          <label class="form-label" for="postYoutube">Vídeo do YouTube (opcional)</label>
+          <input class="input" type="text" id="postYoutube" placeholder="https://www.youtube.com/watch?v=..." />
+          <!-- Mensagem de status da verificação de embed — aparece após colar a URL -->
+          <div id="ytCheckStatus" style="display:none"></div>
+        </div>
+
+        <!-- Botões de ação do formulário — à direita (justify-content: flex-end) -->
+        <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:.75rem">
           <button class="btn btn-outline" onclick="closeModal('postModal')">Cancelar</button>
-          <button class="btn btn-primary" onclick="handleCreatePost()">
-            🐉 Publicar Post
-          </button>
+          <!-- handleSavePost() no backend.js cria um novo post OU atualiza um existente,
+               dependendo de como o modal foi aberto (modo criar vs. modo editar). -->
+          <button class="btn btn-primary" onclick="handleSavePost()">Publicar</button>
         </div>
 
       </div>
-    </div>
-  </div>
+    </div><!-- /modal -->
+  </div><!-- /postModal -->
 
-  <!-- Área onde as notificações temporárias aparecem (sucesso, erro, info) -->
+  <!-- Área onde as notificações temporárias aparecem (toasts de sucesso, erro, info).
+       Esta div começa vazia — o JavaScript insere e remove os itens de toast aqui.
+       Fica posicionada no canto inferior direito da tela (definido no CSS). -->
   <div id="toast"></div>
 
   <!-- ============================================================
-       JAVASCRIPT – TODA A LÓGICA DE FUNCIONAMENTO DO SITE
-       Este bloco de código controla tudo que "acontece" no site:
-       navegação entre páginas, login, criação de posts, busca, etc.
-       O JavaScript roda no navegador do usuário, sem precisar de servidor.
+       JAVASCRIPT — TODA A LÓGICA DE FUNCIONAMENTO DO SITE
+
+       POR QUE O SCRIPT VEM NO FINAL DO BODY E NÃO NO <head>?
+       O navegador lê e executa o HTML de cima para baixo, linha a linha.
+       O backend.js precisa encontrar e manipular elementos HTML (como #navbar,
+       #toast, #page-home). Se o <script> estivesse no <head>, seria executado
+       ANTES dos elementos existirem — o JavaScript não encontraria nada e daria erro.
+
+       Colocando o script no FINAL do body, todos os elementos HTML já foram
+       criados quando o JavaScript começa a rodar.
+
+       POR QUE "src='backend.js'" EM VEZ DE ESCREVER O CÓDIGO AQUI?
+       Poderíamos escrever todo o JavaScript entre <script></script> aqui mesmo.
+       Mas separar em um arquivo externo facilita: editar sem mexer no HTML,
+       o navegador pode cachear o arquivo (não rebaixa toda vez), e o código
+       fica organizado em um arquivo dedicado.
+
+       COMO O CÓDIGO RODA?
+       O navegador baixa o backend.js, interpreta e executa cada linha.
+       Funções são registradas na memória. O evento "DOMContentLoaded" (no final
+       do backend.js) chama as funções de inicialização quando o HTML está pronto.
   ============================================================ -->
   <script src="backend.js"></script>
+  <script src="editor-assistente.js"></script>
 </body>
 </html>
