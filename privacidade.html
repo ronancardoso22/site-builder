@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; script-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Política de Privacidade · Drakbuilder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;700&family=Pixelify+Sans:wght@600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#15120f; --card:#1d1915; --text:#ede4d3; --sec:#b3a690; --ember:#e0782f; --brass:#d9a441; --border:#3a3129; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:1.05rem/1.65 'Alegreya Sans', system-ui, sans-serif; }
+    main { max-width: 760px; margin: 0 auto; padding: 2.5rem 16px 4rem; }
+    h1 { font-family:'Pixelify Sans', sans-serif; color:var(--brass); font-size:2rem; margin:0 0 .25rem; }
+    h2 { color:var(--ember); font-size:1.25rem; margin:2.25rem 0 .5rem; }
+    p, li { color:var(--text); }
+    .meta { color:var(--sec); margin-bottom:2rem; }
+    a { color:var(--ember); }
+    .caixa { background:var(--card); border:1px solid var(--border); padding:1rem 1.25rem; margin:1rem 0; }
+    table { width:100%; border-collapse:collapse; margin:.5rem 0 1rem; font-size:.97rem; }
+    th, td { border:1px solid var(--border); padding:.5rem .6rem; text-align:left; vertical-align:top; }
+    th { background:var(--card); color:var(--brass); }
+    .voltar { display:inline-block; margin-bottom:1.5rem; }
+  </style>
+</head>
+<body>
+<main>
+  <a class="voltar" href="index.html">← Voltar ao Drakbuilder</a>
+  <h1>Política de Privacidade</h1>
+  <p class="meta">Versão 2026-10-25 · em vigor desde 25 de outubro de 2026</p>
+
+  <div class="caixa">
+    <strong>Resumo:</strong> pedimos só o necessário para você ter uma conta e publicar builds e guias
+    (nome de exibição, e-mail e senha). Não vendemos dados, não usamos anúncios nem rastreadores.
+    Você pode baixar ou apagar tudo a qualquer momento em <em>Configurações › Privacidade e meus dados</em>.
+  </div>
+
+  <h2>1. Quem cuida dos seus dados</h2>
+  <p>O Drakbuilder é um site de fãs de Drakantos, sem ligação oficial com a desenvolvedora do jogo.
+  O responsável pelos dados (controlador, na LGPD) é <strong>Ronan Cardoso</strong>.
+  Contato para assuntos de privacidade: <a href="mailto:cofapi@hotmail.com">cofapi@hotmail.com</a>.</p>
+
+  <h2>2. Quais dados coletamos</h2>
+  <table>
+    <tr><th>Dado</th><th>Quando</th><th>Quem vê</th></tr>
+    <tr><td>Nome de exibição</td><td>No cadastro (obrigatório)</td><td>Todos (aparece nos seus posts e perfil)</td></tr>
+    <tr><td>E-mail</td><td>No cadastro (obrigatório)</td><td>Só você e o sistema de login. Não aparece no site.</td></tr>
+    <tr><td>Senha</td><td>No cadastro</td><td>Ninguém. Fica guardada com criptografia (bcrypt) e nem o administrador consegue lê-la.</td></tr>
+    <tr><td>Confirmação de idade (13+) e aceite desta política (data e versão)</td><td>No cadastro</td><td>Só o sistema, como prova do seu aceite</td></tr>
+    <tr><td>Bio e foto de perfil</td><td>Se você quiser preencher</td><td>Todos</td></tr>
+    <tr><td>Posts, textos, imagens e links de vídeo que você publica</td><td>Quando você publica</td><td>Todos (menos posts suspensos pela moderação)</td></tr>
+    <tr><td>Quem você segue</td><td>Quando você segue alguém</td><td>Você. Os outros veem só o número de seguidores.</td></tr>
+    <tr><td>Notificações</td><td>Quando alguém que você segue publica</td><td>Só você (guardamos as 50 mais recentes)</td></tr>
+    <tr><td>Dados técnicos de acesso (endereço IP, data e hora do login, navegador)</td><td>Ao entrar na conta</td><td>Só o provedor e o administrador, para segurança</td></tr>
+  </table>
+  <p>Não pedimos CPF, telefone, endereço, data de nascimento nem dados sensíveis.
+  Por favor, não coloque dados pessoais seus ou de outras pessoas nos posts.</p>
+
+  <h2>3. Para que usamos e com qual base legal</h2>
+  <ul>
+    <li><strong>Criar e manter sua conta, publicar seus posts e mostrar notificações:</strong> execução do serviço que você pediu (LGPD, art. 7º, V).</li>
+    <li><strong>Segurança, prevenção de fraude e de abuso</strong> (registros de acesso, limite de posts por hora, moderação): legítimo interesse (art. 7º, IX).</li>
+    <li><strong>Prova do seu aceite e da confirmação de idade:</strong> cumprimento de obrigação legal (art. 7º, II, e art. 8º, §2º).</li>
+  </ul>
+  <p>Não usamos seus dados para publicidade, perfis de comportamento ou decisões automatizadas.</p>
+
+  <h2>4. Com quem compartilhamos</h2>
+  <p>Usamos o <strong>Supabase</strong> como provedor de banco de dados, login e armazenamento de imagens
+  (operador, na LGPD). Os servidores ficam na região de São Paulo (Brasil).
+  Não vendemos nem alugamos dados a ninguém. Podemos fornecer dados a autoridades apenas quando a lei obrigar.</p>
+  <p>Para barrar robôs no cadastro e no login, usamos a verificação <strong>Cloudflare Turnstile</strong>.
+  Ela analisa sinais técnicos do navegador (como endereço IP) só para saber se é uma pessoa,
+  sem anúncios nem rastreamento entre sites.</p>
+  <p>Vídeos do YouTube embutidos nos posts são servidos pelo próprio YouTube (Google), que segue a política de privacidade dele quando você dá play.</p>
+
+  <h2>5. O que fica guardado no seu navegador</h2>
+  <p>Seu navegador guarda a sessão de login (para você não precisar entrar a cada página) e rascunhos de posts
+  que você ainda não publicou. Não usamos cookies de publicidade nem ferramentas de rastreamento.
+  Ao sair da conta a sessão é apagada; ao excluir a conta, os rascunhos deste navegador também são apagados.</p>
+
+  <h2>6. Por quanto tempo guardamos</h2>
+  <ul>
+    <li>Conta, perfil, posts e seguidores: enquanto sua conta existir.</li>
+    <li>Ao excluir a conta, tudo isso é apagado na hora do banco de dados, junto com suas imagens.</li>
+    <li>Registros técnicos de acesso do provedor são apagados automaticamente pelo próprio provedor no ciclo dele.</li>
+  </ul>
+
+  <h2>7. Seus direitos (LGPD, art. 18)</h2>
+  <p>Você pode, a qualquer momento e de graça:</p>
+  <ul>
+    <li><strong>Confirmar e acessar</strong> seus dados, e <strong>levar para outro lugar</strong>: <em>Configurações › Privacidade e meus dados › Baixar meus dados</em> (arquivo JSON).</li>
+    <li><strong>Corrigir</strong>: edite nome, bio e foto em <em>Configurações › Perfil</em>; edite ou apague seus posts quando quiser.</li>
+    <li><strong>Apagar tudo</strong>: <em>Configurações › Privacidade e meus dados › Excluir minha conta</em>.</li>
+    <li><strong>Pedir informação</strong> sobre com quem compartilhamos dados, <strong>se opor</strong> a algum uso ou <strong>revogar</strong> o aceite: pelo e-mail de contato acima. Respondemos em até 15 dias.</li>
+    <li>Reclamar à <strong>ANPD</strong> (Autoridade Nacional de Proteção de Dados): <a href="https://www.gov.br/anpd" rel="noopener" target="_blank">gov.br/anpd</a>.</li>
+  </ul>
+
+  <h2>8. Crianças e adolescentes</h2>
+  <p>Para criar conta é preciso ter <strong>13 anos ou mais</strong>. Quem tem menos de 13 anos pode ler o site,
+  mas não pode criar conta. Se soubermos de uma conta de alguém com menos de 13 anos, ela será apagada.
+  Pais ou responsáveis podem pedir a exclusão pelo e-mail de contato.
+  Se você tem entre 13 e 17 anos, recomendamos ler esta política junto com seu responsável.</p>
+
+  <h2>9. Como protegemos</h2>
+  <ul>
+    <li>Conexão sempre criptografada (HTTPS).</li>
+    <li>Senhas com criptografia forte, que ninguém consegue ler.</li>
+    <li>Regras no próprio banco de dados que impedem uma pessoa de ver ou mudar dados de outra.</li>
+    <li>Proteções contra injeção de código nas páginas (XSS) e limite de envios para evitar abuso.</li>
+  </ul>
+  <p>Se acontecer um incidente de segurança que possa trazer risco a você, avisaremos os afetados e a ANPD, como manda a lei.</p>
+
+  <h2>10. Mudanças nesta política</h2>
+  <p>Se mudarmos algo importante, avisaremos no site e pediremos um novo aceite. A versão e a data ficam no topo desta página.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# Cabeçalhos de segurança que a Cloudflare Pages manda junto com cada página (25/10/2026).
+# - Strict-Transport-Security: o navegador só usa HTTPS neste site.
+# - X-Content-Type-Options: impede o navegador de "adivinhar" o tipo de arquivo.
+# - X-Frame-Options + frame-ancestors: ninguém pode colocar o site dentro de outro (golpe de clique).
+# - Referrer-Policy: não vaza o endereço completo da página para outros sites.
+# - Permissions-Policy: o site não pede câmera, microfone, localização etc.
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
