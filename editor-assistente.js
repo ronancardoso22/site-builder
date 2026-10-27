@@ -43,7 +43,7 @@
 
   // Tipos de bloco que o autor pode adicionar
   const TIPOS_BLOCO = {
-    texto: { rotulo: 'Texto',            dica: 'Parágrafos normais. Linha em branco separa os parágrafos.' },
+    texto: { rotulo: 'Texto',            dica: 'Parágrafos normais. Linha em branco separa os parágrafos. Para pôr uma imagem no meio do texto, clique onde ela deve ficar e depois em "Localize no texto aqui" na imagem.' },
     ficha: { rotulo: 'Ficha',            dica: 'Pares "nome: valor". Vira uma tabela, boa para informações rápidas.' },
     lista: { rotulo: 'Lista em ordem',   dica: 'Itens numerados. Bom para ordem de habilidades ou passo a passo.' },
     itens: { rotulo: 'Itens',            dica: 'Clique no quadrado para pôr a imagem do item (ou arraste / Ctrl+V) e escreva o nome ao lado.' },
@@ -402,7 +402,7 @@
     const t = TIPOS_BLOCO[b.kind];
     let corpo = '';
     if (b.kind === 'texto') {
-      corpo = `<textarea class="input ae-text" rows="5" placeholder="Escreva aqui..."
+      corpo = `<textarea class="input ae-text" id="ae-txt-${b.id}" rows="5" placeholder="Escreva aqui..."
         oninput="aeBloco('${b.id}','text',this.value)">${esc(b.text)}</textarea>`;
     }
     if (b.kind === 'ficha') {
@@ -471,7 +471,9 @@
         ${b.kind === 'itens' ? '' : `<div class="ae-imgs">
           ${b.images.map((src, n) => `
             <div class="ae-img"><img src="${src}" alt="">
-              <button title="Remover imagem" onclick="aeDelImg('${b.id}',${n})">✕</button></div>`).join('')}
+              <span title="Escreva [imagem ${n + 1}] numa linha do texto para mostrar esta imagem ali" style="position:absolute;left:4px;top:4px;background:rgba(0,0,0,.75);color:#fff;font-size:.7rem;padding:0 .35rem;border-radius:3px">${n + 1}</span>
+              <button title="Remover imagem" onclick="aeDelImg('${b.id}',${n})">✕</button>
+              ${b.kind === 'texto' ? `<button title="Colocar esta imagem no texto, onde está o cursor" style="top:auto;bottom:3px;left:3px;right:3px;width:auto;height:auto;padding:.1rem .3rem;font-size:.66rem;line-height:1.2;white-space:normal" onclick="aeImgNoTexto('${b.id}',${n})">Localize no texto aqui</button>` : ''}</div>`).join('')}
           <label class="ae-img-add">+ Imagens
             <input type="file" accept="image/*" multiple hidden onchange="aeArquivos(this.files,'${b.id}')">
           </label>
@@ -533,7 +535,36 @@
     if (inputs.length) inputs[b.kind === 'ficha' ? inputs.length - 2 : inputs.length - 1].focus();
   };
   window.aeDelItem = (id, n) => { const b = achar(id); (b.kind === 'ficha' ? b.rows : b.items).splice(n, 1); render(); salvarRascunho(); };
-  window.aeDelImg = (id, n) => { achar(id).images.splice(n, 1); render(); salvarRascunho(); };
+  // Põe a linha [imagem N] no texto do bloco, onde o cursor estava (ou no fim).
+  // O site mostra a imagem nesse ponto; a linha pode ser movida à vontade.
+  window.aeImgNoTexto = (id, n) => {
+    const b = achar(id);
+    if (!b || typeof b.text !== 'string') return;
+    const ta = document.getElementById('ae-txt-' + id);
+    const pos = ta && typeof ta.selectionStart === 'number' ? ta.selectionStart : b.text.length;
+    const antes = b.text.slice(0, pos).replace(/[ \t]*$/, '');
+    const depois = b.text.slice(pos).replace(/^[ \t]*/, '');
+    const marca = `[imagem ${n + 1}]`;
+    b.text = antes + (antes && !antes.endsWith('\n') ? '\n' : '') + marca + (depois && !depois.startsWith('\n') ? '\n' : '') + depois;
+    if (ta) { ta.value = b.text; const fim = (antes + (antes && !antes.endsWith('\n') ? '\n' : '') + marca).length; ta.focus(); ta.setSelectionRange(fim, fim); }
+    salvarRascunho();
+    showToast(`Imagem ${n + 1} colocada no texto.`, 'info');
+  };
+
+  // Remove a imagem e acerta as marcas [imagem N] do texto (a removida some, as seguintes descem 1)
+  window.aeDelImg = (id, n) => {
+    const b = achar(id);
+    b.images.splice(n, 1);
+    if (typeof b.text === 'string') {
+      b.text = b.text.split('\n').map(l => {
+        const m = l.trim().match(/^\[imagem\s+(\d{1,2})\]$/i);
+        if (!m) return l;
+        const k = Number(m[1]);
+        return k === n + 1 ? null : k > n + 1 ? `[imagem ${k - 1}]` : l;
+      }).filter(l => l !== null).join('\n');
+    }
+    render(); salvarRascunho();
+  };
   // Ações dos espaços de item (imagem + nome)
   window.aeSlotFoco = (id, grupo, n) => { E.focado = id; E.slotFocado = { id, grupo, n }; };
   window.aeSlotImg = (id, grupo, n, files) => imagemDoSlot(files, id, grupo, n);

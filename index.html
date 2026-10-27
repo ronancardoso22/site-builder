@@ -81,7 +81,7 @@
       base-uri/form-action → impedem trocar o endereço base ou desviar formulários
     Se um dia adicionar outro serviço externo, inclua o endereço aqui.
   -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://img.youtube.com https://i.ytimg.com https://*.steamstatic.com https://*.steamusercontent.com https://*.akamaihd.net; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' https://www.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://tixxigsfgkcpnjccjbwd.supabase.co https://img.youtube.com https://i.ytimg.com https://*.steamstatic.com https://*.steamusercontent.com https://*.akamaihd.net; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com; connect-src 'self' https://tixxigsfgkcpnjccjbwd.supabase.co https://www.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
   <!-- Não envia o endereço completo da página para outros sites (só o domínio) -->
   <meta name="referrer" content="strict-origin-when-cross-origin" />
 
@@ -206,7 +206,7 @@
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
           <path d="M11.7 10.3l3 3-1.4 1.4-3-3A6 6 0 1 1 13 6a6 6 0 0 1-1.3 4.3zM6 10A4 4 0 1 0 6 2a4 4 0 0 0 0 8z"/>
         </svg>
-        <input type="text" placeholder="Buscar..." id="searchInput" oninput="handleSearch()" />
+        <input type="search" name="busca" placeholder="Buscar..." id="searchInput" oninput="handleSearch()" autocomplete="off" spellcheck="false" style="-webkit-appearance:none;appearance:none" />
       </div>
 
       <!-- Botão "Entrar" — visível por padrão (usuário não logado).
@@ -530,7 +530,7 @@
     <p class="footer-copy">Drakbuilder é um site de fã, sem ligação oficial com a desenvolvedora de Drakantos.</p>
     <div class="footer-links">
       <a href="https://store.steampowered.com/app/2454980/" target="_blank" rel="noopener">Drakantos na Steam</a>
-      <a href="#">Política de Privacidade</a>
+      <a href="privacidade.html">Política de Privacidade</a>
       <a href="#">Termos de Uso</a>
     </div>
   </footer>
@@ -584,15 +584,18 @@
             <label class="form-label" for="loginEmail">E-mail</label>
             <!-- type="email": o navegador valida o formato (precisa ter "@") antes de enviar
                  placeholder: texto cinza que aparece quando o campo está vazio -->
-            <input class="input" type="email" id="loginEmail" placeholder="seu@email.com" />
+            <input class="input" type="email" id="loginEmail" name="email" placeholder="seu@email.com" autocomplete="username" />
           </div>
 
           <div class="form-group">
             <label class="form-label" for="loginPassword">Senha</label>
             <!-- type="password": esconde os caracteres digitados com bolinhas (••••)
                  Isso é feito pelo próprio navegador — não precisamos implementar. -->
-            <input class="input" type="password" id="loginPassword" placeholder="••••••••" />
+            <input class="input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
           </div>
+          <!-- Esqueci a senha (25/10/2026): só funciona com o banco Supabase ligado -->
+          <button type="button" class="link-esqueci" onclick="typeof esqueciSenha === 'function' ? esqueciSenha() : showToast('Disponível quando o banco estiver ligado.', 'info')"
+                  style="background:none;border:0;padding:0;color:var(--magma-bright);cursor:pointer;font:inherit;text-align:left">Esqueci minha senha</button>
 
           <!-- Botão que chama handleLogin() do backend.js ao ser clicado.
                "width:100%" faz o botão ocupar toda a largura do modal.
@@ -618,20 +621,31 @@
 
           <div class="form-group">
             <label class="form-label" for="regEmail">E-mail</label>
-            <input class="input" type="email" id="regEmail" placeholder="seu@email.com" />
+            <input class="input" type="email" id="regEmail" name="email" placeholder="seu@email.com" autocomplete="email" />
           </div>
 
           <div class="form-group">
             <label class="form-label" for="regPassword">Senha</label>
-            <input class="input" type="password" id="regPassword" placeholder="Mínimo 6 caracteres" />
+            <input class="input" type="password" id="regPassword" placeholder="Mínimo 8, com letras e números" autocomplete="new-password" />
           </div>
 
           <!-- Campo de confirmação de senha — o JavaScript verifica se os dois
                campos têm o mesmo valor antes de criar a conta. -->
           <div class="form-group">
             <label class="form-label" for="regConfirm">Confirmar Senha</label>
-            <input class="input" type="password" id="regConfirm" placeholder="Repita a senha" />
+            <input class="input" type="password" id="regConfirm" placeholder="Repita a senha" autocomplete="new-password" />
           </div>
+
+          <!-- LGPD (25/10/2026): idade mínima 13 anos e aceite da Política de Privacidade.
+               O banco recusa o cadastro se estas duas caixas não forem marcadas. -->
+          <label style="display:flex;gap:.5rem;align-items:flex-start;color:var(--text-secondary);font-size:.95rem;cursor:pointer">
+            <input type="checkbox" id="regIdade" style="margin-top:.3rem" />
+            <span>Tenho 13 anos ou mais.</span>
+          </label>
+          <label style="display:flex;gap:.5rem;align-items:flex-start;color:var(--text-secondary);font-size:.95rem;cursor:pointer">
+            <input type="checkbox" id="regPrivacidade" style="margin-top:.3rem" />
+            <span>Li e aceito a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span>
+          </label>
 
           <!-- btn-gold em vez de btn-primary para diferenciar visualmente
                a ação de "criar conta" da ação de "entrar" -->
@@ -800,7 +814,13 @@
        Funções são registradas na memória. O evento "DOMContentLoaded" (no final
        do backend.js) chama as funções de inicialização quando o HTML está pronto.
   ============================================================ -->
-  <script src="backend.js"></script>
-  <script src="editor-assistente.js"></script>
+  <!-- Banco de dados (25/10/2026): biblioteca do Supabase guardada no próprio site
+       (não depende de CDN), depois a configuração, e por último db-supabase.js,
+       que troca o localStorage pelo banco. Com supabase-config.js vazio, nada muda. -->
+  <script src="vendor/supabase-2.117.3.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="backend.js?v=2026-10-25f"></script>
+  <script src="editor-assistente.js?v=2026-10-25e"></script>
+  <script src="db-supabase.js?v=2026-10-25f"></script>
 </body>
 </html>

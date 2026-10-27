@@ -5,3 +5,19 @@ backup-seguranca/
 *.db-shm
 .claude/
 __pycache__/
+
+# 25/10/2026 (publicação): segredos, pacotes e coisas só do PC
+.env
+.env.*
+*.zip
+*.pem
+*.key
+node_modules/
+.wrangler/
+# pasta montada pelo construir-site.sh na hora de publicar
+publico/
+# agente antigo (abandonado em 25/10/2026) e scripts do login antigo
+agent.html
+agenteIA/
+setup_db.py
+trocar_senha_admin.py

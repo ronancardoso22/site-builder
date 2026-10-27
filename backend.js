@@ -99,11 +99,9 @@ const App = {
   Para trocar a senha do admin, gere um novo sal + hash (veja o
   comentário de hashPassword logo abaixo).
 */
-const ADMIN = {
-  email:     'ronancardoso22@hotmail.com',
-  adminSalt: 'e9t02fLH28dmGkLxIgUx7Q==',
-  adminHash: 'OGMKe+1f/OyB+IDXXXflGzLHk+LfwT+e2enVheg9oyk=',
-};
+// 25/10/2026: o admin agora é definido no banco (Supabase, profiles.role).
+// O admin "local" foi desligado e o hash removido do código público.
+const ADMIN = { email: '', adminSalt: '', adminHash: '' };
 
 
 // ===========================================================
@@ -1124,7 +1122,7 @@ async function handleLogin() {
   loginEmAndamento = true;
   try {
     // Verifica se é o administrador (conta virtual, não fica no localStorage)
-    if (email === ADMIN.email) {
+    if (ADMIN.email && email === ADMIN.email) {
       if (await checkPassword(password, ADMIN.adminSalt, ADMIN.adminHash)) {
         loginUser({ id: 'admin', name: 'Administrador', email: ADMIN.email, isAdmin: true });
         closeModal('authModal');
@@ -2686,11 +2684,18 @@ function deletePostAdmin(postId, event) {
   Linha em branco separa parágrafos. Todo texto passa por escapeHtml
   ANTES de virar HTML, então ninguém consegue injetar código.
 */
-function formatSectionContent(text) {
+/*
+  [imagem N] numa linha sozinha = mostra ali a imagem N da seção (N começa em 1).
+  Só um número: o endereço vem da lista de imagens já limpa por safeImageUrl.
+*/
+const MARCA_IMAGEM = /^\[imagem\s+(\d{1,2})\]$/i;
+
+function formatSectionContent(text, imgs = [], offset = 0) {
   const lines = String(text || '').replace(/\r/g, '').split('\n');
   const kindOf = line => {
     const t = line.trim();
     if (!t) return 'blank';
+    if (MARCA_IMAGEM.test(t)) return 'img';
     if (/^\d+[.)]\s+/.test(t)) return 'ol';
     if (/^[-•*]\s+/.test(t)) return 'ul';
     if (/^[^:]{1,32}:\s+\S/.test(t) && !/https?:/.test(t.split(':')[0])) return 'kv';
@@ -2708,6 +2713,13 @@ function formatSectionContent(text) {
 
   return groups.map(g => {
     if (g.kind === 'blank') return '';
+    if (g.kind === 'img') {
+      const html = g.lines.map(l => {
+        const j = Number(l.match(MARCA_IMAGEM)[1]) - 1;
+        return imgs[j] ? `<img src="${escapeHtml(imgs[j])}" alt="Imagem ${j + 1}" loading="lazy" onclick="openLightbox(${offset + j})" />` : '';
+      }).join('');
+      return html ? `<div class="images-grid n-1">${html}</div>` : '';
+    }
     if (g.kind === 'kv' && g.lines.length >= 2) {
       return `<dl class="stat-table">${g.lines.map(l => {
         const idx = l.indexOf(':');
@@ -2933,17 +2945,26 @@ function renderPostDetail(post) {
   let imgOffset = 0; // offset acumulado para o índice do lightbox
   const sectionsHtml = sections.map(s => {
     const sImgs = s.images || [];
+    // Imagens marcadas no texto com [imagem N] aparecem no lugar da marca;
+    // as que sobram vão para a grade no fim da seção.
+    const noTexto = new Set();
+    String(s.content || '').split('\n').forEach(l => {
+      const m = l.trim().match(MARCA_IMAGEM);
+      if (m) noTexto.add(Number(m[1]) - 1);
+    });
+    const resto = sImgs.map((u, j) => [u, j]).filter(([, j]) => !noTexto.has(j));
     // A classe "n-1", "n-2"... deixa o CSS escolher o layout:
     // 1 imagem ocupa a largura toda; 2 ou mais viram uma grade.
-    const secImgHtml = sImgs.length > 0 ? `
-      <div class="images-grid n-${Math.min(sImgs.length, 3)}">
-        ${sImgs.map((_, j) => `<img src="${sImgs[j]}" alt="${escapeHtml(s.name || 'Imagem')} ${j+1}" loading="lazy" onclick="openLightbox(${imgOffset + j})" />`).join('')}
+    const secImgHtml = resto.length > 0 ? `
+      <div class="images-grid n-${Math.min(resto.length, 3)}">
+        ${resto.map(([u, j]) => `<img src="${escapeHtml(u)}" alt="${escapeHtml(s.name || 'Imagem')} ${j+1}" loading="lazy" onclick="openLightbox(${imgOffset + j})" />`).join('')}
       </div>` : '';
+    const offsetSecao = imgOffset;
     imgOffset += sImgs.length; // avança o offset para as próximas seções
     return `
       <div class="detail-section" id="${s.id}">
         <h2 class="detail-section-title">${escapeHtml(s.name || 'Seção')}</h2>
-        <div class="detail-section-content rich">${formatSectionContent(s.content)}</div>
+        <div class="detail-section-content rich">${formatSectionContent(s.content, sImgs, offsetSecao)}</div>
         ${secImgHtml}
       </div>`;
   }).join('');
@@ -3505,7 +3526,7 @@ function buildPostCard(post) {
   const isAdmin    = App.currentUser?.isAdmin;
   const isOwner    = App.currentUser && App.currentUser.id === post.authorId;
   const suspended  = post.suspended === true;
-  const detailable = !suspended; // posts suspensos não abrem detalhe ao clicar
+  const detailable = !suspended || isAdmin || isOwner; // suspenso: só admin e dono abrem (para revisar/editar)
 
   // Posts suspensos ficam ocultos para quem não é admin nem dono
   if (suspended && !isAdmin && !isOwner) return '';
