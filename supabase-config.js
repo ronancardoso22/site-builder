@@ -21,5 +21,5 @@ window.DRK_SUPABASE = {
   anonKey: 'sb_publishable_BSocTOgkQ5U7r35Q8PVEcw_0ywdOFmT',
   // CAPTCHA anti-robô (Cloudflare Turnstile). Cole aqui a "Site Key" (pública).
   // Deixe vazio para desligar. A "Secret Key" vai SÓ no painel do Supabase.
-  turnstileSiteKey: '',
+  turnstileSiteKey: '0x4AAAAAAFyK96Qs_itxS6lC',
 };
