@@ -208,3 +208,6 @@ body:has(#page-editor.active) > footer { display: none; }
   display: flex; align-items: center; justify-content: center; text-align: center;
   font-size: .8rem; color: var(--text-secondary); border-style: dashed;
 }
+.ae-vid-add { flex-direction: column; gap: .15rem; text-align: center; }
+.ae-vid-add small { font-size: .76rem; color: var(--text-secondary); line-height: 1.2; }
+.ae-vid-dica { margin-top: .25rem; color: var(--text-secondary); }

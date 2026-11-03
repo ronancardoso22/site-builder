@@ -23,7 +23,7 @@
   // Carrega o CSS do assistente (assim basta UMA linha no index.html)
   const css = document.createElement('link');
   css.rel = 'stylesheet';
-  css.href = 'editor-assistente.css?v=2026-11-03';
+  css.href = 'editor-assistente.css?v=2026-11-03b';
   document.head.appendChild(css);
 
   // Cria a "página" do assistente dentro do #app
@@ -504,11 +504,14 @@
           ${b.kind === 'texto' ? `<button class="ae-vid-texto" title="Colocar este vídeo no texto, onde está o cursor" onclick="aeVidNoTexto('${b.id}',${n})">Localize no texto aqui</button>` : ''}</div>`).join('')}
       ${enviandoAqui ? `<div class="ae-img ae-vid-enviando">Enviando vídeo… ${E.enviando.pct}%</div>` : ''}
       ${podeVideo() && vids.length < MAX_VIDEOS && !E.enviando ? `
-        <label class="ae-img-add" title="MP4, WEBM ou MOV, até 30 MB">+ Vídeo
+        <label class="ae-img-add ae-vid-add" title="MP4, WEBM ou MOV, até 30 MB">
+          <span>+ Vídeo</span>
+          <small>até 1 min · máx. 30 MB</small>
           <input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" hidden onchange="aeVideo(this.files,'${b.id}')">
         </label>` : ''}
     </div>
-    ${podeVideo() ? '<p class="ae-hint">Vídeo: MP4, WEBM ou MOV, até 30 MB (cerca de 1 minuto). MP4 funciona em todos os navegadores.</p>' : ''}`;
+    ${podeVideo() ? `<p class="ae-hint">Vídeo: MP4, WEBM ou MOV, até 30 MB (cerca de 1 minuto). MP4 funciona em todos os navegadores.</p>
+    <p class="ae-hint ae-vid-dica"><strong>Vídeo longo?</strong> É melhor postar o vídeo como <strong>público</strong> no YouTube e colar o link no campo "Vídeo do YouTube" do passo 1 (Básico).</p>` : ''}`;
   }
 
   function passo3() {
