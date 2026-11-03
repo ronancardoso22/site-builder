@@ -11,3 +11,11 @@
   Content-Security-Policy: frame-ancestors 'none'
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+
+# Página principal: a mesma regra de proteção (CSP) que está dentro do index.html,
+# repetida aqui no cabeçalho do servidor como segunda camada (03/11/2026).
+# Se mudar a regra no index.html, mude aqui também.
+/
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://tixxigsfgkcpnjccjbwd.supabase.co https://img.youtube.com https://i.ytimg.com https://*.steamstatic.com https://*.steamusercontent.com https://*.akamaihd.net; media-src 'self' https://tixxigsfgkcpnjccjbwd.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com; connect-src 'self' https://tixxigsfgkcpnjccjbwd.supabase.co https://www.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'
+/index.html
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://tixxigsfgkcpnjccjbwd.supabase.co https://img.youtube.com https://i.ytimg.com https://*.steamstatic.com https://*.steamusercontent.com https://*.akamaihd.net; media-src 'self' https://tixxigsfgkcpnjccjbwd.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com; connect-src 'self' https://tixxigsfgkcpnjccjbwd.supabase.co https://www.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'

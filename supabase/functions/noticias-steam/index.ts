@@ -1,5 +1,6 @@
 // =====================================================================
 // NOTÍCIAS DA STEAM -> BANCO (Supabase Edge Function) — 25/10/2026
+// 03/11/2026: correções de tradução, links protegidos, fonte = página da Steam.
 //
 // Roda sozinha 1x por dia (agendada no banco com pg_cron). Busca as
 // notícias do Drakantos na Steam, traduz para português só os parágrafos
@@ -22,7 +23,26 @@ const REVISAR = (Deno.env.get("NOTICIAS_REVISAR") ?? "sim") === "sim"; // sim = 
 const DEEPL_KEY = Deno.env.get("DEEPL_API_KEY") ?? "";
 const MYMEMORY_EMAIL = Deno.env.get("MYMEMORY_EMAIL") ?? "";
 
-const GLOSSARIO = ["Drakantos", "PvP", "PvE", "XP", "DPS", "MMO", "Steam", "Discord", "Patch Notes"];
+// Termos que NÃO devem ser traduzidos (ficam como estão). Os mais longos primeiro.
+const GLOSSARIO = ["Steam Deck", "Patch Notes", "Drakantos", "Discord", "Steam", "PvP", "PvE", "XP", "DPS", "MMO", "Builds", "Build", "builds", "build"];
+
+// Correções depois da tradução automática (03/11/2026): erros vistos no devlog
+// e palavras em português que vieram sem acento.
+const CORRECOES: [RegExp, string][] = [
+  [/\b(Baralho|Deck) (de|do) Vapor\b/gi, "Steam Deck"],
+  [/\bcompilaç(ão|ao)\b/gi, "build"],
+  [/\bcompilaç(ões|oes)\b/gi, "builds"],
+  [/\bbrincar com (um|o) controle\b/gi, "jogar com $1 controle"],
+  [/\balavanca direita\b/gi, "analógico direito"],
+  [/\balavanca esquerda\b/gi, "analógico esquerdo"],
+  [/\bcobranças\b/g, "cargas"],
+  [/\bsistema de e-?mail\b/gi, "sistema de correio"],
+  [/\bvoce\b/g, "você"], [/\bVoce\b/g, "Você"], [/\bvoces\b/g, "vocês"],
+  [/\bpagina\b/g, "página"], [/\bnao\b/g, "não"], [/\bNao\b/g, "Não"],
+  [/\btambem\b/g, "também"], [/\bentao\b/g, "então"], [/\bsao\b/g, "são"],
+  [/\batualizacao\b/g, "atualização"], [/\binformacoes\b/g, "informações"],
+];
+const corrigir = (t: string) => CORRECOES.reduce((acc, [re, novo]) => acc.replace(re, novo), t);
 const PALAVRAS_EN = new Set("hey hi hello everyone welcome thank thanks you we've we're it's officially reached here of to in on by at an be if or not but out up get got our us my the and with will you your new update fixed added removed now from this that have has for are is was were which when where our we it its been can more players player some all into than these those there their they them should would could also only just about after before during while".split(" "));
 const PALAVRAS_PT = new Set("o a os as um uma de do da dos das em no na nos nas para por com que não é são foi foram mais seu sua seus suas também agora novo nova novos novas jogadores jogador corrigido adicionado removido".split(" "));
 
@@ -90,10 +110,28 @@ async function traduzirDeepL(textos: string[]) {
   return data.translations.map((t: { text: string }) => unescapeXml(t.text.replace(/<\/?x>/g, "")));
 }
 
-async function traduzirMyMemory(textos: string[]) {
+// Troca links e termos do glossário por marcas (ZQ0QZ...) que o tradutor não
+// mexe, e depois devolve. Assim os links do Discord etc. continuam inteiros.
+function proteger(texto: string) {
+  const guardados: string[] = [];
+  const marca = (m: string) => { guardados.push(m); return `ZQ${guardados.length - 1}QZ`; };
+  const t = texto
+    .replace(/https?:\/\/[^\s()<>"'`]+/g, (u) => { const fim = u.match(/[.,!?;:]+$/)?.[0] ?? ""; return marca(u.slice(0, u.length - fim.length)) + fim; })
+    .replace(regexGlossario, marca);
+  return { t, guardados };
+}
+function devolver(texto: string, guardados: string[]) {
+  let t = texto.replace(/ZQ\s?(\d+)\s?QZ/gi, (_, n) => guardados[Number(n)] ?? "");
+  // Se o tradutor engoliu algum link, ele volta no fim do parágrafo
+  for (const g of guardados) if (/^https?:/.test(g) && !t.includes(g)) t += ` ${g}`;
+  return t;
+}
+
+async function traduzirMyMemory(textosOriginais: string[]) {
   const saida: string[] = [];
   const enc = new TextEncoder();
-  for (const texto of textos) {
+  const protegidos = textosOriginais.map(proteger);
+  for (const { t: texto, guardados } of protegidos) {
     const partes = texto.match(/[^.!?\n]+[.!?]*\s*|\n/g) ?? [texto];
     let resultado = "", bloco = "";
     const enviar = async () => {
@@ -109,7 +147,7 @@ async function traduzirMyMemory(textos: string[]) {
       bloco += parte;
     }
     await enviar();
-    saida.push(resultado.trim());
+    saida.push(devolver(resultado.trim(), guardados));
   }
   return saida;
 }
@@ -119,11 +157,11 @@ const traduzirLista = (t: string[]) => (DEEPL_KEY ? traduzirDeepL(t) : traduzirM
 async function traduzirTexto(texto: string) {
   const par = texto.split("\n");
   const idx = par.map((p, i) => [p, i] as const).filter(([p]) => p.trim() && pareceIngles(p.replace(/^(##\s*|-\s*)/, ""))).map(([, i]) => i);
-  if (!idx.length) return texto;
+  if (!idx.length) return corrigir(texto);
   const pref = idx.map((i) => par[i].match(/^(##\s*|-\s*)?/)![0]);
   const trad = await traduzirLista(idx.map((i, k) => par[i].slice(pref[k].length)));
   idx.forEach((i, k) => { par[i] = pref[k] + String(trad[k]).replace(/[<>`]/g, ""); });
-  return par.join("\n");
+  return corrigir(par.join("\n"));
 }
 
 function classificar(t: string) {
@@ -222,7 +260,9 @@ Deno.serve(async (req) => {
       const imagens = await copiarImagens(db, gid, limpo.imagens);
       const capa = imagens.findIndex((u) => !!u);
       const { tag, emoji } = classificar(`${item.title} ${titulo}`);
-      const fonte = /^https:\/\/store\.steampowered\.com\//.test(item.url ?? "") || /^https:\/\/steamstore-a\.akamaihd\.net\//.test(item.url ?? "") ? item.url : `https://store.steampowered.com/news/app/${APP_ID}`;
+      // Fonte: sempre a página da notícia na loja da Steam (o item.url às vezes
+      // aponta para um servidor da Akamai, que confunde o leitor).
+      const fonte = `https://store.steampowered.com/news/app/${APP_ID}/view/${gid}`;
       const { error } = await db.from("posts").insert({
         id, type: "novidades", author_id: admin.id,
         title: titulo, descr: resumoDe(corpo).slice(0, 1000), emoji, tags: [tag],

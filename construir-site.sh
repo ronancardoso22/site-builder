@@ -7,10 +7,10 @@
 set -euo pipefail
 rm -rf publico
 mkdir -p publico
-cp index.html privacidade.html style.css \
+cp index.html privacidade.html termos.html 404.html style.css \
    backend.js db-supabase.js supabase-config.js \
    editor-assistente.js editor-assistente.css \
-   _headers publico/
-cp -r imagens vendor publico/
+   _headers _redirects publico/
+cp -r imagens vendor fontes publico/
 echo "Pasta publico pronta:"
 ls -R publico | head -50
