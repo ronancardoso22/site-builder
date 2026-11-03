@@ -23,7 +23,7 @@
   // Carrega o CSS do assistente (assim basta UMA linha no index.html)
   const css = document.createElement('link');
   css.rel = 'stylesheet';
-  css.href = 'editor-assistente.css?v=2026-11-03b';
+  css.href = 'editor-assistente.css?v=2026-11-03c';
   document.head.appendChild(css);
 
   // Cria a "página" do assistente dentro do #app
@@ -487,8 +487,23 @@
           <label class="ae-img-add">+ Imagens
             <input type="file" accept="image/*" multiple hidden onchange="aeArquivos(this.files,'${b.id}')">
           </label>
-        </div>${videosHtml(b)}`}
+        </div>${ytNoBlocoHtml(b)}${videosHtml(b)}`}
       </section>`;
+  }
+
+  /* Vídeo do YouTube (do passo 1) também pode ir para o meio do texto: marca [youtube] */
+  function ytNoBlocoHtml(b) {
+    if (b.kind !== 'texto' || E.type === 'novidades') return '';
+    const id = extractYouTubeId(E.yt || '');
+    if (!id) return '';
+    const jaNoTexto = E.blocks.some(x => /^\[youtube\]$/im.test(x.text || ''));
+    return `<div class="ae-imgs ae-yt-bloco">
+      <div class="ae-img"><img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" alt="">
+        <span class="ae-vid-num">YouTube</span>
+        <button class="ae-vid-texto" title="Colocar o vídeo do YouTube no texto, onde está o cursor" onclick="aeYtNoTexto('${b.id}')">${jaNoTexto ? 'Mover para cá' : 'Localize no texto aqui'}</button>
+      </div>
+      <p class="ae-hint">Sem marcar, o vídeo do YouTube aparece no topo do post.</p>
+    </div>`;
   }
 
   /* Vídeos do bloco: prévia pequena + número + remover + pôr no texto */
@@ -571,6 +586,16 @@
   // Põe a linha [imagem N] no texto do bloco, onde o cursor estava (ou no fim).
   // O site mostra a imagem nesse ponto; a linha pode ser movida à vontade.
   window.aeImgNoTexto = (id, n) => porMarcaNoTexto(id, `[imagem ${n + 1}]`, `Imagem ${n + 1} colocada no texto.`);
+  // O YouTube só aparece uma vez: tira a marca antiga antes de pôr a nova
+  window.aeYtNoTexto = id => {
+    porMarcaNoTexto(id, '[youtube:novo]', 'Vídeo do YouTube colocado no texto.');
+    E.blocks.forEach(x => {
+      if (typeof x.text !== 'string') return;
+      x.text = x.text.split('\n').filter(l => !/^\[youtube\]$/i.test(l.trim()))
+        .map(l => (l.trim() === '[youtube:novo]' ? '[youtube]' : l)).join('\n');
+    });
+    salvarRascunho(); render();
+  };
   window.aeVidNoTexto = (id, n) => porMarcaNoTexto(id, `[video ${n + 1}]`, `Vídeo ${n + 1} colocado no texto.`);
   function porMarcaNoTexto(id, marca, aviso) {
     const b = achar(id);
