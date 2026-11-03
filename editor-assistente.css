@@ -192,3 +192,22 @@ body:has(#page-editor.active) > footer { display: none; }
   background: var(--bg-card); border: 1px solid var(--border);
 }
 .eq-nome { font-family: var(--font-ui); font-weight: 700; color: var(--text-primary); }
+
+/* Vídeos no assistente (03/11/2026) */
+.ae-vids { margin-top: .5rem; }
+.ae-vid video { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; }
+.ae-vid .ae-vid-num {
+  position: absolute; left: 4px; top: 4px; background: rgba(0,0,0,.75); color: #fff;
+  font-size: .7rem; padding: 0 .35rem; border-radius: 3px;
+}
+.ae-img .ae-vid-texto {
+  top: auto; bottom: 3px; left: 3px; right: 3px; width: auto; height: auto;
+  padding: .1rem .3rem; font-size: .66rem; line-height: 1.2; white-space: normal;
+}
+.ae-vid-enviando {
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-size: .8rem; color: var(--text-secondary); border-style: dashed;
+}
+.ae-vid-add { flex-direction: column; gap: .15rem; text-align: center; }
+.ae-vid-add small { font-size: .76rem; color: var(--text-secondary); line-height: 1.2; }
+.ae-vid-dica { margin-top: .25rem; color: var(--text-secondary); }

@@ -160,6 +160,13 @@ function safeImageUrl(u) {
   return null;
 }
 
+/*
+  Vídeos enviados pelo autor (03/11/2026). Sem banco (modo antigo) não há
+  vídeos: esta versão recusa tudo. O db-supabase.js troca por uma que só
+  aceita arquivos do balde "videos" do nosso Supabase.
+*/
+function safeVideoUrl(u) { return null; }
+
 function sanitizeSection(s) {
   if (!s || typeof s !== 'object') return null;
   const sec = {
@@ -168,6 +175,7 @@ function sanitizeSection(s) {
     name: longText(s.name, 120),
     content: longText(s.content),
     images: (Array.isArray(s.images) ? s.images : []).map(safeImageUrl).filter(Boolean),
+    videos: (Array.isArray(s.videos) ? s.videos : []).map(u => window.safeVideoUrl(u)).filter(Boolean).slice(0, 3),
   };
   if (Array.isArray(s.rows))  sec.rows  = s.rows.map(r => ({ k: longText(r?.k, 200), v: longText(r?.v, 500) }));
   if (Array.isArray(s.items)) sec.items = s.items.map(t => longText(t, 500));
@@ -2689,13 +2697,25 @@ function deletePostAdmin(postId, event) {
   Só um número: o endereço vem da lista de imagens já limpa por safeImageUrl.
 */
 const MARCA_IMAGEM = /^\[imagem\s+(\d{1,2})\]$/i;
+// [video N] numa linha sozinha = mostra ali o vídeo N da seção
+const MARCA_VIDEO = /^\[v[ií]deo\s+(\d)\]$/i;
+// [youtube] numa linha sozinha = mostra ali o vídeo do YouTube do post (só o primeiro conta)
+const MARCA_YOUTUBE = /^\[youtube\]$/i;
 
-function formatSectionContent(text, imgs = [], offset = 0) {
+// Player de vídeo: o endereço já passou por safeVideoUrl (só o nosso Storage).
+// preload="metadata": só baixa o vídeo inteiro quando a pessoa aperta play.
+function videoHtml(url, n) {
+  return `<div class="video-wrapper"><video controls preload="metadata" playsinline src="${escapeHtml(url)}" aria-label="Vídeo ${n}">Seu navegador não consegue tocar este vídeo.</video></div>`;
+}
+
+function formatSectionContent(text, imgs = [], offset = 0, vids = [], ytAqui = null) {
   const lines = String(text || '').replace(/\r/g, '').split('\n');
   const kindOf = line => {
     const t = line.trim();
     if (!t) return 'blank';
     if (MARCA_IMAGEM.test(t)) return 'img';
+    if (MARCA_VIDEO.test(t)) return 'vid';
+    if (MARCA_YOUTUBE.test(t)) return 'yt';
     if (/^\d+[.)]\s+/.test(t)) return 'ol';
     if (/^[-•*]\s+/.test(t)) return 'ul';
     if (/^[^:]{1,32}:\s+\S/.test(t) && !/https?:/.test(t.split(':')[0])) return 'kv';
@@ -2719,6 +2739,13 @@ function formatSectionContent(text, imgs = [], offset = 0) {
         return imgs[j] ? `<img src="${escapeHtml(imgs[j])}" alt="Imagem ${j + 1}" loading="lazy" onclick="openLightbox(${offset + j})" />` : '';
       }).join('');
       return html ? `<div class="images-grid n-1">${html}</div>` : '';
+    }
+    if (g.kind === 'yt') return ytAqui ? ytAqui() : '';
+    if (g.kind === 'vid') {
+      return g.lines.map(l => {
+        const j = Number(l.match(MARCA_VIDEO)[1]) - 1;
+        return vids[j] ? videoHtml(vids[j], j + 1) : '';
+      }).join('');
     }
     if (g.kind === 'kv' && g.lines.length >= 2) {
       return `<dl class="stat-table">${g.lines.map(l => {
@@ -2941,6 +2968,16 @@ function renderPostDetail(post) {
 
   const hasSidebar = sections.length > 0 || videoId; // sidebar só aparece se há algo para navegar
 
+  // O autor pode pôr [youtube] no texto: o player vai para lá (só na 1ª marca)
+  const ytNoTexto = !!videoId && sections.some(s =>
+    String(s.content || '').split('\n').some(l => MARCA_YOUTUBE.test(l.trim())));
+  let ytJaFoi = false;
+  const ytAqui = ytNoTexto ? () => {
+    if (ytJaFoi) return '';
+    ytJaFoi = true;
+    return `<div id="detail-video">${youtubeCorpoHtml(videoId, post.youtubeEmbeddable)}</div>`;
+  } : null;
+
   // Renderiza as seções com suas imagens embutidas
   let imgOffset = 0; // offset acumulado para o índice do lightbox
   const sectionsHtml = sections.map(s => {
@@ -2948,10 +2985,15 @@ function renderPostDetail(post) {
     // Imagens marcadas no texto com [imagem N] aparecem no lugar da marca;
     // as que sobram vão para a grade no fim da seção.
     const noTexto = new Set();
+    const vidNoTexto = new Set();
     String(s.content || '').split('\n').forEach(l => {
       const m = l.trim().match(MARCA_IMAGEM);
       if (m) noTexto.add(Number(m[1]) - 1);
+      const v = l.trim().match(MARCA_VIDEO);
+      if (v) vidNoTexto.add(Number(v[1]) - 1);
     });
+    const sVids = s.videos || [];
+    const secVidHtml = sVids.map((u, j) => vidNoTexto.has(j) ? '' : videoHtml(u, j + 1)).join('');
     const resto = sImgs.map((u, j) => [u, j]).filter(([, j]) => !noTexto.has(j));
     // A classe "n-1", "n-2"... deixa o CSS escolher o layout:
     // 1 imagem ocupa a largura toda; 2 ou mais viram uma grade.
@@ -2964,8 +3006,9 @@ function renderPostDetail(post) {
     return `
       <div class="detail-section" id="${s.id}">
         <h2 class="detail-section-title">${escapeHtml(s.name || 'Seção')}</h2>
-        <div class="detail-section-content rich">${formatSectionContent(s.content, sImgs, offsetSecao)}</div>
+        <div class="detail-section-content rich">${formatSectionContent(s.content, sImgs, offsetSecao, sVids, ytAqui)}</div>
         ${secImgHtml}
+        ${secVidHtml}
       </div>`;
   }).join('');
 
@@ -2990,20 +3033,11 @@ function renderPostDetail(post) {
     Isso detecta TODOS os tipos de bloqueio, inclusive restrições de domínio
     e licenciamento que a API oEmbed não consegue identificar.
   */
-  const ytUrl      = `https://www.youtube.com/watch?v=${videoId}`;
-  const youtubeHtml = videoId ? `
+  // Se o autor pôs [youtube] no texto, o player já está lá e não repete no topo
+  const youtubeHtml = videoId && !ytNoTexto ? `
     <div class="detail-section" id="detail-video">
       <h2 class="detail-section-title">Vídeo</h2>
-      ${post.youtubeEmbeddable === false
-        ? /* link simples para vídeos confirmados como bloqueados */
-          `<a href="${ytUrl}" target="_blank" rel="noopener noreferrer" class="yt-link">
-            ▶ Assistir no YouTube
-          </a>`
-        : /* container para a YouTube IFrame API — o <iframe> é criado pela API */
-          `<div class="youtube-wrapper" id="yt-wrapper-${videoId}">
-            <div id="yt-player-${videoId}"></div>
-          </div>`
-      }
+      ${youtubeCorpoHtml(videoId, post.youtubeEmbeddable)}
     </div>
   ` : '';
 
@@ -3135,6 +3169,19 @@ function renderPostDetail(post) {
   if (videoId && post.youtubeEmbeddable !== false) {
     initYouTubePlayer(videoId, post.id);
   }
+}
+
+/*
+  Miolo do bloco do YouTube (sem título). videoId já passou por
+  extractYouTubeId, então só tem letras, números, - e _ (11 caracteres).
+*/
+function youtubeCorpoHtml(videoId, embeddable) {
+  const ytUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  return embeddable === false
+    ? /* link simples para vídeos confirmados como bloqueados */
+      `<a href="${ytUrl}" target="_blank" rel="noopener noreferrer" class="yt-link">▶ Assistir no YouTube</a>`
+    : /* container para a YouTube IFrame API — o <iframe> é criado pela API */
+      `<div class="youtube-wrapper" id="yt-wrapper-${videoId}"><div id="yt-player-${videoId}"></div></div>`;
 }
 
 // ===========================================================
