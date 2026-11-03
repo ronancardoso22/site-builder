@@ -81,7 +81,7 @@
       base-uri/form-action → impedem trocar o endereço base ou desviar formulários
     Se um dia adicionar outro serviço externo, inclua o endereço aqui.
   -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://tixxigsfgkcpnjccjbwd.supabase.co https://img.youtube.com https://i.ytimg.com https://*.steamstatic.com https://*.steamusercontent.com https://*.akamaihd.net; media-src 'self' https://tixxigsfgkcpnjccjbwd.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com; connect-src 'self' https://tixxigsfgkcpnjccjbwd.supabase.co https://www.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://tixxigsfgkcpnjccjbwd.supabase.co https://img.youtube.com https://i.ytimg.com https://*.steamstatic.com https://*.steamusercontent.com https://*.akamaihd.net; media-src 'self' https://tixxigsfgkcpnjccjbwd.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com; connect-src 'self' https://tixxigsfgkcpnjccjbwd.supabase.co https://www.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
   <!-- Não envia o endereço completo da página para outros sites (só o domínio) -->
   <meta name="referrer" content="strict-origin-when-cross-origin" />
 
@@ -102,33 +102,17 @@
   <!-- Título que aparece na aba do navegador e nos resultados de busca (SEO) -->
   <title>Drakbuilder – Tudo sobre o universo do jogo</title>
 
-  <!-- ===== FONTES EXTERNAS DO GOOGLE FONTS =====
-       Carregamos três fontes especiais que não estão instaladas no
-       computador do usuário — elas vêm dos servidores do Google.
-
-       POR QUE DUAS TAGS "preconnect" ANTES DAS FONTES?
-       "preconnect" é uma dica ao navegador para ABRIR A CONEXÃO com o
-       servidor antes de precisar do recurso. Isso reduz o tempo de espera.
-       São dois servidores diferentes: fonts.googleapis.com (fornece o CSS
-       das fontes) e fonts.gstatic.com (fornece os arquivos de fonte reais).
-       O atributo "crossorigin" em fonts.gstatic.com é necessário para que
-       o navegador pré-conecte corretamente a esse servidor específico.
-
-       Fontes carregadas:
-       — Cinzel Decorative: ornamentada, usada no logo "DRAKBUILDER" (hero e navbar)
-       — Cinzel: elegante, usada em títulos, botões e menus
-       — Crimson Pro: serifada de leitura, usada no corpo do texto e parágrafos
-         (ital,wght = carrega variantes itálica e os pesos 300, 400, 600) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <!-- Redesenho 24/10/2026: Pixelify Sans (títulos, combina com a pixel art do jogo)
-       e Alegreya Sans (texto, fácil de ler em textos longos de build). -->
-  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet" />
+  <!-- ===== FONTES =====
+       Desde 03/11/2026 as fontes ficam no próprio site (pasta fontes/).
+       Antes vinham do Google Fonts, e cada visita mandava o IP da pessoa ao Google.
+       — Pixelify Sans: títulos (combina com a pixel art do jogo)
+       — Alegreya Sans: texto (fácil de ler em textos longos de build) -->
+  <link rel="stylesheet" href="fontes/fontes.css" />
 
   <!-- Carrega o arquivo de estilos CSS. O navegador aplica TODOS os estilos
        de style.css a esta página. "rel=stylesheet" informa que é uma folha
        de estilos (não um link de navegação ou outro tipo de recurso). -->
-  <link rel="stylesheet" href="style.css?v=2026-11-03c" />
+  <link rel="stylesheet" href="style.css?v=2026-11-03d" />
 
   <!-- Favicon: o ícone pequeno que aparece na aba do navegador e nos favoritos.
        "type=image/png" informa que é uma imagem PNG.
@@ -206,7 +190,7 @@
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
           <path d="M11.7 10.3l3 3-1.4 1.4-3-3A6 6 0 1 1 13 6a6 6 0 0 1-1.3 4.3zM6 10A4 4 0 1 0 6 2a4 4 0 0 0 0 8z"/>
         </svg>
-        <input type="search" name="busca" placeholder="Buscar..." id="searchInput" oninput="handleSearch()" autocomplete="off" spellcheck="false" style="-webkit-appearance:none;appearance:none" />
+        <input type="search" name="busca" placeholder="Buscar..." id="searchInput" aria-label="Buscar builds, guias e notícias" maxlength="80" oninput="handleSearch()" onkeydown="if(event.key==='Enter')handleSearch(event)" autocomplete="off" spellcheck="false" style="-webkit-appearance:none;appearance:none" />
       </div>
 
       <!-- Botão "Entrar" — visível por padrão (usuário não logado).
@@ -531,7 +515,7 @@
     <div class="footer-links">
       <a href="https://store.steampowered.com/app/2454980/" target="_blank" rel="noopener">Drakantos na Steam</a>
       <a href="privacidade.html">Política de Privacidade</a>
-      <a href="#">Termos de Uso</a>
+      <a href="termos.html">Termos de Uso</a>
     </div>
   </footer>
 
@@ -560,9 +544,9 @@
   ============================================================ -->
   <div class="modal-backdrop hidden" id="authModal" onclick="closeModalOnBackdrop(event,'authModal')">
     <!-- A caixa do modal em si (não o fundo escuro, mas a "janela" central) -->
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Entrar ou criar conta">
       <!-- Botão ✕ no canto superior direito para fechar o modal -->
-      <button class="modal-close" onclick="closeModal('authModal')">✕</button>
+      <button class="modal-close" onclick="closeModal('authModal')" aria-label="Fechar">✕</button>
 
       <!-- Abas para alternar entre os formulários de login e cadastro.
            Funcionam como botões de rádio: clicar em um ativa-o e desativa o outro.
@@ -616,7 +600,7 @@
           <div class="form-group">
             <label class="form-label" for="regName">Nome de Usuário</label>
             <!-- type="text": aceita qualquer texto (em vez de validar email, número, etc.) -->
-            <input class="input" type="text" id="regName" placeholder="DragonSlayer99" />
+            <input class="input" type="text" id="regName" placeholder="DragonSlayer99" maxlength="40" autocomplete="nickname" />
           </div>
 
           <div class="form-group">
@@ -626,7 +610,8 @@
 
           <div class="form-group">
             <label class="form-label" for="regPassword">Senha</label>
-            <input class="input" type="password" id="regPassword" placeholder="Mínimo 8, com letras e números" autocomplete="new-password" />
+            <input class="input" type="password" id="regPassword" placeholder="Crie uma senha" autocomplete="new-password" aria-describedby="regPasswordAjuda" />
+            <small class="campo-ajuda" id="regPasswordAjuda">Mínimo 8 caracteres, com letras e números.</small>
           </div>
 
           <!-- Campo de confirmação de senha — o JavaScript verifica se os dois
@@ -644,7 +629,7 @@
           </label>
           <label style="display:flex;gap:.5rem;align-items:flex-start;color:var(--text-secondary);font-size:.95rem;cursor:pointer">
             <input type="checkbox" id="regPrivacidade" style="margin-top:.3rem" />
-            <span>Li e aceito a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span>
+            <span>Li e aceito os <a href="termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span>
           </label>
 
           <!-- btn-gold em vez de btn-primary para diferenciar visualmente
@@ -673,8 +658,8 @@
   <div class="modal-backdrop hidden" id="postModal" onclick="closeModalOnBackdrop(event,'postModal')">
     <!-- modal-wide: versão mais larga do modal (max-width: 640px vs 460px padrão)
          necessária porque o formulário de post tem mais campos do que o de login -->
-    <div class="modal modal-wide">
-      <button class="modal-close" onclick="closeModal('postModal')">✕</button>
+    <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="postModalTitle">
+      <button class="modal-close" onclick="closeModal('postModal')" aria-label="Fechar">✕</button>
 
       <!-- Título do modal — alterado pelo JavaScript conforme o contexto:
            "✍️ Nova Notícia", "✍️ Nova Build", "✍️ Novo Guia", "✏️ Editar Post" -->
@@ -819,8 +804,8 @@
        que troca o localStorage pelo banco. Com supabase-config.js vazio, nada muda. -->
   <script src="vendor/supabase-2.117.3.js"></script>
   <script src="supabase-config.js"></script>
-  <script src="backend.js?v=2026-11-03c"></script>
+  <script src="backend.js?v=2026-11-03d"></script>
   <script src="editor-assistente.js?v=2026-11-03c"></script>
-  <script src="db-supabase.js?v=2026-11-03"></script>
+  <script src="db-supabase.js?v=2026-11-03d"></script>
 </body>
 </html>

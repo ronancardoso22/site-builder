@@ -36,6 +36,10 @@
 
   if (!CFG.url && !CFG.anonKey) return; // modo antigo (localStorage)
 
+  // Enquanto os posts não chegam do banco, a tela mostra "Carregando…"
+  // em vez de "Nenhuma build ainda" (03/11/2026).
+  App.carregando = true;
+
   function pararComErro(msg) {
     console.error('[Drakbuilder] ' + msg);
     document.addEventListener('DOMContentLoaded', () => showToast(msg, 'error'));
@@ -572,7 +576,10 @@
   window.handleLogin = async function () {
     const email = document.getElementById('loginEmail').value.trim();
     const senha = document.getElementById('loginPassword').value;
-    if (!email || !senha) { showToast('Preencha e-mail e senha!', 'error'); return; }
+    limparErrosCampos(document.getElementById('formLogin'));
+    if (!email) { erroNoCampo('loginEmail', 'Digite seu e-mail.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { erroNoCampo('loginEmail', 'Esse e-mail não parece válido. Confira se tem @ e o domínio.'); return; }
+    if (!senha) { erroNoCampo('loginPassword', 'Digite sua senha.'); return; }
     if (entrando) return;
     const captchaToken = pegarCaptcha('login');
     if (captchaToken === null) return;
@@ -602,16 +609,21 @@
     const idade  = document.getElementById('regIdade')?.checked;
     const aceite = document.getElementById('regPrivacidade')?.checked;
 
-    if (!nome || !email || !senha || !conf) { showToast('Preencha todos os campos!', 'error'); return; }
-    if (nome.length < 3 || nome.length > 40) { showToast('O nome deve ter de 3 a 40 caracteres.', 'error'); return; }
-    if (/[<>"'`\\]/.test(nome)) { showToast('O nome não pode ter os símbolos < > " \' ` \\', 'error'); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('E-mail inválido!', 'error'); return; }
+    // Erro aparece embaixo do campo certo, um de cada vez (03/11/2026)
+    limparErrosCampos(document.getElementById('formRegister'));
+    if (!nome) { erroNoCampo('regName', 'Escolha um nome de usuário.'); return; }
+    if (nome.length < 3 || nome.length > 40) { erroNoCampo('regName', 'O nome deve ter de 3 a 40 caracteres.'); return; }
+    if (/[<>"'`\\]/.test(nome)) { erroNoCampo('regName', 'O nome não pode ter os símbolos < > " \' ` \\'); return; }
+    if (!email) { erroNoCampo('regEmail', 'Digite seu e-mail.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { erroNoCampo('regEmail', 'Esse e-mail não parece válido. Confira se tem @ e o domínio.'); return; }
+    if (!senha) { erroNoCampo('regPassword', 'Crie uma senha.'); return; }
     if (senha.length < 8 || !/[A-Za-z]/.test(senha) || !/[0-9]/.test(senha)) {
-      showToast('A senha precisa de pelo menos 8 caracteres, com letras e números.', 'error'); return;
+      erroNoCampo('regPassword', 'A senha precisa de pelo menos 8 caracteres, com letras e números.'); return;
     }
-    if (senha !== conf) { showToast('As senhas não coincidem!', 'error'); return; }
-    if (!idade)  { showToast('É preciso ter 13 anos ou mais para criar conta.', 'error'); return; }
-    if (!aceite) { showToast('Para criar conta, leia e aceite a Política de Privacidade.', 'error'); return; }
+    if (!conf) { erroNoCampo('regConfirm', 'Repita a senha.'); return; }
+    if (senha !== conf) { erroNoCampo('regConfirm', 'As duas senhas estão diferentes.'); return; }
+    if (!idade)  { erroNoCampo('regIdade', 'É preciso ter 13 anos ou mais para criar conta.'); return; }
+    if (!aceite) { erroNoCampo('regPrivacidade', 'Para criar conta, leia e aceite os Termos de Uso e a Política de Privacidade.'); return; }
     if (cadastrando) return;
     const captchaToken = pegarCaptcha('cadastro');
     if (captchaToken === null) return;
@@ -647,7 +659,7 @@
 
   window.esqueciSenha = async function () {
     const email = document.getElementById('loginEmail').value.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Digite seu e-mail no campo acima e clique de novo.', 'info'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { erroNoCampo('loginEmail', 'Digite seu e-mail neste campo e clique de novo em "Esqueci minha senha".'); return; }
     const captchaToken = pegarCaptcha('login');
     if (captchaToken === null) return;
     await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname, captchaToken });
@@ -842,8 +854,10 @@
 
   // Primeira carga dos posts (o login, se houver, vem pelo INITIAL_SESSION)
   document.addEventListener('DOMContentLoaded', async () => {
-    await recarregarPosts();
-    if (!App.currentUser) rerenderAtivo();
+    try { await recarregarPosts(); }
+    finally { App.carregando = false; }
+    rerenderAtivo();
+    if (typeof aplicarRota === 'function') aplicarRota(); // abre o post do link, agora que os posts chegaram
   });
 
   console.info('[Drakbuilder] usando o banco Supabase.');
