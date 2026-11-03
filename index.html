@@ -81,7 +81,7 @@
       base-uri/form-action → impedem trocar o endereço base ou desviar formulários
     Se um dia adicionar outro serviço externo, inclua o endereço aqui.
   -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://tixxigsfgkcpnjccjbwd.supabase.co https://img.youtube.com https://i.ytimg.com https://*.steamstatic.com https://*.steamusercontent.com https://*.akamaihd.net; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com; connect-src 'self' https://tixxigsfgkcpnjccjbwd.supabase.co https://www.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://tixxigsfgkcpnjccjbwd.supabase.co https://img.youtube.com https://i.ytimg.com https://*.steamstatic.com https://*.steamusercontent.com https://*.akamaihd.net; media-src 'self' https://tixxigsfgkcpnjccjbwd.supabase.co; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com; connect-src 'self' https://tixxigsfgkcpnjccjbwd.supabase.co https://www.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
   <!-- Não envia o endereço completo da página para outros sites (só o domínio) -->
   <meta name="referrer" content="strict-origin-when-cross-origin" />
 
@@ -128,7 +128,7 @@
   <!-- Carrega o arquivo de estilos CSS. O navegador aplica TODOS os estilos
        de style.css a esta página. "rel=stylesheet" informa que é uma folha
        de estilos (não um link de navegação ou outro tipo de recurso). -->
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=2026-11-03" />
 
   <!-- Favicon: o ícone pequeno que aparece na aba do navegador e nos favoritos.
        "type=image/png" informa que é uma imagem PNG.
@@ -819,8 +819,8 @@
        que troca o localStorage pelo banco. Com supabase-config.js vazio, nada muda. -->
   <script src="vendor/supabase-2.117.3.js"></script>
   <script src="supabase-config.js"></script>
-  <script src="backend.js?v=2026-10-25f"></script>
-  <script src="editor-assistente.js?v=2026-10-25e"></script>
-  <script src="db-supabase.js?v=2026-10-25f"></script>
+  <script src="backend.js?v=2026-11-03"></script>
+  <script src="editor-assistente.js?v=2026-11-03"></script>
+  <script src="db-supabase.js?v=2026-11-03"></script>
 </body>
 </html>

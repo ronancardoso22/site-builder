@@ -97,6 +97,75 @@
     return safeImageUrlAntigo(u);
   };
 
+  // ---------------------------------------------------------
+  // VÍDEOS (03/11/2026): balde "videos", só MP4/WEBM/MOV, até 30 MB.
+  // O banco (04-videos.sql) confere tudo de novo: tipo, tamanho,
+  // pasta da pessoa, limites por hora/total e o endereço nos posts.
+  // ---------------------------------------------------------
+  const PREFIXO_VID = CFG.url + '/storage/v1/object/public/videos/';
+  const VIDEO_MAX = 30 * 1024 * 1024;
+  const RE_VIDEO = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(mp4|webm|mov)$/;
+  window.safeVideoUrl = function (u) {
+    return typeof u === 'string' && u.startsWith(PREFIXO_VID) && RE_VIDEO.test(u.slice(PREFIXO_VID.length)) ? u : null;
+  };
+
+  // Descobre o tipo pelo conteúdo do arquivo (não pelo nome, que pode mentir)
+  async function tipoDoVideo(file) {
+    const b = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+    if (b[0] === 0x1A && b[1] === 0x45 && b[2] === 0xDF && b[3] === 0xA3) return { mime: 'video/webm', ext: 'webm' };
+    const txt = String.fromCharCode(...b.slice(4, 12));
+    if (txt.startsWith('ftyp')) {
+      return txt.slice(4) === 'qt  ' ? { mime: 'video/quicktime', ext: 'mov' } : { mime: 'video/mp4', ext: 'mp4' };
+    }
+    return null;
+  }
+
+  // Envia o vídeo para videos/<id-da-pessoa>/<aleatório>.<ext> e devolve o endereço público.
+  // Usa XMLHttpRequest só para mostrar a porcentagem do envio.
+  window.drkEnviarVideo = async function (file, aoProgredir) {
+    const erro = m => Object.assign(new Error(m), { code: 'P0001' });
+    if (!DB.eu) throw erro('Faça login para enviar vídeos.');
+    if (!(file instanceof Blob) || !file.size) throw erro('Arquivo de vídeo inválido.');
+    if (file.size > VIDEO_MAX) throw erro('Vídeo maior que 30 MB. Corte ou diminua a qualidade e tente de novo.');
+    const tipo = await tipoDoVideo(file);
+    if (!tipo) throw erro('Formato não aceito. Use MP4, WEBM ou MOV.');
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw erro('Sua sessão expirou. Entre de novo.');
+    const caminho = `${DB.eu.id}/${crypto.randomUUID()}.${tipo.ext}`;
+    await new Promise((ok, falha) => {
+      const x = new XMLHttpRequest();
+      x.open('POST', `${CFG.url}/storage/v1/object/videos/${caminho}`);
+      x.setRequestHeader('Authorization', 'Bearer ' + session.access_token);
+      x.setRequestHeader('apikey', chave);
+      x.setRequestHeader('Content-Type', tipo.mime);
+      x.setRequestHeader('x-upsert', 'false');
+      x.setRequestHeader('cache-control', 'max-age=31536000');
+      x.upload.onprogress = ev => { if (ev.lengthComputable && aoProgredir) aoProgredir(Math.round(ev.loaded / ev.total * 100)); };
+      x.onload = () => {
+        if (x.status >= 200 && x.status < 300) return ok();
+        if (x.status === 413 || /size|large/i.test(x.responseText)) return falha(erro('Vídeo maior que 30 MB.'));
+        if (x.status === 400 || x.status === 403) return falha(erro('Limite de vídeos atingido (3 por hora, 10 no total) ou espaço do site cheio. Tente mais tarde.'));
+        falha(new Error('envio falhou: ' + x.status));
+      };
+      x.onerror = () => falha(erro('Sem conexão. Confira sua internet.'));
+      x.send(file);
+    });
+    return PREFIXO_VID + caminho;
+  };
+
+  // Apaga um vídeo da própria pasta (ou qualquer um, se for admin; o banco decide)
+  window.drkApagarVideo = async function (url) {
+    if (!window.safeVideoUrl(url)) return;
+    const { error } = await sb.storage.from('videos').remove([url.slice(PREFIXO_VID.length)]);
+    if (error) console.error('[Drakbuilder] erro ao apagar vídeo', error);
+  };
+
+  // Lista os vídeos do Storage usados num post (caminhos dentro do balde)
+  function videosDoPost(p) {
+    return (p?.sections || []).flatMap(s => s.videos || []).filter(u => window.safeVideoUrl(u))
+      .map(u => u.slice(PREFIXO_VID.length));
+  }
+
   // base64 -> arquivo no Storage (pasta do próprio usuário) -> endereço público
   const jaEnviadas = new Map();
   async function enviarImagem(dataUrl) {
@@ -190,10 +259,10 @@
     const idsNovos = new Set(novos.map(p => p.id));
     for (const [id, p] of antes) if (!idsNovos.has(id)) ops.push(['apagar', p]);
     DB.posts = novos; // a tela já mostra a mudança; o banco confirma em seguida
-    DB.fila = DB.fila.then(() => gravarPosts(ops));
+    DB.fila = DB.fila.then(() => gravarPosts(ops, antes));
   };
 
-  async function gravarPosts(ops) {
+  async function gravarPosts(ops, antesDe = new Map()) {
     let falhou = null;
     for (const [op, p] of ops) {
       try {
@@ -203,6 +272,8 @@
           if (!apagados?.length) throw Object.assign(new Error('Você não tem permissão para apagar este post.'), { code: 'P0001' });
           const arquivos = imagensDoMeuStorage(p);
           if (arquivos.length) await sb.storage.from('imagens').remove(arquivos);
+          const vids = videosDoPost(p);
+          if (vids.length) await sb.storage.from('videos').remove(vids);
           continue;
         }
         const linha = await trocarImagensBase64(postParaLinha(p));
@@ -215,6 +286,12 @@
         if (error) throw error;
         if (!data?.length) throw Object.assign(new Error('Você não tem permissão para alterar este post.'), { code: 'P0001' });
         const salvo = linhaParaPost(data[0]);
+        if (op === 'editar') {
+          // vídeos tirados do post na edição: apaga os arquivos
+          const ficaram = new Set(videosDoPost(salvo));
+          const sairam = videosDoPost(antesDe.get(p.id)).filter(v => !ficaram.has(v));
+          if (sairam.length) await sb.storage.from('videos').remove(sairam);
+        }
         DB.posts = DB.posts.map(x => (x.id === salvo.id ? salvo : x));
       } catch (e) {
         console.error('[Drakbuilder] erro ao gravar post', e);
@@ -695,14 +772,16 @@
     const resp = prompt('Isso apaga para sempre sua conta, seu perfil, seus posts, imagens, seguidores e notificações.\n\nPara confirmar, digite EXCLUIR:');
     if (resp !== 'EXCLUIR') { if (resp !== null) showToast('Texto diferente de EXCLUIR. Nada foi apagado.', 'info'); return; }
     try {
-      // 1. apaga as imagens da pasta da pessoa no Storage
-      for (;;) {
-        const { data: arqs, error } = await sb.storage.from('imagens').list(DB.eu.id, { limit: 100 });
-        if (error) throw error;
-        if (!arqs?.length) break;
-        const { error: e2 } = await sb.storage.from('imagens').remove(arqs.map(a => `${DB.eu.id}/${a.name}`));
-        if (e2) throw e2;
-        if (arqs.length < 100) break;
+      // 1. apaga as imagens e os vídeos da pasta da pessoa no Storage
+      for (const balde of ['imagens', 'videos']) {
+        for (;;) {
+          const { data: arqs, error } = await sb.storage.from(balde).list(DB.eu.id, { limit: 100 });
+          if (error) throw error;
+          if (!arqs?.length) break;
+          const { error: e2 } = await sb.storage.from(balde).remove(arqs.map(a => `${DB.eu.id}/${a.name}`));
+          if (e2) throw e2;
+          if (arqs.length < 100) break;
+        }
       }
       // 2. apaga a conta (e, em cascata, perfil, posts, seguidores, notificações)
       const { error } = await sb.rpc('excluir_minha_conta');

@@ -23,7 +23,7 @@
   // Carrega o CSS do assistente (assim basta UMA linha no index.html)
   const css = document.createElement('link');
   css.rel = 'stylesheet';
-  css.href = 'editor-assistente.css';
+  css.href = 'editor-assistente.css?v=2026-11-03';
   document.head.appendChild(css);
 
   // Cria a "página" do assistente dentro do #app
@@ -43,7 +43,7 @@
 
   // Tipos de bloco que o autor pode adicionar
   const TIPOS_BLOCO = {
-    texto: { rotulo: 'Texto',            dica: 'Parágrafos normais. Linha em branco separa os parágrafos. Para pôr uma imagem no meio do texto, clique onde ela deve ficar e depois em "Localize no texto aqui" na imagem.' },
+    texto: { rotulo: 'Texto',            dica: 'Parágrafos normais. Linha em branco separa os parágrafos. Para pôr uma imagem ou vídeo no meio do texto, clique onde ele deve ficar e depois em "Localize no texto aqui".' },
     ficha: { rotulo: 'Ficha',            dica: 'Pares "nome: valor". Vira uma tabela, boa para informações rápidas.' },
     lista: { rotulo: 'Lista em ordem',   dica: 'Itens numerados. Bom para ordem de habilidades ou passo a passo.' },
     itens: { rotulo: 'Itens',            dica: 'Clique no quadrado para pôr a imagem do item (ou arraste / Ctrl+V) e escreva o nome ao lado.' },
@@ -98,8 +98,15 @@
       items: kind === 'lista' ? ['', '', ''] : [],
       itens: kind === 'itens' ? itensVazios() : undefined,
       images: [],
+      videos: [],
     };
   }
+
+  // Vídeos (03/11/2026): no máximo 3 por bloco, até 30 MB cada.
+  // Só funcionam com o banco ligado (o envio é feito pelo db-supabase.js).
+  const MAX_VIDEOS = 3;
+  const videoSeguro = u => !!window.safeVideoUrl(u);
+  const podeVideo = () => typeof window.drkEnviarVideo === 'function';
 
   /* Cria os espaços vazios do bloco "Itens": { trofeus: [{img, nome}, ...], ... } */
   function itensVazios(salvos) {
@@ -122,9 +129,9 @@
   /* Converte uma seção salva de volta para bloco (para editar posts antigos) */
   function secaoParaBloco(s) {
     if (s.kind === 'itens' && s.itens) return { ...blocoVazio('itens', s.name), id: s.id, itens: itensVazios(s.itens) };
-    if (s.kind === 'ficha' && Array.isArray(s.rows)) return { ...blocoVazio('ficha', s.name), id: s.id, rows: s.rows.map(r => ({ ...r })), images: [...(s.images || [])] };
-    if (s.kind === 'lista' && Array.isArray(s.items)) return { ...blocoVazio('lista', s.name), id: s.id, items: [...s.items], images: [...(s.images || [])] };
-    return { ...blocoVazio('texto', s.name), id: s.id || novoId(), text: s.content || '', images: [...(s.images || [])] };
+    if (s.kind === 'ficha' && Array.isArray(s.rows)) return { ...blocoVazio('ficha', s.name), id: s.id, rows: s.rows.map(r => ({ ...r })), images: [...(s.images || [])], videos: [...(s.videos || [])] };
+    if (s.kind === 'lista' && Array.isArray(s.items)) return { ...blocoVazio('lista', s.name), id: s.id, items: [...s.items], images: [...(s.images || [])], videos: [...(s.videos || [])] };
+    return { ...blocoVazio('texto', s.name), id: s.id || novoId(), text: s.content || '', images: [...(s.images || [])], videos: [...(s.videos || [])] };
   }
 
   /* Converte um bloco em seção no formato que o backend.js já sabe mostrar */
@@ -151,6 +158,7 @@
       name: b.name.trim() || `Seção ${i + 1}`,
       content,
       images: [...b.images],
+      videos: b.kind === 'itens' ? [] : (b.videos || []).filter(videoSeguro).slice(0, MAX_VIDEOS),
       kind: b.kind,
       rows: b.kind === 'ficha' ? b.rows.filter(r => r.k.trim() || r.v.trim()) : undefined,
       items: b.kind === 'lista' ? b.items.map(t => t.trim()).filter(Boolean) : undefined,
@@ -192,6 +200,8 @@
       blocks: MODELOS[type].map(([k, n]) => blocoVazio(k, n)),
     };
     E.restaurado = !!salvo;
+    E.blocks.forEach(b => { if (!Array.isArray(b.videos)) b.videos = []; }); // rascunhos antigos
+    E.enviando = null;
     App.inlineEditing = false;
     render();
     showPage('editor');
@@ -224,7 +234,7 @@
     timerRascunho = setTimeout(() => {
       const st = document.getElementById('ae-status');
       try {
-        const { restaurado, ...dados } = E;
+        const { restaurado, enviando, ...dados } = E;
         localStorage.setItem('drk_rascunho_' + E.type, JSON.stringify(dados));
         if (st) st.textContent = 'Rascunho salvo';
       } catch (e) {
@@ -477,8 +487,28 @@
           <label class="ae-img-add">+ Imagens
             <input type="file" accept="image/*" multiple hidden onchange="aeArquivos(this.files,'${b.id}')">
           </label>
-        </div>`}
+        </div>${videosHtml(b)}`}
       </section>`;
+  }
+
+  /* Vídeos do bloco: prévia pequena + número + remover + pôr no texto */
+  function videosHtml(b) {
+    if (!podeVideo() && !(b.videos || []).length) return '';
+    const vids = (b.videos || []).filter(videoSeguro);
+    const enviandoAqui = E.enviando && E.enviando.id === b.id;
+    return `<div class="ae-imgs ae-vids">
+      ${vids.map((src, n) => `
+        <div class="ae-img ae-vid"><video src="${esc(src)}" preload="metadata" muted playsinline></video>
+          <span class="ae-vid-num" title="Escreva [video ${n + 1}] numa linha do texto para mostrar este vídeo ali">▶ ${n + 1}</span>
+          <button title="Remover vídeo" onclick="aeDelVideo('${b.id}',${n})">✕</button>
+          ${b.kind === 'texto' ? `<button class="ae-vid-texto" title="Colocar este vídeo no texto, onde está o cursor" onclick="aeVidNoTexto('${b.id}',${n})">Localize no texto aqui</button>` : ''}</div>`).join('')}
+      ${enviandoAqui ? `<div class="ae-img ae-vid-enviando">Enviando vídeo… ${E.enviando.pct}%</div>` : ''}
+      ${podeVideo() && vids.length < MAX_VIDEOS && !E.enviando ? `
+        <label class="ae-img-add" title="MP4, WEBM ou MOV, até 30 MB">+ Vídeo
+          <input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" hidden onchange="aeVideo(this.files,'${b.id}')">
+        </label>` : ''}
+    </div>
+    ${podeVideo() ? '<p class="ae-hint">Vídeo: MP4, WEBM ou MOV, até 30 MB (cerca de 1 minuto). MP4 funciona em todos os navegadores.</p>' : ''}`;
   }
 
   function passo3() {
@@ -502,7 +532,7 @@
       cardImage: E.cover,
       youtubeUrl: E.type !== 'novidades' && E.yt.trim() ? E.yt.trim() : null,
       youtubeEmbeddable: existente && existente.youtubeUrl === E.yt.trim() ? existente.youtubeEmbeddable : null,
-      sections: E.blocks.map(blocoParaSecao).filter(s => s.content || s.images.length),
+      sections: E.blocks.map(blocoParaSecao).filter(s => s.content || s.images.length || s.videos.length),
     };
   }
 
@@ -537,18 +567,63 @@
   window.aeDelItem = (id, n) => { const b = achar(id); (b.kind === 'ficha' ? b.rows : b.items).splice(n, 1); render(); salvarRascunho(); };
   // Põe a linha [imagem N] no texto do bloco, onde o cursor estava (ou no fim).
   // O site mostra a imagem nesse ponto; a linha pode ser movida à vontade.
-  window.aeImgNoTexto = (id, n) => {
+  window.aeImgNoTexto = (id, n) => porMarcaNoTexto(id, `[imagem ${n + 1}]`, `Imagem ${n + 1} colocada no texto.`);
+  window.aeVidNoTexto = (id, n) => porMarcaNoTexto(id, `[video ${n + 1}]`, `Vídeo ${n + 1} colocado no texto.`);
+  function porMarcaNoTexto(id, marca, aviso) {
     const b = achar(id);
     if (!b || typeof b.text !== 'string') return;
     const ta = document.getElementById('ae-txt-' + id);
     const pos = ta && typeof ta.selectionStart === 'number' ? ta.selectionStart : b.text.length;
     const antes = b.text.slice(0, pos).replace(/[ \t]*$/, '');
     const depois = b.text.slice(pos).replace(/^[ \t]*/, '');
-    const marca = `[imagem ${n + 1}]`;
     b.text = antes + (antes && !antes.endsWith('\n') ? '\n' : '') + marca + (depois && !depois.startsWith('\n') ? '\n' : '') + depois;
     if (ta) { ta.value = b.text; const fim = (antes + (antes && !antes.endsWith('\n') ? '\n' : '') + marca).length; ta.focus(); ta.setSelectionRange(fim, fim); }
     salvarRascunho();
-    showToast(`Imagem ${n + 1} colocada no texto.`, 'info');
+    showToast(aviso, 'info');
+  }
+
+  /* ---------- Vídeos ---------- */
+  async function enviarVideoDoBloco(arquivos, id) {
+    const f = [...(arquivos || [])][0];
+    const b = achar(id);
+    if (!f || !b || !podeVideo() || E.enviando) return;
+    if ((b.videos || []).length >= MAX_VIDEOS) { showToast(`No máximo ${MAX_VIDEOS} vídeos por bloco.`, 'info'); return; }
+    E.enviando = { id, pct: 0 }; render();
+    try {
+      const url = await window.drkEnviarVideo(f, pct => {
+        if (!E || !E.enviando) return;
+        E.enviando.pct = pct;
+        const el = page.querySelector('.ae-vid-enviando');
+        if (el) el.textContent = `Enviando vídeo… ${pct}%`;
+      });
+      if (!E) return;
+      const alvo = achar(id);
+      if (alvo) { alvo.videos = [...(alvo.videos || []), url]; showToast('Vídeo enviado!', 'success'); }
+    } catch (e) {
+      showToast(e?.message && e.code === 'P0001' ? e.message : 'Não consegui enviar o vídeo. Tente de novo.', 'error');
+    }
+    if (!E) return;
+    E.enviando = null; render(); salvarRascunho();
+  }
+  window.aeVideo = (files, id) => enviarVideoDoBloco(files, id);
+
+  // Remove o vídeo e acerta as marcas [video N]. Se ele não está em nenhum
+  // post já salvo, apaga o arquivo do Storage na hora (não fica lixo).
+  window.aeDelVideo = (id, n) => {
+    const b = achar(id);
+    if (!b || !confirm('Remover este vídeo?')) return;
+    const [url] = b.videos.splice(n, 1);
+    if (typeof b.text === 'string') {
+      b.text = b.text.split('\n').map(l => {
+        const m = l.trim().match(/^\[v[ií]deo\s+(\d)\]$/i);
+        if (!m) return l;
+        const k = Number(m[1]);
+        return k === n + 1 ? null : k > n + 1 ? `[video ${k - 1}]` : l;
+      }).filter(l => l !== null).join('\n');
+    }
+    const usado = getPosts().some(p => JSON.stringify(p.sections || []).includes(url));
+    if (url && !usado && typeof window.drkApagarVideo === 'function') window.drkApagarVideo(url);
+    render(); salvarRascunho();
   };
 
   // Remove a imagem e acerta as marcas [imagem N] do texto (a removida some, as seguintes descem 1)
@@ -579,7 +654,7 @@
   };
   window.aeDelBloco = id => {
     const b = achar(id);
-    const temConteudo = b.text.trim() || b.images.length || b.rows.some(r => r.k || r.v) || b.items.some(Boolean)
+    const temConteudo = b.text.trim() || b.images.length || (b.videos || []).length || b.rows.some(r => r.k || r.v) || b.items.some(Boolean)
       || (b.kind === 'itens' && GRUPOS_ITENS.some(g => b.itens[g.chave].some(slotPreenchido)));
     if (temConteudo && !confirm(`Remover o bloco "${b.name || 'sem nome'}"?`)) return;
     E.blocks = E.blocks.filter(x => x.id !== id); render(); salvarRascunho();
@@ -602,20 +677,29 @@
     window.scrollTo({ top: 0 });
   };
 
+  // Apaga do Storage os vídeos deste editor que não estão em nenhum post salvo
+  function apagarVideosSoltos() {
+    if (!E || typeof window.drkApagarVideo !== 'function') return;
+    const salvos = JSON.stringify(getPosts().map(p => p.sections || []));
+    E.blocks.flatMap(b => b.videos || []).filter(u => !salvos.includes(u)).forEach(u => window.drkApagarVideo(u));
+  }
+
   window.aeDescartarRascunho = () => {
     if (!confirm('Apagar o rascunho e começar do zero?')) return;
+    apagarVideosSoltos();
     apagarRascunho(E.type);
     const t = E.type; E = null; window.startInlineCreate(t);
   };
 
   window.aeCancelar = () => {
     const t = E.type, id = E.editingId;
-    if (id) { if (!confirm('Sair sem salvar as alterações?')) return; E = null; showPostDetail(id); return; }
+    if (id) { if (!confirm('Sair sem salvar as alterações?')) return; apagarVideosSoltos(); E = null; showPostDetail(id); return; }
     E = null; showPage(t);
     showToast('O rascunho continua salvo. Ele volta quando você criar de novo.', 'info');
   };
 
   window.aePublicar = () => {
+    if (E.enviando) { showToast('Espere o vídeo terminar de enviar.', 'info'); return; }
     const rascunho = montarPostRascunho();
     const posts = getPosts();
     let salvo;
