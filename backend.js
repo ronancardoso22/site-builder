@@ -54,6 +54,8 @@ const App = {
   myPostsTab:          'builds', // aba ativa na página "Minhas Postagens"
   currentDetailPostId: null,   // ID do post atualmente aberto na página de detalhe
   searchQuery:         '',     // termo de busca normalizado sem acentos ('' = sem busca ativa)
+  searchRaw:           '',     // o mesmo termo como a pessoa digitou (só para mostrar na tela)
+  carregando:          false,  // true enquanto os posts ainda estão vindo do banco
   _searchNav:          false,  // flag interna: fica true enquanto showPage() é acionado pela busca
   _ytEmbeddable:       null,   // resultado da verificação de embed: null=não verificado, true=ok, false=bloqueado
   _ytDebounce:         null,   // timer de debounce para não disparar a verificação a cada tecla digitada
@@ -449,14 +451,7 @@ function goToPage(type, n) {
     if (!App.currentUser?.isAdmin) posts = posts.filter(p => !p.suspended || p.authorId === uid);
     const f = App.currentFilter[type];
     if (f && f !== 'all') posts = posts.filter(p => p.tags.includes(f));
-    if (App.searchQuery) {
-      const q = App.searchQuery;
-      posts = posts.filter(p =>
-        normalize(p.title).includes(q) ||
-        normalize(p.desc).includes(q)  ||
-        p.tags.some(t => normalize(t).includes(q))
-      );
-    }
+    if (App.searchQuery) posts = posts.filter(p => postCombinaBusca(p, App.searchQuery));
     return posts.length;
   })();
   const pages = Math.ceil(total / pag.perPage);
@@ -1017,6 +1012,7 @@ function showPage(pageId) {
   */
   if (!App._searchNav) {
     App.searchQuery = '';
+    App.searchRaw   = '';
     const si = document.getElementById('searchInput');
     if (si) si.value = ''; // limpa o campo de busca visualmente
   }
@@ -1044,6 +1040,8 @@ function showPage(pageId) {
   if (pageId === 'myposts')   renderMyPosts();
   if (pageId === 'settings')  renderSettings();
   if (pageId === 'profile')   renderProfile();
+
+  atualizarEndereco(pageId); // endereço (#/builds...) e título da aba
 }
 
 
@@ -2708,7 +2706,29 @@ function videoHtml(url, n) {
   return `<div class="video-wrapper"><video controls preload="metadata" playsinline src="${escapeHtml(url)}" aria-label="Vídeo ${n}">Seu navegador não consegue tocar este vídeo.</video></div>`;
 }
 
-function formatSectionContent(text, imgs = [], offset = 0, vids = [], ytAqui = null) {
+/*
+  Texto com links clicáveis (03/11/2026). Só endereços https:// viram link.
+  Cada pedaço passa por escapeHtml, então continua sem como injetar código.
+  rel="nofollow ugc": avisa os buscadores que o link foi posto por usuário.
+*/
+function textoComLinks(texto) {
+  const t = String(texto ?? '');
+  const re = /https:\/\/[^\s<>"'`]+/g;
+  let saida = '', ultimo = 0, m;
+  while ((m = re.exec(t))) {
+    let url = m[0].replace(/[.,;:!?)\]]+$/, '');
+    let valido = false;
+    try { valido = new URL(url).protocol === 'https:' && url.length <= 500; } catch (e) { /* não é link */ }
+    if (!valido) continue;
+    saida += escapeHtml(t.slice(ultimo, m.index));
+    saida += `<a class="post-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer nofollow ugc">${escapeHtml(url)}</a>`;
+    ultimo = m.index + url.length;
+    re.lastIndex = ultimo;
+  }
+  return saida + escapeHtml(t.slice(ultimo));
+}
+
+function formatSectionContent(text, imgs = [], offset = 0, vids = [], ytAqui = null, nomeSecao = '') {
   const lines = String(text || '').replace(/\r/g, '').split('\n');
   const kindOf = line => {
     const t = line.trim();
@@ -2736,7 +2756,7 @@ function formatSectionContent(text, imgs = [], offset = 0, vids = [], ytAqui = n
     if (g.kind === 'img') {
       const html = g.lines.map(l => {
         const j = Number(l.match(MARCA_IMAGEM)[1]) - 1;
-        return imgs[j] ? `<img src="${escapeHtml(imgs[j])}" alt="Imagem ${j + 1}" loading="lazy" onclick="openLightbox(${offset + j})" />` : '';
+        return imgs[j] ? `<img src="${escapeHtml(imgs[j])}" alt="${escapeHtml(`Imagem ${j + 1}${nomeSecao ? ' da seção ' + nomeSecao : ''} (clique para ampliar)`)}" loading="lazy" onclick="openLightbox(${offset + j})" />` : '';
       }).join('');
       return html ? `<div class="images-grid n-1">${html}</div>` : '';
     }
@@ -2750,16 +2770,16 @@ function formatSectionContent(text, imgs = [], offset = 0, vids = [], ytAqui = n
     if (g.kind === 'kv' && g.lines.length >= 2) {
       return `<dl class="stat-table">${g.lines.map(l => {
         const idx = l.indexOf(':');
-        return `<div><dt>${escapeHtml(l.slice(0, idx).trim())}</dt><dd>${escapeHtml(l.slice(idx + 1).trim())}</dd></div>`;
+        return `<div><dt>${escapeHtml(l.slice(0, idx).trim())}</dt><dd>${textoComLinks(l.slice(idx + 1).trim())}</dd></div>`;
       }).join('')}</dl>`;
     }
     if (g.kind === 'ol') {
-      return `<ol>${g.lines.map(l => `<li>${escapeHtml(l.replace(/^\d+[.)]\s+/, ''))}</li>`).join('')}</ol>`;
+      return `<ol>${g.lines.map(l => `<li>${textoComLinks(l.replace(/^\d+[.)]\s+/, ''))}</li>`).join('')}</ol>`;
     }
     if (g.kind === 'ul') {
-      return `<ul>${g.lines.map(l => `<li>${escapeHtml(l.replace(/^[-•*]\s+/, ''))}</li>`).join('')}</ul>`;
+      return `<ul>${g.lines.map(l => `<li>${textoComLinks(l.replace(/^[-•*]\s+/, ''))}</li>`).join('')}</ul>`;
     }
-    return `<p>${g.lines.map(escapeHtml).join('<br>')}</p>`;
+    return `<p>${g.lines.map(textoComLinks).join('<br>')}</p>`;
   }).join('');
 }
 
@@ -2999,14 +3019,14 @@ function renderPostDetail(post) {
     // 1 imagem ocupa a largura toda; 2 ou mais viram uma grade.
     const secImgHtml = resto.length > 0 ? `
       <div class="images-grid n-${Math.min(resto.length, 3)}">
-        ${resto.map(([u, j]) => `<img src="${escapeHtml(u)}" alt="${escapeHtml(s.name || 'Imagem')} ${j+1}" loading="lazy" onclick="openLightbox(${imgOffset + j})" />`).join('')}
+        ${resto.map(([u, j]) => `<img src="${escapeHtml(u)}" alt="${escapeHtml(`Imagem ${j + 1}${s.name ? ' da seção ' + s.name : ''} (clique para ampliar)`)}" loading="lazy" onclick="openLightbox(${imgOffset + j})" />`).join('')}
       </div>` : '';
     const offsetSecao = imgOffset;
     imgOffset += sImgs.length; // avança o offset para as próximas seções
     return `
       <div class="detail-section" id="${s.id}">
         <h2 class="detail-section-title">${escapeHtml(s.name || 'Seção')}</h2>
-        <div class="detail-section-content rich">${formatSectionContent(s.content, sImgs, offsetSecao, sVids, ytAqui)}</div>
+        <div class="detail-section-content rich">${formatSectionContent(s.content, sImgs, offsetSecao, sVids, ytAqui, s.name || '')}</div>
         ${secImgHtml}
         ${secVidHtml}
       </div>`;
@@ -3379,7 +3399,9 @@ function renderHomeNews(posts) {
   const c = document.getElementById('homeNewsList');
   if (!c) return;
   if (posts.length === 0) {
-    c.innerHTML = '<p style="color:var(--text-muted);font-size:.85rem;padding:.5rem">Nenhuma novidade ainda.</p>';
+    c.innerHTML = App.carregando
+      ? '<p style="color:var(--text-muted);font-size:.85rem;padding:.5rem" role="status">Carregando…</p>'
+      : '<p style="color:var(--text-muted);font-size:.85rem;padding:.5rem">Nenhuma novidade ainda.</p>';
     return;
   }
   c.innerHTML = posts.map(p => `
@@ -3405,7 +3427,9 @@ function renderHomeBuilds(posts) {
   const c = document.getElementById('homeBuildsList');
   if (!c) return;
   if (posts.length === 0) {
-    c.innerHTML = '<p style="color:var(--text-muted);font-size:.85rem;padding:.5rem">Nenhuma build ainda.</p>';
+    c.innerHTML = App.carregando
+      ? '<p style="color:var(--text-muted);font-size:.85rem;padding:.5rem" role="status">Carregando…</p>'
+      : '<p style="color:var(--text-muted);font-size:.85rem;padding:.5rem">Nenhuma build ainda.</p>';
     return;
   }
   c.innerHTML = posts.map(p => `
@@ -3431,7 +3455,9 @@ function renderHomeGuides(posts) {
   const c = document.getElementById('homeGuidesList');
   if (!c) return;
   if (posts.length === 0) {
-    c.innerHTML = '<p style="color:var(--text-muted);font-size:.85rem;padding:.5rem">Nenhum guia ainda.</p>';
+    c.innerHTML = App.carregando
+      ? '<p style="color:var(--text-muted);font-size:.85rem;padding:.5rem" role="status">Carregando…</p>'
+      : '<p style="color:var(--text-muted);font-size:.85rem;padding:.5rem">Nenhum guia ainda.</p>';
     return;
   }
   c.innerHTML = posts.map(p => `
@@ -3495,15 +3521,25 @@ function renderPage(type) {
   */
   if (App.searchQuery) {
     const q = App.searchQuery;
-    posts = posts.filter(p =>
-      normalize(p.title).includes(q) ||
-      normalize(p.desc).includes(q)  ||
-      p.tags.some(t => normalize(t).includes(q))
-    );
+    posts = posts.filter(p => postCombinaBusca(p, q));
   }
 
   // Ordena mais recentes primeiro
   posts.sort((a, b) => b.timestamp - a.timestamp);
+  renderSearchInfo(type, posts.length);
+
+  if (posts.length === 0 && (App.carregando || App.searchQuery)) {
+    grid.innerHTML = App.carregando
+      ? `<div class="empty-state" style="grid-column:1/-1" role="status"><div class="empty-state-title">Carregando…</div></div>`
+      : `<div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-state-title">Nenhum resultado para “${escapeHtml(App.searchRaw || App.searchQuery)}” em ${NOMES_SECAO[type]}</div>
+          <p>Tente outra palavra${App.currentFilter[type] !== 'all' ? ' ou volte o filtro para "Todos"' : ''}.</p>
+          <button class="btn btn-outline" style="margin:1rem auto;display:flex" onclick="limparBusca()">Limpar busca</button>
+        </div>`;
+    const pagEl = document.getElementById(type + 'Pagination');
+    if (pagEl) pagEl.innerHTML = '';
+    return;
+  }
 
   if (posts.length === 0) {
     grid.innerHTML = `
@@ -3659,8 +3695,12 @@ function buildPostCard(post) {
 function filterPosts(type, filterValue, btnEl) {
   App.currentFilter[type]    = filterValue; // guarda o filtro ativo para este tipo
   App.pagination[type].page  = 1;           // volta à página 1 ao mudar o filtro
-  btnEl.closest('.page-filters').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btnEl.closest('.page-filters').querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-pressed', 'false');
+  });
   btnEl.classList.add('active'); // destaca apenas o botão clicado
+  btnEl.setAttribute('aria-pressed', 'true');
   renderPage(type); // re-renderiza a grade com o novo filtro
 }
 
@@ -3693,62 +3733,123 @@ function filterPosts(type, filterValue, btnEl) {
   → Uma letra só geraria resultados demais (pouco útil).
     "a" corresponderia a quase tudo. Dois já permitem buscas úteis.
 */
-function handleSearch() {
-  const raw   = document.getElementById('searchInput').value.trim();
-  const query = normalize(raw); // normaliza: remove acentos + minúsculas
+const NOMES_SECAO = { novidades: 'Notícias', builds: 'Builds', guias: 'Guias' };
 
-  // Campo vazio ou muito curto → sai do modo de busca
+// Um post combina com a busca? (título, resumo ou tags, sem acentos)
+function postCombinaBusca(p, q) {
+  return normalize(p.title).includes(q) ||
+         normalize(p.desc).includes(q)  ||
+         p.tags.some(t => normalize(t).includes(q));
+}
+
+// Quantos posts visíveis combinam com a busca em cada seção
+function contarBusca(q) {
+  const uid = App.currentUser?.id;
+  const counts = { novidades: 0, builds: 0, guias: 0 };
+  getPosts().forEach(p => {
+    if (!App.currentUser?.isAdmin && p.suspended && p.authorId !== uid) return;
+    if (counts[p.type] === undefined) return;
+    if (postCombinaBusca(p, q)) counts[p.type]++;
+  });
+  return counts;
+}
+
+// Volta os filtros (Todos/PVP/...) de todas as seções para "Todos"
+function limparFiltros() {
+  Object.keys(App.currentFilter).forEach(t => { App.currentFilter[t] = 'all'; });
+  document.querySelectorAll('.page-filters').forEach(box => {
+    box.querySelectorAll('.filter-btn').forEach(b => {
+      const ativo = b.dataset.filter === 'all';
+      b.classList.toggle('active', ativo);
+      b.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+    });
+  });
+}
+
+/*
+  BUSCA (revisada em 03/11/2026, a partir dos relatórios de teste)
+  - Filtra enquanto a pessoa digita (a partir de 2 letras).
+  - Uma busca nova limpa o filtro de tag (PVP etc.), para a lista e a
+    contagem usarem o mesmo critério.
+  - Fica na seção atual se ela tem resultado. Senão vai para a seção com
+    mais resultados. Uma faixa acima da lista diz onde há resultados.
+  - Sem resultado: a lista fica vazia com "Nenhum resultado para ...".
+  - Menos de 2 letras (ex.: "%"): ao apertar Enter, avisa o mínimo.
+*/
+function handleSearch(e) {
+  const input = document.getElementById('searchInput');
+  const raw   = input.value.trim().slice(0, 80);
+  const query = normalize(raw);
+  const enter = e && e.type === 'keydown';
+
   if (query.length < 2) {
+    if (enter && raw) showToast('Digite pelo menos 2 letras para buscar.', 'info');
     if (App.searchQuery) {
-      // Só re-renderiza se havia uma busca ativa (evita trabalho desnecessário)
       App.searchQuery = '';
+      App.searchRaw   = '';
       Object.keys(App.pagination).forEach(t => { App.pagination[t].page = 1; });
-      renderPage('novidades');
-      renderPage('builds');
-      renderPage('guias');
+      ['novidades', 'builds', 'guias'].forEach(renderPage);
     }
     return;
   }
 
-  // Salva o termo normalizado para que renderPage() o use no filtro
+  if (query !== App.searchQuery) limparFiltros(); // busca nova = sem filtro de tag
   App.searchQuery = query;
-
-  // Volta todas as seções para a página 1 — os resultados mudam completamente
+  App.searchRaw   = raw;
   Object.keys(App.pagination).forEach(t => { App.pagination[t].page = 1; });
 
-  // Conta quantos posts correspondem em cada seção
-  // (respeita suspensão: posts suspensos são invisíveis para não-admin)
-  const uid = App.currentUser?.id;
-  const counts = { novidades: 0, builds: 0, guias: 0 };
-  getPosts().forEach(p => {
-    // Pula posts suspensos que o usuário atual não pode ver
-    if (!App.currentUser?.isAdmin && p.suspended && p.authorId !== uid) return;
-    if (counts[p.type] === undefined) return; // tipo desconhecido — ignora
-    if (
-      normalize(p.title).includes(query) ||
-      normalize(p.desc).includes(query)  ||
-      p.tags.some(t => normalize(t).includes(query))
-    ) counts[p.type]++;
-  });
+  const counts = contarBusca(query);
+  const atual  = (document.querySelector('.page.active')?.id || '').replace('page-', '');
+  const secoes = Object.keys(counts);
+  let destino;
+  if (secoes.includes(atual) && (counts[atual] > 0 || secoes.every(t => counts[t] === 0))) destino = atual;
+  else if (secoes.every(t => counts[t] === 0)) destino = 'builds';
+  else destino = secoes.sort((a, b) => counts[b] - counts[a])[0];
 
-  const total = counts.novidades + counts.builds + counts.guias;
-
-  if (total === 0) {
-    showToast(`Nenhum resultado para "${raw}"`, 'info');
-    return;
-  }
-
-  /*
-    Navega para a seção com MAIS resultados.
-    Usamos App._searchNav = true para que showPage() saiba que a navegação
-    foi acionada pela busca e NÃO limpe o App.searchQuery nem o campo.
-  */
-  const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+  if (destino === atual) { renderPage(destino); return; }
   App._searchNav = true;
-  showPage(best);          // renderPage() dentro de showPage() vai filtrar pelos resultados
+  showPage(destino);
   App._searchNav = false;
+}
 
-  showToast(`${total} resultado(s) para "${raw}"`, 'success');
+// Vai para outra seção mantendo a busca (botões da faixa de resultados)
+function irParaBusca(type) {
+  App._searchNav = true;
+  showPage(type);
+  App._searchNav = false;
+}
+
+// Botão "Limpar busca"
+function limparBusca() {
+  const si = document.getElementById('searchInput');
+  if (si) si.value = '';
+  App.searchQuery = '';
+  App.searchRaw   = '';
+  ['novidades', 'builds', 'guias'].forEach(renderPage);
+}
+
+// Faixa acima da lista: "N resultado(s) para X" + outras seções + limpar
+function renderSearchInfo(type, n) {
+  const grid = document.getElementById(type + 'Grid');
+  if (!grid) return;
+  let box = document.getElementById(type + 'SearchInfo');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = type + 'SearchInfo';
+    box.className = 'search-info';
+    box.setAttribute('role', 'status');
+    grid.parentNode.insertBefore(box, grid);
+  }
+  if (!App.searchQuery) { box.innerHTML = ''; box.hidden = true; return; }
+  const counts = contarBusca(App.searchQuery);
+  const outras = Object.keys(counts).filter(t => t !== type && counts[t] > 0)
+    .map(t => `<button type="button" class="search-info-link" onclick="irParaBusca('${t}')">${NOMES_SECAO[t]} (${counts[t]})</button>`);
+  if (n === 0 && !outras.length) { box.innerHTML = ''; box.hidden = true; return; } // a lista vazia já explica
+  box.hidden = false;
+  box.innerHTML = `
+    <span><strong>${n}</strong> resultado${n !== 1 ? 's' : ''} para “${escapeHtml(App.searchRaw || App.searchQuery)}” em ${NOMES_SECAO[type]}.</span>
+    ${outras.length ? `<span>Também em: ${outras.join(' ')}</span>` : ''}
+    <button type="button" class="search-info-clear" onclick="limparBusca()">Limpar busca</button>`;
 }
 
 
@@ -4584,12 +4685,166 @@ function toggleFollow(targetUserId) {
   - Click fora da navbar: fecha menu mobile
   - Enter nos campos de login/cadastro: submete o formulário
 */
+// ===========================================================
+// CORREÇÕES DOS RELATÓRIOS DE TESTE (03/11/2026)
+// ===========================================================
+
+/* ---------- Erros de formulário mostrados no próprio campo ---------- */
+function limparErrosCampos(raiz) {
+  (raiz || document).querySelectorAll('.campo-erro').forEach(el => {
+    el.classList.remove('campo-erro');
+    el.removeAttribute('aria-invalid');
+  });
+  (raiz || document).querySelectorAll('.campo-msg').forEach(m => { m.textContent = ''; });
+}
+
+// Marca o campo com erro, escreve a mensagem embaixo dele e põe o cursor nele
+function erroNoCampo(id, msg) {
+  const el = document.getElementById(id);
+  showToast(msg, 'error');
+  if (!el) return;
+  limparErrosCampos(el.closest('.modal-form') || document);
+  el.classList.add('campo-erro');
+  el.setAttribute('aria-invalid', 'true');
+  const grupo = el.closest('.form-group') || el.closest('label') || el.parentNode;
+  let m = document.getElementById(id + 'Msg');
+  if (!m) {
+    m = document.createElement('small');
+    m.id = id + 'Msg';
+    m.className = 'campo-msg';
+    m.setAttribute('role', 'alert');
+    grupo.appendChild(m);
+    const desc = el.getAttribute('aria-describedby');
+    el.setAttribute('aria-describedby', desc ? desc + ' ' + m.id : m.id);
+  }
+  m.textContent = msg;
+  el.focus();
+}
+
+/* ---------- Botão "Mostrar" nos campos de senha do login/cadastro ---------- */
+function instalarMostrarSenha() {
+  ['loginPassword', 'regPassword', 'regConfirm'].forEach(id => {
+    const input = document.getElementById(id);
+    if (!input || input.parentNode.classList.contains('senha-wrap')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'senha-wrap';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'senha-toggle';
+    btn.textContent = 'Mostrar';
+    btn.setAttribute('aria-label', 'Mostrar senha');
+    btn.setAttribute('aria-pressed', 'false');
+    btn.addEventListener('click', () => {
+      const ver = input.type === 'password';
+      input.type = ver ? 'text' : 'password';
+      btn.textContent = ver ? 'Ocultar' : 'Mostrar';
+      btn.setAttribute('aria-label', ver ? 'Ocultar senha' : 'Mostrar senha');
+      btn.setAttribute('aria-pressed', ver ? 'true' : 'false');
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+/* ---------- Teclado: itens clicáveis que não são botões nem links ----------
+   Cards de post, "Ver todas", itens do menu etc. eram <div>/<span> com onclick:
+   o mouse funcionava, o teclado e o leitor de tela não. Aqui eles ganham
+   role="button" e tabindex="0", e Enter/Espaço fazem o mesmo que o clique. */
+const NATIVOS_CLICAVEIS = 'a, button, input, select, textarea, label, summary, video, iframe';
+function tornarAcessivel(el) {
+  if (el.matches(NATIVOS_CLICAVEIS) || el.matches('.modal-backdrop, .lightbox-backdrop, [contenteditable]')) return;
+  if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
+  if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+}
+function varrerClicaveis(raiz) {
+  if (raiz.nodeType !== 1) return;
+  if (raiz.hasAttribute('onclick')) tornarAcessivel(raiz);
+  raiz.querySelectorAll('[onclick]').forEach(tornarAcessivel);
+}
+function instalarTecladoAcessivel() {
+  varrerClicaveis(document.body);
+  new MutationObserver(lista => lista.forEach(m => m.addedNodes.forEach(varrerClicaveis)))
+    .observe(document.body, { childList: true, subtree: true });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target;
+    if (!el || el.getAttribute?.('role') !== 'button' || el.matches(NATIVOS_CLICAVEIS)) return;
+    e.preventDefault();
+    el.click();
+  });
+}
+
+/* ---------- Endereços das páginas (#/builds, #/post/ID ...) ----------
+   O site é uma página só. Antes, o endereço nunca mudava, então não dava para
+   compartilhar uma build nem usar o botão Voltar. Agora cada tela tem um
+   endereço com # (funciona em qualquer hospedagem, sem configurar servidor). */
+const TITULO_SITE = 'Drakbuilder – Tudo sobre o universo do jogo';
+const ROTAS_SECAO = { builds: 'builds', guias: 'guias', novidades: 'novidades', noticias: 'novidades' };
+
+function enderecoDaTela(pageId) {
+  if (pageId === 'home') return '#/';
+  if (pageId === 'builds' || pageId === 'guias' || pageId === 'novidades') return '#/' + pageId;
+  if (pageId === 'detail' && App.currentDetailPostId) return '#/post/' + encodeURIComponent(App.currentDetailPostId);
+  if (pageId === 'profile' && App.currentProfileId) return '#/perfil/' + encodeURIComponent(App.currentProfileId);
+  return null; // telas de quem está logado (Minhas postagens, Configurações...) não ganham endereço
+}
+
+function tituloDaTela(pageId) {
+  if (pageId === 'detail' && App.currentDetailPostId) {
+    const p = getPosts().find(x => x.id === App.currentDetailPostId);
+    if (p) return `${p.title} · Drakbuilder`;
+  }
+  const nomes = { builds: 'Builds', guias: 'Guias', novidades: 'Notícias', profile: 'Perfil',
+                  myposts: 'Minhas postagens', settings: 'Configurações' };
+  return nomes[pageId] ? `${nomes[pageId]} · Drakbuilder` : TITULO_SITE;
+}
+
+// Chamada no fim de showPage(): troca o endereço e o título da aba
+function atualizarEndereco(pageId) {
+  document.title = tituloDaTela(pageId);
+  if (App._aplicandoRota) return; // a mudança veio do próprio endereço (Voltar/link)
+  const novo = enderecoDaTela(pageId);
+  const alvo = novo === null ? location.pathname + location.search : novo;
+  const atual = location.hash || '';
+  if ((novo === null && !atual) || atual === novo) return;
+  try { history.pushState(null, '', alvo); } catch (e) { /* navegador antigo: ignora */ }
+}
+
+// Lê o endereço e abre a tela certa (ao carregar, no Voltar/Avançar e em links)
+function aplicarRota() {
+  const h = location.hash || '';
+  if (h && !h.startsWith('#/')) return; // âncoras comuns (#algo) não são rotas
+  const partes = h.replace(/^#\/?/, '').split('/').map(x => { try { return decodeURIComponent(x); } catch (e) { return ''; } });
+  const [rota, arg] = partes;
+  App._aplicandoRota = true;
+  try {
+    if (!rota) { if (document.querySelector('.page.active')?.id !== 'page-home' || h) showPage('home'); }
+    else if (ROTAS_SECAO[rota]) showPage(ROTAS_SECAO[rota]);
+    else if (rota === 'post' && arg) {
+      const existe = getPosts().some(p => p.id === arg);
+      if (existe) showPostDetail(arg);
+      else if (!App.carregando) { showToast('Este post não existe mais ou foi removido.', 'info'); showPage('home'); }
+    }
+    else if (rota === 'perfil' && arg) showProfile(arg);
+    else showPage('home');
+  } finally { App._aplicandoRota = false; }
+  if (!rota || (rota === 'post' && !App.carregando && !getPosts().some(p => p.id === arg))) {
+    try { history.replaceState(null, '', location.pathname + location.search + (rota ? '#/' : '')); } catch (e) { /* ignora */ }
+  }
+}
+window.addEventListener('popstate', aplicarRota);
+window.addEventListener('hashchange', aplicarRota);
+
 document.addEventListener('DOMContentLoaded', () => {
   seedDefaultPosts(); // popula posts de exemplo se for a primeira vez
   seedTestGuias();    // insere 15 guias de teste para visualização da paginação
   applySeedCovers();  // coloca prints oficiais da Steam como capa dos posts de exemplo
   restoreSession();   // restaura login salvo na sessionStorage
   renderHome();       // renderiza o conteúdo inicial da home
+  instalarMostrarSenha();
+  instalarTecladoAcessivel();
+  aplicarRota();      // abre a tela do endereço (ex.: link compartilhado de uma build)
 
   // Tecla Escape: fecha o que estiver aberto na seguinte prioridade:
   // 1. Lightbox (visualizador de imagem) → 2. Modais → 3. Menu mobile
