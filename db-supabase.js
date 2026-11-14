@@ -350,8 +350,14 @@
         mudou.avatar_url = eu.avatar ? await trocarImagensBase64(eu.avatar) : null;
       }
       if (Object.keys(mudou).length) {
-        const { error } = await sb.from('profiles').update(mudou).eq('id', eu.id);
+        const { data: salvo, error } = await sb.from('profiles').update(mudou).eq('id', eu.id)
+          .select('name,bio').maybeSingle();
         if (error) throw error;
+        // O banco troca palavrões por ***** (05-filtro-palavroes.sql): usa o que ficou salvo
+        if (salvo) {
+          eu.name = salvo.name; eu.bio = salvo.bio;
+          if (App.currentUser) { App.currentUser.name = salvo.name; App.currentUser.bio = salvo.bio; }
+        }
         if ('avatar_url' in mudou) {
           eu.avatar = mudou.avatar_url;
           if (App.currentUser) App.currentUser.avatar = mudou.avatar_url;
