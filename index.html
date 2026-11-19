@@ -112,7 +112,7 @@
   <!-- Carrega o arquivo de estilos CSS. O navegador aplica TODOS os estilos
        de style.css a esta página. "rel=stylesheet" informa que é uma folha
        de estilos (não um link de navegação ou outro tipo de recurso). -->
-  <link rel="stylesheet" href="style.css?v=2026-11-03d" />
+  <link rel="stylesheet" href="style.css?v=2026-11-19a" />
 
   <!-- Favicon: o ícone pequeno que aparece na aba do navegador e nos favoritos.
        "type=image/png" informa que é uma imagem PNG.
@@ -251,6 +251,9 @@
           <div class="user-menu-item" onclick="showMyPosts('guias')">
             Meus guias
           </div>
+          <div class="user-menu-item" onclick="showMeusLikes()">
+            Meus likes
+          </div>
 
           <div class="divider" style="margin:.4rem 0"></div>
 
@@ -327,7 +330,7 @@
              O hero usa h1 implicitamente, então as colunas usam h2. -->
         <div class="section-block block-builds">
           <div class="section-header">
-            <h2 class="section-title">Builds recentes</h2>
+            <h2 class="section-title" id="homeBuildsTitle">Builds recentes</h2>
             <span class="section-link" onclick="showPage('builds')">Ver todas</span>
           </div>
           <div id="homeBuildsList">
@@ -357,7 +360,7 @@
         <!-- COLUNA 2: Prévia das builds em destaque -->
         <div class="section-block block-guides">
           <div class="section-header">
-            <h2 class="section-title">Guias</h2>
+            <h2 class="section-title" id="homeGuidesTitle">Guias recentes</h2>
             <span class="section-link" onclick="showPage('guias')">Ver todos</span>
           </div>
           <div id="homeGuidesList">
@@ -484,6 +487,8 @@
          seção (Builds / Guias), com opção de editar ou deletar cada um.
     ===================================================== -->
     <div class="page" id="page-myposts"></div>
+    <!-- Meus likes: posts que o usuário curtiu (preenchido pelo JavaScript) -->
+    <div class="page" id="page-meuslikes"></div>
 
     <!-- =====================================================
          PÁGINA: CONFIGURAÇÕES
@@ -804,8 +809,8 @@
        que troca o localStorage pelo banco. Com supabase-config.js vazio, nada muda. -->
   <script src="vendor/supabase-2.117.3.js"></script>
   <script src="supabase-config.js"></script>
-  <script src="backend.js?v=2026-11-03d"></script>
+  <script src="backend.js?v=2026-11-19a"></script>
   <script src="editor-assistente.js?v=2026-11-03c"></script>
-  <script src="db-supabase.js?v=2026-11-10a"></script>
+  <script src="db-supabase.js?v=2026-11-19a"></script>
 </body>
 </html>
