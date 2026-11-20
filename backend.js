@@ -1038,6 +1038,7 @@ function showPage(pageId) {
   if (pageId === 'builds')    renderPage('builds');
   if (pageId === 'guias')     renderPage('guias');
   if (pageId === 'myposts')   renderMyPosts();
+  if (pageId === 'meuslikes') renderMeusLikes();
   if (pageId === 'settings')  renderSettings();
   if (pageId === 'profile')   renderProfile();
 
@@ -1293,6 +1294,7 @@ function loginUser(user) {
   else if (activeId === 'page-guias')      renderPage('guias');
   else if (activeId === 'page-novidades')  renderPage('novidades');
   else if (activeId === 'page-myposts')    renderMyPosts();
+  else if (activeId === 'page-meuslikes')  renderMeusLikes();
 }
 
 /*
@@ -3166,7 +3168,7 @@ function renderPostDetail(post) {
               <span class="detail-date">${post.date}</span>
             </div>
           </div>
-          <div class="detail-hero-actions">${editBtn}${deleteBtn}</div>
+          <div class="detail-hero-actions">${botaoCurtirHtml(post)}${editBtn}${deleteBtn}</div>
         </header>
       </div>
 
@@ -3384,8 +3386,15 @@ function renderHome() {
   const visible = p => !p.suspended || isAdmin || p.authorId === uid;
 
   renderHomeNews(getPostsByType('novidades').filter(visible).slice(0, 3));
-  renderHomeBuilds(getPostsByType('builds').filter(visible).slice(0, 3));
-  renderHomeGuides(getPostsByType('guias').filter(visible).slice(0, 3));
+  renderHomeBuilds(maisCurtidosDaSemana(getPostsByType('builds').filter(visible), 3));
+  renderHomeGuides(maisCurtidosDaSemana(getPostsByType('guias').filter(visible), 3));
+
+  // Títulos das colunas: com curtidas ligadas, a home mostra o ranking da semana
+  const ranking = curtidasAtivas();
+  const tB = document.getElementById('homeBuildsTitle');
+  const tG = document.getElementById('homeGuidesTitle');
+  if (tB) tB.textContent = ranking ? 'Builds mais curtidas da semana' : 'Builds recentes';
+  if (tG) tG.textContent = ranking ? 'Guias mais curtidos da semana' : 'Guias recentes';
 }
 
 /*
@@ -3444,6 +3453,7 @@ function renderHomeBuilds(posts) {
         <div class="build-tags">
           ${p.tags.map(t => `<span class="tag tag-${t.toLowerCase()}">${t}</span>`).join('')}
         </div>
+        ${curtidasSemanaHtml(p)}
       </div>
       <div class="build-arrow">›</div>
     </div>
@@ -3471,10 +3481,169 @@ function renderHomeGuides(posts) {
         <div class="guide-name">${escapeHtml(p.title)}</div>
         <!-- substring(0, 60) limita a descrição a 60 caracteres para o card não ficar muito alto -->
         <div class="guide-desc">${escapeHtml(p.desc)}</div>
+        ${curtidasSemanaHtml(p)}
       </div>
       <div class="build-arrow" style="color:var(--gold)">›</div>
     </div>
   `).join('');
+}
+
+
+// ===========================================================
+// CURTIDAS (LIKES) — 19/11/2026
+// ===========================================================
+/*
+  Os dados e a gravação ficam em db-supabase.js (window.drkCurtidas);
+  quem garante "1 curtida por conta por post" é o banco (06-curtidas.sql).
+  Aqui só desenhamos o botão, os números e o ranking da home.
+  Sem banco (modo antigo) ou sem o SQL 06, tudo isso some sozinho.
+*/
+function curtidasAtivas() {
+  return !!(window.drkCurtidas && window.drkCurtidas.ativo);
+}
+function curtivel(post) {
+  return curtidasAtivas() && !!post && (post.type === 'builds' || post.type === 'guias');
+}
+
+// Coração em pixel art (combina com o jogo). Só desenho, sem texto do usuário.
+const ICONE_CORACAO = '<svg class="like-icon" viewBox="0 0 7 6" aria-hidden="true" shape-rendering="crispEdges">'
+  + '<path d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z"/></svg>';
+
+/*
+  Ranking da home: mais curtidas nos últimos 7 dias. Empate → mais
+  curtidas no total → mais recente. Se poucas tiverem curtidas na semana,
+  completa com as mais recentes (a coluna nunca fica vazia).
+*/
+function maisCurtidosDaSemana(lista, n) {
+  if (!curtidasAtivas()) return lista.slice(0, n);
+  const C = window.drkCurtidas;
+  const top = lista.filter(p => C.semana(p.id) > 0)
+    .sort((a, b) => (C.semana(b.id) - C.semana(a.id)) || (C.total(b.id) - C.total(a.id)) || (b.timestamp - a.timestamp))
+    .slice(0, n);
+  const usados = new Set(top.map(p => p.id));
+  return top.concat(lista.filter(p => !usados.has(p.id)).slice(0, n - top.length));
+}
+
+// "♥ 3 na semana" nos cards da home (só se tiver curtida na semana)
+function curtidasSemanaHtml(post) {
+  if (!curtivel(post)) return '';
+  const n = window.drkCurtidas.semana(post.id);
+  if (!n) return '';
+  return `<div class="like-week" title="Curtidas nos últimos 7 dias">${ICONE_CORACAO}<span>${n} na semana</span></div>`;
+}
+
+// Número total de curtidas no rodapé dos cards das listas
+function curtidasCardHtml(post) {
+  if (!curtivel(post)) return '';
+  const n = window.drkCurtidas.total(post.id);
+  const on = window.drkCurtidas.curti(post.id);
+  return `<span class="like-count${on ? ' is-on' : ''}" data-like-count="${escapeHtml(post.id)}"
+    title="${n === 1 ? '1 curtida' : n + ' curtidas'}" ${n ? '' : 'hidden'}>${ICONE_CORACAO}<span class="like-num">${n}</span></span>`;
+}
+
+// Botão "Curtir" da página do post
+function botaoCurtirHtml(post) {
+  if (!curtivel(post)) return '';
+  const C = window.drkCurtidas;
+  const n = C.total(post.id);
+  const id = escapeHtml(post.id);
+  if (App.currentUser && App.currentUser.id === post.authorId) {
+    // O autor vê quantas curtidas tem, mas não pode curtir o próprio post
+    return `<span class="like-btn is-own" data-like-post="${id}" title="Curtidas do seu post">
+      ${ICONE_CORACAO}<span class="like-label">Curtidas</span><span class="like-num">${n}</span></span>`;
+  }
+  const on = C.curti(post.id);
+  return `<button type="button" class="like-btn${on ? ' is-on' : ''}" data-like-post="${id}"
+    aria-pressed="${on}" onclick="alternarCurtida('${id}', event)"
+    title="${on ? 'Tirar curtida' : 'Curtir este post'}">
+    ${ICONE_CORACAO}<span class="like-label">${on ? 'Curtido' : 'Curtir'}</span><span class="like-num">${n}</span></button>`;
+}
+
+function alternarCurtida(postId, ev) {
+  if (ev) ev.stopPropagation(); // não abre o card que está por trás
+  if (window.drkCurtidas) window.drkCurtidas.alternar(String(postId));
+}
+
+// Atualiza os botões e números de UM post na tela, sem redesenhar a página
+function atualizarBotoesCurtir(postId) {
+  if (!window.drkCurtidas) return;
+  const C = window.drkCurtidas;
+  const n = C.total(postId), on = C.curti(postId);
+  document.querySelectorAll('[data-like-post]').forEach(el => {
+    if (el.dataset.likePost !== postId) return;
+    el.querySelector('.like-num').textContent = String(n);
+    if (el.tagName !== 'BUTTON') return;
+    el.classList.toggle('is-on', on);
+    el.setAttribute('aria-pressed', String(on));
+    el.title = on ? 'Tirar curtida' : 'Curtir este post';
+    el.querySelector('.like-label').textContent = on ? 'Curtido' : 'Curtir';
+    if (on) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+  });
+  document.querySelectorAll('[data-like-count]').forEach(el => {
+    if (el.dataset.likeCount !== postId) return;
+    el.querySelector('.like-num').textContent = String(n);
+    el.hidden = !n;
+    el.classList.toggle('is-on', on);
+    el.title = n === 1 ? '1 curtida' : n + ' curtidas';
+  });
+}
+
+/*
+  MEUS LIKES — página só com os posts que a pessoa curtiu (builds e guias),
+  do curtido mais recente para o mais antigo. Filtro Todos / Builds / Guias.
+*/
+function showMeusLikes(filtro) {
+  App.meusLikesFiltro = ['builds', 'guias'].includes(filtro) ? filtro : 'todos';
+  showPage('meuslikes');
+}
+
+function renderMeusLikes() {
+  const page = document.getElementById('page-meuslikes');
+  if (!page) return;
+  if (!App.currentUser) { page.innerHTML = ''; return; }
+
+  const filtro = App.meusLikesFiltro || 'todos';
+  const tab = (valor, nome) => `<button class="myposts-tab ${filtro === valor ? 'active' : ''}"
+      onclick="showMeusLikes('${valor}')">${nome}</button>`;
+
+  let corpo;
+  if (!curtidasAtivas()) {
+    corpo = `<div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-state-title">${App.carregando ? 'Carregando…' : 'As curtidas ainda não estão disponíveis.'}</div>
+      </div>`;
+  } else {
+    const porId = new Map(getPosts().map(p => [p.id, p]));
+    const posts = window.drkCurtidas.minhas()
+      .map(id => porId.get(id))
+      .filter(p => p && (p.type === 'builds' || p.type === 'guias'))
+      .filter(p => filtro === 'todos' || p.type === filtro);
+    corpo = posts.length
+      ? posts.map(p => buildPostCard(p)).join('')
+      : `<div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-state-icon like-empty-icon">${ICONE_CORACAO}</div>
+          <div class="empty-state-title">${filtro === 'guias' ? 'Nenhum guia curtido ainda'
+              : filtro === 'builds' ? 'Nenhuma build curtida ainda' : 'Você ainda não curtiu nenhum post'}</div>
+          <p>Abra uma build ou um guia e toque em <strong>Curtir</strong>. Eles aparecem aqui.</p>
+          <div style="display:flex;gap:.6rem;justify-content:center;margin-top:1rem;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="showPage('builds')">Ver builds</button>
+            <button class="btn btn-outline" onclick="showPage('guias')">Ver guias</button>
+          </div>
+        </div>`;
+  }
+
+  page.innerHTML = `
+    <div class="container">
+      <div class="myposts-header">
+        <div>
+          <h1 class="page-header-title">Meus likes</h1>
+          <p class="meuslikes-sub">Builds e guias que você curtiu. Só você vê esta lista.</p>
+        </div>
+        <div class="myposts-tabs" role="group" aria-label="Filtrar">
+          ${tab('todos', 'Todos')}${tab('builds', 'Builds')}${tab('guias', 'Guias')}
+        </div>
+      </div>
+      <div class="posts-grid">${corpo}</div>
+    </div>`;
 }
 
 
@@ -3673,7 +3842,7 @@ function buildPostCard(post) {
             <div class="post-card-avatar">${post.author[0].toUpperCase()}</div>
             <span>${escapeHtml(post.author)}</span>
           </div>
-          <span>${post.date}</span>
+          <span class="post-card-meta">${curtidasCardHtml(post)}<span>${post.date}</span></span>
         </div>
       </div>
     </div>
@@ -4796,7 +4965,7 @@ function tituloDaTela(pageId) {
     if (p) return `${p.title} · Drakbuilder`;
   }
   const nomes = { builds: 'Builds', guias: 'Guias', novidades: 'Notícias', profile: 'Perfil',
-                  myposts: 'Minhas postagens', settings: 'Configurações' };
+                  myposts: 'Minhas postagens', meuslikes: 'Meus likes', settings: 'Configurações' };
   return nomes[pageId] ? `${nomes[pageId]} · Drakbuilder` : TITULO_SITE;
 }
 

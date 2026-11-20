@@ -4001,3 +4001,56 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 
 /* Links dentro do texto dos posts */
 .post-link { color: var(--magma-bright); word-break: break-all; }
+
+/* ============================================================
+   CURTIDAS (LIKES) — 19/11/2026
+   Coração em pixel art, cor de brasa quando curtido.
+   Mesmo estilo dos botões do site: canto reto, borda grossa,
+   sombra dura. Sem brilho, sem gradiente.
+============================================================ */
+.like-icon { width: 1.05em; height: .9em; flex: none; fill: currentColor; }
+
+.like-btn {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-family: var(--font-ui); font-size: .9rem; line-height: 1;
+  padding: .45rem .85rem; border-radius: 0;
+  background: transparent; color: var(--text-secondary);
+  border: 2px solid var(--border); cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+button.like-btn:hover { color: var(--text-primary); border-color: var(--magma-mid); }
+button.like-btn:focus-visible { outline: 2px solid var(--magma-bright); outline-offset: 2px; }
+button.like-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+.like-btn .like-num {
+  font-variant-numeric: tabular-nums; min-width: 1ch;
+  padding-left: .45rem; border-left: 1px solid var(--border);
+  color: var(--text-primary);
+}
+.like-btn.is-on, button.like-btn.is-on:hover { color: var(--magma-bright); border-color: var(--magma-bright); background: rgba(224,120,47,.1); }
+.like-btn.is-on .like-num { border-left-color: rgba(224,120,47,.4); }
+.like-btn.is-own { cursor: default; box-shadow: none; }
+.like-btn.pop .like-icon { animation: like-pop .28s steps(3) 1; }
+@keyframes like-pop { 0% { transform: scale(1); } 50% { transform: scale(1.45); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .like-btn.pop .like-icon { animation: none; } }
+
+.detail-hero-actions { gap: .5rem; flex-wrap: wrap; align-items: flex-start; }
+
+/* Número no rodapé dos cards */
+.post-card-meta { display: inline-flex; align-items: center; gap: .75rem; }
+.like-count { display: inline-flex; align-items: center; gap: .3rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.like-count[hidden] { display: none; }
+.like-count.is-on { color: var(--magma-bright); }
+
+/* "♥ 3 na semana" nos cards da home */
+.like-week {
+  display: inline-flex; align-items: center; gap: .3rem; margin-top: .3rem;
+  font-size: .82rem; color: var(--magma-bright); font-variant-numeric: tabular-nums;
+}
+
+/* Página Meus likes */
+.meuslikes-sub { color: var(--text-secondary); font-size: .95rem; margin-top: .25rem; }
+.like-empty-icon { color: var(--magma-bright); font-size: 2.2rem; }
+/* Cabeçalho de "Minhas postagens" e "Meus likes" alinhado com a grade de cards */
+.myposts-header { max-width: 1280px; margin: 2rem auto 1.25rem; padding: 0 2rem; }
+@media (max-width: 768px) { .myposts-header { padding: 0 1rem; } }

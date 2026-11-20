@@ -244,10 +244,95 @@
   }
 
   async function recarregarPosts() {
-    const { data, error } = await sb.from('posts').select(COLS_POST).order('created_at', { ascending: false }).limit(2000);
+    const [{ data, error }] = await Promise.all([
+      sb.from('posts').select(COLS_POST).order('created_at', { ascending: false }).limit(2000),
+      carregarCurtidas(),
+    ]);
     if (error) { showToast(msgErro(error, 'Não foi possível carregar os posts.'), 'error'); return; }
     DB.posts = data.map(linhaParaPost).filter(Boolean);
   }
+
+  // ---------------------------------------------------------
+  // CURTIDAS (LIKES) — 19/11/2026 (supabase/06-curtidas.sql)
+  // 1 curtida por conta por post, só em builds e guias. Quem decide
+  // isso é o banco; aqui só mostramos. O site recebe só NÚMEROS de
+  // curtidas (nunca quem curtiu) e a lista das curtidas da própria pessoa.
+  // Se o SQL 06 ainda não foi rodado, o recurso fica desligado e a home
+  // volta a mostrar os posts recentes.
+  // ---------------------------------------------------------
+  const CURT = {
+    ativo: false,
+    contagem: new Map(), // post_id -> { total, semana }
+    minhas: new Map(),   // post_id -> quando curti (ms)
+    enviando: new Set(), // posts com clique em andamento (evita clique duplo)
+  };
+  const idPostOk = v => typeof v === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(v);
+  const numOk = v => { const n = Number(v); return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0; };
+
+  async function carregarCurtidas() {
+    const { data, error } = await sb.rpc('curtidas_dos_posts');
+    if (error) { CURT.ativo = false; console.warn('[Drakbuilder] curtidas desligadas:', error.message); return; }
+    CURT.ativo = true;
+    CURT.contagem = new Map((data || []).filter(r => idPostOk(r.post_id))
+      .map(r => [r.post_id, { total: numOk(r.total), semana: numOk(r.semana) }]));
+  }
+
+  async function carregarMinhasCurtidas() {
+    CURT.minhas = new Map();
+    if (!DB.eu) return;
+    const { data, error } = await sb.from('post_likes').select('post_id,created_at')
+      .order('created_at', { ascending: false }).limit(5000);
+    if (error) { console.warn('[Drakbuilder] não foi possível ler suas curtidas:', error.message); return; }
+    for (const r of data || []) if (idPostOk(r.post_id)) CURT.minhas.set(r.post_id, new Date(r.created_at).getTime() || 0);
+  }
+
+  function somar(id, delta) {
+    const c = CURT.contagem.get(id) || { total: 0, semana: 0 };
+    CURT.contagem.set(id, { total: Math.max(0, c.total + delta), semana: Math.max(0, c.semana + delta) });
+  }
+
+  window.drkCurtidas = {
+    get ativo() { return CURT.ativo; },
+    total:  id => CURT.contagem.get(id)?.total || 0,
+    semana: id => CURT.contagem.get(id)?.semana || 0,
+    curti:  id => CURT.minhas.has(id),
+    // ids que eu curti, do mais recente para o mais antigo
+    minhas: () => [...CURT.minhas.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id),
+    async alternar(id) {
+      if (!CURT.ativo || !idPostOk(id)) return;
+      if (!App.currentUser || !DB.eu) {
+        showToast('Entre na sua conta para curtir.', 'info');
+        openAuthModal();
+        return;
+      }
+      const post = DB.posts.find(p => p.id === id);
+      if (!post || (post.type !== 'builds' && post.type !== 'guias')) return;
+      if (post.authorId === DB.eu.id) { showToast('Você não pode curtir o próprio post.', 'info'); return; }
+      if (CURT.enviando.has(id)) return;
+      CURT.enviando.add(id);
+      const jaCurti = CURT.minhas.has(id);
+      // Mostra na hora; se o banco recusar, desfaz
+      if (jaCurti) { CURT.minhas.delete(id); somar(id, -1); }
+      else { CURT.minhas.set(id, Date.now()); somar(id, +1); }
+      atualizarBotoesCurtir(id);
+      try {
+        if (jaCurti) {
+          const { error } = await sb.from('post_likes').delete().eq('post_id', id);
+          if (error) throw error;
+        } else {
+          const { error } = await sb.from('post_likes').insert({ post_id: id });
+          if (error && error.code !== '23505') throw error; // 23505 = já estava curtido
+        }
+      } catch (e) {
+        if (jaCurti) { CURT.minhas.set(id, Date.now()); somar(id, +1); }
+        else { CURT.minhas.delete(id); somar(id, -1); }
+        atualizarBotoesCurtir(id);
+        showToast(msgErro(e, 'Não foi possível salvar sua curtida. Tente de novo.'), 'error');
+      } finally {
+        CURT.enviando.delete(id);
+      }
+    },
+  };
 
   window.getPosts = () => DB.posts.map(p => ({ ...p }));
 
@@ -496,7 +581,7 @@
   async function entrarNaTela() {
     const eu = await carregarEu();
     if (!eu) return;
-    await Promise.all([carregarNotificacoes(), recarregarPosts()]);
+    await Promise.all([carregarNotificacoes(), recarregarPosts(), carregarMinhasCurtidas()]);
     const u = sanitizeUser({ ...eu, following: [...DB.seguindo] });
     loginUserAntigo(u);
     // loginUser() antigo só reconhece o admin "virtual"; aqui quem diz é o banco.
@@ -718,7 +803,7 @@
         await entrarNaTela();
         if (evento === 'SIGNED_IN') showToast(`Bem-vindo, ${DB.eu?.name || 'Aventureiro'}! 🐉`, 'success');
       } else if (evento === 'SIGNED_OUT') {
-        DB.eu = null; DB.seguindo = []; DB.notifs = [];
+        DB.eu = null; DB.seguindo = []; DB.notifs = []; CURT.minhas = new Map();
         if (App.currentUser) logoutAntigo();
         await recarregarPosts();
         rerenderAtivo();
@@ -854,6 +939,7 @@
     else if (ativa === 'page-guias')       renderPage('guias');
     else if (ativa === 'page-novidades')   renderPage('novidades');
     else if (ativa === 'page-myposts')     renderMyPosts();
+    else if (ativa === 'page-meuslikes')   renderMeusLikes();
     else if (ativa === 'page-profile')     window.renderProfile();
     else if (ativa === 'page-settings')    window.renderSettings();
   }
