@@ -112,12 +112,15 @@
   <!-- Carrega o arquivo de estilos CSS. O navegador aplica TODOS os estilos
        de style.css a esta página. "rel=stylesheet" informa que é uma folha
        de estilos (não um link de navegação ou outro tipo de recurso). -->
-  <link rel="stylesheet" href="style.css?v=2026-11-19a" />
+  <link rel="stylesheet" href="style.css?v=2026-11-20a" />
 
   <!-- Favicon: o ícone pequeno que aparece na aba do navegador e nos favoritos.
        "type=image/png" informa que é uma imagem PNG.
        "rel=icon" informa que é o ícone da página (não uma imagem de conteúdo). -->
-  <link rel="icon" type="image/png" href="imagens/favicon.png" />
+  <!-- 20/11/2026: favicon = emblema dragão dourado (32px PNG + .ico para navegadores antigos + ícone do iPhone) -->
+  <link rel="icon" type="image/png" sizes="32x32" href="imagens/favicon-emblema-32.png" />
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="imagens/apple-touch-icon.png" />
 </head>
 <body>
 
@@ -142,7 +145,11 @@
     <div class="nav-logo" onclick="showPage('home')">
       <!-- "alt" (texto alternativo) descreve a imagem para leitores de tela
            e aparece quando a imagem não carrega. Importante para acessibilidade. -->
-      <img src="imagens/favicon.png" class="nav-logo-icon" alt="Drakbuilder logo" />
+      <!-- 20/11/2026: logo = emblema dragão dourado. WebP (17 KB) com PNG de reserva. -->
+      <picture>
+        <source srcset="imagens/logo-emblema.webp" type="image/webp" />
+        <img src="imagens/logo-emblema.png" class="nav-logo-icon" alt="Drakbuilder logo" width="40" height="40" />
+      </picture>
       <!-- <span> é um container inline genérico — não quebra a linha, só envolve texto -->
       <span class="nav-logo-text">DRAKBUILDER</span>
     </div>
