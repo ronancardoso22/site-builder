@@ -85,12 +85,16 @@
     notifs: [],           // notificações do usuário logado
     eu: null,             // dados do usuário logado
     fila: Promise.resolve(),
+    completos: new Set(), // ids dos posts com o texto (sections) já carregado
   };
 
   // "!posts_author_id_fkey" diz ao banco QUAL ligação usar para achar o autor.
   // Sem isso, depois das curtidas (post_likes também liga posts a perfis) o banco
   // respondia "mais de uma ligação" (erro PGRST201) e nenhum post aparecia (20/11/2026).
-  const COLS_POST = 'id,type,title,descr,emoji,tags,card_image,sections,youtube_url,youtube_embeddable,suspended,created_at,author_id,autor:profiles!posts_author_id_fkey(id,name,avatar_url)';
+  const COLS_POST = 'id,type,title,descr,emoji,tags,card_image,sections,youtube_url,youtube_embeddable,suspended,created_at,updated_at,author_id,autor:profiles!posts_author_id_fkey(id,name,avatar_url)';
+  // A lista é a mesma coisa SEM o texto das seções (a parte pesada). O texto
+  // de um post só vem quando alguém abre ou edita esse post (carregarPostCompleto).
+  const COLS_LISTA = COLS_POST.replace('sections,', '');
   const PREFIXO_IMG = CFG.url + '/storage/v1/object/public/imagens/';
   const ehUuid = v => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v));
 
@@ -258,7 +262,15 @@
       date: new Date(t).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }),
       timestamp: t, cardImage: r.card_image, sections: r.sections || [],
       youtubeUrl: r.youtube_url, youtubeEmbeddable: r.youtube_embeddable, suspended: r.suspended,
+      atualizadoEm: r.updated_at || null,
     });
+  }
+
+  // Linha que veio com as seções (consulta completa) -> post marcado como completo
+  function linhaCompleta(r) {
+    const p = linhaParaPost(r);
+    if (p) DB.completos.add(p.id);
+    return p;
   }
 
   function postParaLinha(p) {
@@ -270,25 +282,52 @@
     };
   }
 
-  // shortcut: cada visita baixa todos os posts inteiros (até 1000, o máximo
-  // que o Supabase devolve por consulta). Ótimo para poucos posts; ao passar
-  // de uns 300, buscar só título/capa/tags na lista e o texto ao abrir o post.
-  const LIMITE_POSTS = 1000;
-  let avisouLimite = false;
+  // CARREGAR EM PARTES (auditoria 20/11/2026, item 7)
+  // A lista vem sem o texto das seções e em páginas de 1000 (o máximo que o
+  // Supabase devolve por consulta), então não há limite de quantidade.
+  const POR_PAGINA = 1000;
   async function recarregarPosts() {
-    const [{ data, error }] = await Promise.all([
-      sb.from('posts').select(COLS_POST).order('created_at', { ascending: false }).limit(LIMITE_POSTS),
-      carregarCurtidas(),
-    ]);
+    const buscarLista = async () => {
+      const linhas = [];
+      for (let de = 0; ; de += POR_PAGINA) {
+        const { data, error } = await sb.from('posts').select(COLS_LISTA)
+          .order('created_at', { ascending: false }).order('id')
+          .range(de, de + POR_PAGINA - 1);
+        if (error) return { error };
+        linhas.push(...data);
+        if (data.length < POR_PAGINA) return { data: linhas };
+      }
+    };
+    const [{ data, error }] = await Promise.all([buscarLista(), carregarCurtidas()]);
     if (error) { showToast(msgErro(error, 'Não foi possível carregar os posts.'), 'error'); return; }
-    DB.posts = data.map(linhaParaPost).filter(Boolean);
-    // Não deixa os posts mais antigos sumirem calados (auditoria 20/11/2026, item 7)
-    if (data.length >= LIMITE_POSTS && !avisouLimite) {
-      avisouLimite = true;
-      console.warn(`[Drakbuilder] ${LIMITE_POSTS} posts carregados: os mais antigos não aparecem. Hora de carregar em partes.`);
-      if (DB.eu?.isAdmin) showToast(`O site chegou a ${LIMITE_POSTS} posts e os mais antigos não aparecem mais. Peça a mudança "carregar em partes".`, 'error');
-    }
+    // Post já aberto e que não mudou no banco: mantém o texto que já temos
+    const antes = new Map(DB.posts.filter(p => DB.completos.has(p.id)).map(p => [p.id, p]));
+    const completos = new Set();
+    DB.posts = data.map(r => {
+      const p = linhaParaPost(r);
+      const velho = p && antes.get(p.id);
+      if (velho && velho.atualizadoEm && velho.atualizadoEm === p.atualizadoEm) {
+        completos.add(p.id);
+        return { ...p, sections: velho.sections };
+      }
+      return p;
+    }).filter(Boolean);
+    DB.completos = completos;
   }
+
+  // Busca o texto completo de um post (uma vez só) e guarda na memória
+  async function carregarPostCompleto(id) {
+    if (DB.completos.has(id)) return DB.posts.find(p => p.id === id) || null;
+    const { data, error } = await sb.from('posts').select(COLS_POST).eq('id', id).maybeSingle();
+    if (error) { showToast(msgErro(error, 'Não foi possível abrir este post.'), 'error'); return null; }
+    if (!data) return null;
+    const p = linhaCompleta(data);
+    if (!p) return null;
+    const i = DB.posts.findIndex(x => x.id === id);
+    if (i === -1) DB.posts.unshift(p); else DB.posts[i] = p;
+    return p;
+  }
+  window.drkCarregarPost = carregarPostCompleto;
 
   // ---------------------------------------------------------
   // CURTIDAS (LIKES) — 19/11/2026 (supabase/06-curtidas.sql)
@@ -391,9 +430,14 @@
 
   async function gravarPosts(ops, antesDe = new Map()) {
     let falhou = null;
-    for (const [op, p] of ops) {
+    for (let [op, p] of ops) {
       try {
         if (op === 'apagar') {
+          // Para achar as imagens e vídeos do post, o texto dele precisa estar carregado
+          if (!DB.completos.has(p.id)) {
+            const { data: inteiro } = await sb.from('posts').select('sections').eq('id', p.id).maybeSingle();
+            if (inteiro) p = { ...p, sections: (sanitizePost({ ...p, sections: inteiro.sections || [] }) || p).sections };
+          }
           const { data: apagados, error } = await sb.from('posts').delete().eq('id', p.id).select('id');
           if (error) throw error;
           if (!apagados?.length) throw Object.assign(new Error('Você não tem permissão para apagar este post.'), { code: 'P0001' });
@@ -406,13 +450,16 @@
         const linha = await trocarImagensBase64(postParaLinha(p));
         if (op === 'criar') delete linha.suspended; // post novo nunca nasce suspenso
         else delete linha.id;                       // o id de um post nunca muda
+        // Post cujo texto não foi carregado (ex.: admin suspendendo pela lista):
+        // nunca manda as seções, senão o texto salvo seria apagado
+        if (op === 'editar' && !DB.completos.has(p.id)) delete linha.sections;
         const consulta = op === 'criar'
           ? sb.from('posts').insert(linha).select(COLS_POST)
           : sb.from('posts').update(linha).eq('id', p.id).select(COLS_POST);
         const { data, error } = await consulta;
         if (error) throw error;
         if (!data?.length) throw Object.assign(new Error('Você não tem permissão para alterar este post.'), { code: 'P0001' });
-        const salvo = linhaParaPost(data[0]);
+        const salvo = linhaCompleta(data[0]);
         if (op === 'editar') {
           // vídeos tirados do post na edição: apaga os arquivos
           const ficaram = new Set(videosDoPost(salvo));
@@ -947,6 +994,27 @@
     else if (ativa === 'page-profile')     window.renderProfile();
     else if (ativa === 'page-settings')    window.renderSettings();
   }
+
+  // ---------------------------------------------------------
+  // ABRIR E EDITAR: busca o texto do post antes (carregar em partes)
+  // ---------------------------------------------------------
+  // Abrir: mostra o post assim que o texto chega. Se a pessoa clicar em
+  // outro post nesse meio-tempo, vale o último clique.
+  const mostrarPostOriginal = window.showPostDetail;
+  let pedidoAberto = 0;
+  window.showPostDetail = function (postId) {
+    if (DB.completos.has(postId)) return mostrarPostOriginal(postId);
+    const pedido = ++pedidoAberto;
+    carregarPostCompleto(postId).then(p => {
+      if (p && pedido === pedidoAberto) mostrarPostOriginal(postId);
+    });
+  };
+  // Editar: o editor só abre com o texto completo na mão (senão salvaria vazio)
+  const editarPostOriginal = window.startInlineEdit;
+  window.startInlineEdit = function (postId) {
+    if (DB.completos.has(postId)) return editarPostOriginal(postId);
+    carregarPostCompleto(postId).then(p => { if (p) editarPostOriginal(postId); });
+  };
 
   // Primeira carga dos posts (o login, se houver, vem pelo INITIAL_SESSION)
   document.addEventListener('DOMContentLoaded', async () => {
