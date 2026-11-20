@@ -101,6 +101,14 @@
   <!-- Título que aparece na aba do navegador e nos resultados de busca (SEO) -->
   <title>Drakbuilder – Tudo sobre o universo do jogo</title>
 
+  <!-- SEO (20/11/2026): descrição que o Google mostra embaixo do título.
+       Nas páginas /builds, /guias, /novidades e /post/ID a Cloudflare troca o
+       título e a descrição e acrescenta a prévia de redes sociais (seo/seo.js). -->
+  <meta name="description" content="Builds, guias e notícias de Drakantos em português. Veja e compartilhe builds com troféus, artefatos e orbes." />
+  <!-- Endereços como "style.css" e "imagens/..." sempre a partir da raiz do site,
+       para funcionarem também em /post/ID -->
+  <base href="/" />
+
   <!-- ===== FONTES =====
        Desde 03/11/2026 as fontes ficam no próprio site (pasta fontes/).
        Antes vinham do Google Fonts, e cada visita mandava o IP da pessoa ao Google.
@@ -688,7 +696,7 @@
        que troca o localStorage pelo banco. Com supabase-config.js vazio, nada muda. -->
   <script src="vendor/supabase-2.117.3.js"></script>
   <script src="supabase-config.js"></script>
-  <script src="backend.js?v=2026-11-19a"></script>
+  <script src="backend.js?v=2026-11-20seo"></script>
   <script src="editor-assistente.js?v=2026-11-03c"></script>
   <script src="db-supabase.js?v=2026-11-20a"></script>
 </body>

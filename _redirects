@@ -1,5 +1,3 @@
-# Endereços curtos das seções levam para a página certa (03/11/2026).
-/builds     /#/builds     302
-/guias      /#/guias      302
-/noticias   /#/novidades  302
-/novidades  /#/novidades  302
+# /noticias é o nome antigo da seção /novidades (20/11/2026).
+# /builds, /guias e /novidades agora são páginas de verdade (pasta functions/), sem #.
+/noticias   /novidades  301
