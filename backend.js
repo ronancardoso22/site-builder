@@ -1067,7 +1067,7 @@ function openAuthModal() {
 /*
   Fecha qualquer modal pelo seu ID.
   POR QUE uma função genérica em vez de funções específicas?
-  → Reutilizável: fecha tanto authModal quanto postModal com a mesma função.
+  → Reutilizável: serve para qualquer modal pelo id.
 */
 function closeModal(id) {
   document.getElementById(id).classList.add('hidden');
@@ -1488,41 +1488,6 @@ function togglePostTag(tag, btn) {
 
 
 // ===========================================================
-// GERENCIAR SEÇÕES DO POST
-// ===========================================================
-/*
-  Seções dividem o conteúdo de Builds e Guias em partes organizadas.
-  Ex: "Visão Geral", "Atributos", "Equipamentos"
-
-  Cada seção tem:
-  - id: identificador único (para o scroll da sidebar)
-  - name: título da seção
-  - content: texto da seção
-  - images: até 5 imagens da seção
-
-  POR QUE ID com Math.random()?
-  → Date.now() garante unicidade em ms. Math.random().toString(36).slice(2,6)
-    adiciona 4 caracteres aleatórios como extra de segurança contra colisões
-    se duas seções forem criadas no mesmo milissegundo.
-*/
-function addSection() {
-  App.postSections.push({
-    id: 'sec-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-    name: '', content: '', images: [],
-  });
-  renderSectionEditors(); // atualiza a lista de campos de seção na tela
-}
-
-/*
-  Remove uma seção pelo índice (posição no array).
-  splice(idx, 1) remove 1 elemento na posição idx.
-*/
-function removeSection(idx) {
-  App.postSections.splice(idx, 1);
-  renderSectionEditors();
-}
-
-// ===========================================================
 // DRAG-AND-DROP DE IMAGENS ENTRE SEÇÕES
 // ===========================================================
 /*
@@ -1588,10 +1553,7 @@ function _imgDrop(e, secIdx, imgIdx) {
   if (src.secIdx === secIdx && src.imgIdx < imgIdx) dstIdx--;
   dstArr.splice(dstIdx, 0, img);
 
-  /* No modo WYSIWYG, reconstrói apenas as grades de imagem (preserva o texto editável).
-     No modo modal, reconstrói o formulário de seções completo. */
-  if (App.inlineEditing) ieRebuildImgGrids();
-  else renderSectionEditors();
+  ieRebuildImgGrids();
 }
 
 /* Drag sobre a zona de drop no final de uma seção */
@@ -1612,211 +1574,8 @@ function _zoneDrop(e, secIdx) {
   _dragImg  = null;
   const [img] = App.postSections[src.secIdx].images.splice(src.imgIdx, 1);
   App.postSections[secIdx].images.push(img);
-  if (App.inlineEditing) ieRebuildImgGrids();
-  else renderSectionEditors();
+  ieRebuildImgGrids();
 }
-
-/*
-  Gera o HTML interno da grade de imagens de uma seção.
-  Separado em função própria para ser reusado em updateSectionImgGrid()
-  (atualização parcial após upload) sem precisar reconstruir o formulário inteiro.
-
-  draggable="false" na <img> é necessário: sem ele, o browser inicia um arrasto
-  da imagem em vez do arrasto do container div — quebrando o drag-and-drop.
-*/
-function _buildImgGrid(secIdx) {
-  const imgs = App.postSections[secIdx]?.images || [];
-  return imgs.map((src, j) => `
-    <div class="sec-img-item" draggable="true"
-      ondragstart="_imgDragStart(event,${secIdx},${j})"
-      ondragend="_imgDragEnd(event)"
-      ondragover="_imgDragOver(event)"
-      ondragleave="_imgDragLeave(event)"
-      ondrop="_imgDrop(event,${secIdx},${j})">
-      <img src="${src}" alt="imagem ${j+1}" draggable="false">
-      <button class="sec-img-remove" onclick="removeSectionImage(${secIdx},${j})" title="Remover imagem">✕</button>
-    </div>`).join('');
-}
-
-
-/*
-  Gera o HTML dos campos de edição de todas as seções.
-  Chamada sempre que uma seção é adicionada, removida ou reordenada.
-
-  POR QUE oninput="App.postSections[${i}].name = this.value"?
-  → Atualiza o objeto em memória em tempo real enquanto o usuário digita.
-    Sem isso, os dados no formulário e em App.postSections ficariam desincronizados.
-    Alternativa seria ler os campos ao salvar, mas oninput é mais simples aqui.
-*/
-function renderSectionEditors() {
-  const list = document.getElementById('sectionEditorList');
-  if (!list) return;
-
-  list.innerHTML = App.postSections.map((sec, i) => {
-    const imgs = sec.images || [];
-    return `
-      <div class="section-editor-block">
-        <div class="section-editor-header">
-          <input class="section-editor-name" type="text" placeholder="Nome da seção..."
-            value="${escapeHtml(sec.name)}"
-            oninput="App.postSections[${i}].name = this.value" />
-          ${App.postSections.length > 1
-            ? `<button class="section-editor-remove" onclick="removeSection(${i})" title="Remover seção">✕</button>`
-            : ''}
-        </div>
-        <textarea class="section-editor-content" rows="4"
-          placeholder="Conteúdo desta seção..."
-          oninput="App.postSections[${i}].content = this.value">${escapeHtml(sec.content)}</textarea>
-        <div class="section-images-row">
-          <span class="section-images-label">
-            Imagens desta seção
-            ${imgs.length > 0 ? '<span class="img-drag-hint"> — arraste para reposicionar ou mover entre seções</span>' : ''}
-          </span>
-          <div class="sec-img-grid" id="sectionImgGrid-${i}">${_buildImgGrid(i)}</div>
-          <div class="sec-img-dropzone"
-            ondragover="_zoneDragOver(event)"
-            ondragleave="_zoneDragLeave(event)"
-            ondrop="_zoneDrop(event,${i})">
-            ${imgs.length === 0 ? '🖼️ Arraste uma imagem aqui ou use o botão abaixo' : '↓ Solte aqui para adicionar ao final desta seção'}
-          </div>
-          <label class="image-upload-btn" id="sectionImgLabel-${i}" ${imgs.length >= 5 ? 'style="display:none"' : ''}>
-            🖼️ Adicionar Imagem
-            <input type="file" accept="image/*" style="display:none" onchange="handleSectionImageUpload(${i},event)" />
-          </label>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-
-// ===========================================================
-// IMAGEM DE CAPA DO CARD (post card image)
-// ===========================================================
-/*
-  O card de um post pode ter uma imagem de capa (thumbnail).
-  Ao selecionar um arquivo, ele é lido como Base64 (texto que
-  representa a imagem em binário codificado).
-
-  POR QUE Base64 em vez de URL?
-  → Sem servidor, não temos onde hospedar arquivos de imagem.
-    Base64 permite guardar a imagem diretamente no localStorage
-    como uma string muito longa. A desvantagem é que ocupa muito
-    espaço (localStorage tem limite de ~5MB por domínio).
-
-  FileReader:
-  → API do browser para ler arquivos locais sem enviar para servidor.
-    reader.onload é chamado quando a leitura termina.
-    e.target.result contém a imagem em formato data:image/jpeg;base64,...
-*/
-function handleCardImageUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => { App.postCardImage = e.target.result; updateCardImagePreview(); };
-  reader.readAsDataURL(file); // lê o arquivo como URL de dados (Base64)
-  event.target.value = ''; // limpa o input para permitir selecionar o mesmo arquivo novamente
-}
-
-/* Remove a imagem de capa do estado e atualiza a prévia */
-function removeCardImage() {
-  App.postCardImage = null;
-  updateCardImagePreview();
-}
-
-/*
-  Atualiza a prévia visual da imagem de capa no formulário.
-  Se há imagem: exibe a miniatura com botão de remover.
-  Se não há: exibe o botão de selecionar imagem.
-*/
-function updateCardImagePreview() {
-  const preview = document.getElementById('cardImagePreview');
-  const label   = document.getElementById('cardImageLabel');
-  if (!preview) return;
-
-  if (App.postCardImage) {
-    preview.innerHTML = `
-      <div class="card-image-preview">
-        <img src="${App.postCardImage}" alt="imagem do card" />
-        <button class="image-preview-remove" onclick="removeCardImage()" title="Remover">✕</button>
-      </div>`;
-    if (label) label.style.display = 'none'; // esconde o botão "Adicionar Imagem"
-  } else {
-    preview.innerHTML = '';
-    if (label) label.style.display = ''; // mostra o botão "Adicionar Imagem"
-  }
-}
-
-
-// ===========================================================
-// IMAGENS POR SEÇÃO
-// ===========================================================
-/*
-  Cada seção pode ter até 5 imagens.
-
-  Array.from(event.target.files) → converte a lista de arquivos
-  selecionados (FileList) para um array comum de JavaScript,
-  permitindo usar .slice() e .forEach().
-
-  .slice(0, remaining) → garante que não ultrapasse o limite de 5.
-*/
-function handleSectionImageUpload(sectionIdx, event) {
-  const section   = App.postSections[sectionIdx];
-  if (!section) return;
-  if (!section.images) section.images = [];
-
-  const remaining = 5 - section.images.length; // quantas imagens ainda cabem
-  if (remaining <= 0) { showToast('Limite de 5 imagens por seção atingido!', 'error'); event.target.value = ''; return; }
-
-  // Processa cada arquivo selecionado (respeitando o limite)
-  Array.from(event.target.files).slice(0, remaining).forEach(f => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      section.images.push(e.target.result); // adiciona a imagem em Base64
-      updateSectionImgGrid(sectionIdx);     // atualiza a grade de miniaturas
-    };
-    reader.readAsDataURL(f);
-  });
-  event.target.value = ''; // limpa o input
-}
-
-/* Remove uma imagem específica de uma seção */
-function removeSectionImage(sectionIdx, imgIdx) {
-  const section = App.postSections[sectionIdx];
-  if (!section || !section.images) return;
-  section.images.splice(imgIdx, 1); // remove 1 imagem na posição imgIdx
-  updateSectionImgGrid(sectionIdx);
-}
-
-/*
-  Atualiza a grade de imagens de uma seção sem reconstruir o formulário inteiro.
-
-  POR QUE não chamar renderSectionEditors() aqui?
-  → Essa função é chamada logo após um upload de imagem — reconstruir todo o
-    formulário perderia o foco do textarea que o admin pode estar editando.
-    Com atualização parcial (apenas a grade), o resto do formulário fica intacto.
-*/
-function updateSectionImgGrid(sectionIdx) {
-  const section = App.postSections[sectionIdx];
-  const imgs    = section?.images || [];
-  const grid    = document.getElementById(`sectionImgGrid-${sectionIdx}`);
-  const label   = document.getElementById(`sectionImgLabel-${sectionIdx}`);
-  if (!grid) return;
-
-  // Reconstrói apenas os itens da grade com drag-and-drop
-  grid.innerHTML = _buildImgGrid(sectionIdx);
-
-  // Atualiza o texto da zona de drop logo abaixo da grade
-  const zone = grid.nextElementSibling;
-  if (zone?.classList.contains('sec-img-dropzone')) {
-    zone.textContent = imgs.length === 0
-      ? '🖼️ Arraste uma imagem aqui ou use o botão abaixo'
-      : '↓ Solte aqui para adicionar ao final desta seção';
-  }
-
-  // Oculta o botão de upload quando o limite de 5 imagens é atingido
-  if (label) label.style.display = imgs.length >= 5 ? 'none' : '';
-}
-
 
 // ===========================================================
 // YOUTUBE — EXTRAIR ID DO VÍDEO
@@ -1841,291 +1600,6 @@ function extractYouTubeId(url) {
 
 
 // ===========================================================
-// VERIFICAÇÃO DE EMBED DO YOUTUBE
-// ===========================================================
-/*
-  Verifica se um vídeo do YouTube permite ser incorporado (embedded)
-  em outros sites antes de salvar o post.
-
-  POR QUE VERIFICAR?
-  Alguns donos de vídeo desabilitam a opção "Permitir incorporação"
-  no YouTube. Se tentarmos incorporar esses vídeos com <iframe>,
-  o player exibe "Erro 153 — Erro de configuração do player de vídeo".
-  Verificando antes, podemos avisar o usuário e salvar o vídeo
-  como link clicável em vez de iframe quebrado.
-
-  COMO FUNCIONA A VERIFICAÇÃO?
-  Usamos a API pública oEmbed do YouTube:
-    https://www.youtube.com/oembed?url=...&format=json
-  — HTTP 200: vídeo existe e incorporação é permitida
-  — HTTP 401: incorporação desabilitada pelo dono
-  — HTTP 404: vídeo não encontrado ou privado
-  Nenhuma chave de API é necessária.
-
-  POR QUE DEBOUNCE (espera de 800ms)?
-  O usuário pode estar digitando ou colando a URL caractere por caractere.
-  Sem debounce, cada tecla dispararia uma requisição de rede desnecessária.
-  Com o debounce, esperamos 800ms de silêncio antes de consultar o YouTube.
-*/
-async function checkYouTubeEmbed(url) {
-  const statusEl = document.getElementById('ytCheckStatus');
-  if (!statusEl) return;
-
-  // Campo vazio: sem verificação, esconde o status
-  if (!url.trim()) {
-    App._ytEmbeddable  = null;
-    statusEl.style.display = 'none';
-    return;
-  }
-
-  const id = extractYouTubeId(url);
-
-  // URL digitada mas não reconhecida como YouTube válido
-  if (!id) {
-    App._ytEmbeddable  = null;
-    statusEl.style.display = '';
-    statusEl.className = 'yt-check-status yt-check-error';
-    statusEl.textContent = '❌ URL inválida — use youtube.com/watch?v=... ou youtu.be/...';
-    return;
-  }
-
-  // Mostra indicador de carregamento enquanto consulta o YouTube
-  App._ytEmbeddable  = null;
-  statusEl.style.display = '';
-  statusEl.className = 'yt-check-status yt-check-loading';
-  statusEl.textContent = '⏳ Verificando vídeo...';
-
-  try {
-    const res = await fetch(
-      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`
-    );
-
-    if (res.ok) {
-      // Vídeo existe e incorporação está habilitada
-      App._ytEmbeddable = true;
-      statusEl.className = 'yt-check-status yt-check-ok';
-      statusEl.textContent = '✅ Vídeo verificado — incorporação permitida';
-
-    } else if (res.status === 401 || res.status === 403) {
-      // Incorporação desabilitada pelo dono do vídeo
-      App._ytEmbeddable = false;
-      statusEl.className = 'yt-check-status yt-check-warn';
-      statusEl.textContent = '⚠️ Este vídeo não permite incorporação — aparecerá como miniatura clicável para o YouTube';
-
-    } else if (res.status === 404) {
-      // Vídeo não existe ou está privado
-      App._ytEmbeddable = null;
-      statusEl.className = 'yt-check-status yt-check-error';
-      statusEl.textContent = '❌ Vídeo não encontrado — verifique se é público';
-
-    } else {
-      // Outro código HTTP inesperado
-      App._ytEmbeddable = null;
-      statusEl.className = 'yt-check-status yt-check-warn';
-      statusEl.textContent = `⚠️ Não foi possível verificar (código ${res.status})`;
-    }
-
-  } catch {
-    // Falha de rede (sem internet, CORS bloqueado, etc.)
-    App._ytEmbeddable = null;
-    statusEl.className = 'yt-check-status yt-check-warn';
-    statusEl.textContent = '⚠️ Sem conexão para verificar o vídeo — será exibido normalmente';
-  }
-}
-
-
-// ===========================================================
-// SALVAR POST (criar ou editar)
-// ===========================================================
-/*
-  Função principal de salvamento — cria um novo post ou atualiza um existente.
-
-  DECIDE SE É CRIAR OU EDITAR com base em App.editingPostId:
-  - null: cria novo post
-  - algum ID: encontra esse post e atualiza
-
-  POR QUE posts.unshift() para novos posts?
-  → unshift() adiciona no início do array, então o post mais recente
-    aparece primeiro nas listagens (ordem cronológica reversa).
-
-  POR QUE ...posts[idx] (spread) na edição?
-  → O spread copia todos os campos existentes do post.
-    Depois substituímos apenas os que foram editados.
-    Isso preserva campos que não estão no formulário
-    (como timestamp original, authorId, etc.).
-*/
-function handleSavePost() {
-  const title      = document.getElementById('postTitle').value.trim();
-  const desc       = document.getElementById('postDesc').value.trim();
-  const emoji      = document.getElementById('postEmoji').value.trim() || '📝';
-  const youtubeUrl = document.getElementById('postYoutube').value.trim();
-
-  // Validações antes de salvar
-  if (!title)           { showToast('O título é obrigatório!', 'error'); return; }
-  if (!desc)            { showToast('A descrição é obrigatória!', 'error'); return; }
-  if (title.length < 5) { showToast('Título muito curto!', 'error'); return; }
-
-  // Prepara as seções (apenas para Builds e Guias)
-  const extended = App.currentPostType === 'builds' || App.currentPostType === 'guias';
-  const sections = extended
-    ? App.postSections
-        .map((s, i) => ({
-          id:      s.id,
-          name:    s.name.trim() || `Seção ${i + 1}`, // usa "Seção N" se o nome estiver vazio
-          content: s.content.trim(),
-          images:  [...(s.images || [])],              // cópia do array de imagens
-        }))
-        .filter(s => s.content || s.images.length > 0) // remove seções completamente vazias
-    : [];
-
-  const dateStr = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-
-  if (App.editingPostId) {
-    // ── MODO EDIÇÃO: atualiza post existente ──
-    const posts = getPosts();
-    const idx   = posts.findIndex(p => p.id === App.editingPostId);
-    if (idx !== -1) {
-      posts[idx] = {
-        ...posts[idx], // mantém todos os campos originais (timestamp, author, etc.)
-        title, desc, emoji,
-        tags:       [...App.selectedTags],
-        cardImage:  App.postCardImage || null,
-        sections,
-        youtubeUrl:        youtubeUrl || null,
-        youtubeEmbeddable: youtubeUrl ? App._ytEmbeddable : null,
-      };
-      savePosts(posts);
-      closeModal('postModal');
-      showToast('Post atualizado! 🐉', 'success');
-      renderPage(App.currentPostType);
-      renderHome();
-      renderMyPosts();
-      showPostDetail(App.editingPostId); // reabre o detalhe do post editado
-    }
-    return;
-  }
-
-  // ── MODO CRIAÇÃO: novo post ──
-  const newPost = {
-    id:         'post-' + Date.now(),
-    type:       App.currentPostType,
-    title, desc, emoji,
-    tags:       [...App.selectedTags],
-    author:     App.currentUser.name,
-    authorId:   App.currentUser.id,
-    date:       dateStr,
-    timestamp:  Date.now(),
-    cardImage:         App.postCardImage || null,
-    sections,
-    youtubeUrl:        youtubeUrl || null,
-    youtubeEmbeddable: youtubeUrl ? App._ytEmbeddable : null,
-  };
-
-  const posts = getPosts();
-  posts.unshift(newPost); // adiciona no início (mais recente primeiro)
-  savePosts(posts);
-
-  closeModal('postModal');
-  showToast('Post publicado com sucesso! 🐉', 'success');
-  renderPage(App.currentPostType);
-  renderHome();
-  renderMyPosts();
-
-  // Notifica todos os seguidores do autor sobre o novo post
-  const followers = getFollowers(App.currentUser.id);
-  const typeLabel = { builds: 'Build', guias: 'Guia' }[newPost.type] || 'Post';
-  followers.forEach(followerId => {
-    pushNotification(followerId, {
-      type:         'new_post',
-      fromUserId:   App.currentUser.id,
-      fromUserName: App.currentUser.name,
-      postId:       newPost.id,
-      postTitle:    newPost.title,
-      postType:     newPost.type,
-      typeLabel,
-      timestamp:    Date.now(),
-    });
-  });
-  // Se o próprio usuário está logado e é seguido por si mesmo (impossível, mas defensivo)
-  renderNotificationBell();
-
-  if (extended) showPostDetail(newPost.id);
-}
-
-
-// ===========================================================
-// ABRIR MODAL EM MODO EDIÇÃO
-// ===========================================================
-/*
-  Pré-preenche o formulário com os dados do post existente.
-
-  PERMISSÕES:
-  - Dono do post: pode editar qualquer post seu
-  - Admin: pode editar posts de Novidades (controle editorial)
-  - Outros: sem acesso
-*/
-function openEditPostModal(postId) {
-  const post    = getPosts().find(p => p.id === postId);
-  if (!post) return;
-
-  const isAdmin = App.currentUser?.isAdmin;
-  const isOwner = App.currentUser && App.currentUser.id === post.authorId;
-  const canEdit = isOwner || (isAdmin && post.type === 'novidades');
-
-  if (!canEdit) {
-    showToast('Sem permissão para editar este post!', 'error');
-    return;
-  }
-
-  // Preenche o estado de edição
-  App.currentPostType = post.type;
-  App.selectedTags    = [...post.tags];       // cópia do array de tags
-  App.editingPostId   = postId;               // define que estamos editando
-  App.postCardImage   = post.cardImage || null;
-  // Cópia profunda das seções (evita modificar o post original antes de salvar)
-  App.postSections    = (post.sections || []).map(s => ({ ...s, images: [...(s.images || [])] }));
-
-  const names = { novidades: 'Novidades', builds: 'Builds', guias: 'Guias' };
-  document.getElementById('postModalTitle').textContent = '✏️ Editar Post';
-  document.getElementById('postSection').value = names[post.type];
-  document.getElementById('postTitle').value   = post.title;
-  document.getElementById('postDesc').value    = post.desc;
-  document.getElementById('postEmoji').value   = post.emoji;
-  document.getElementById('postYoutube').value = post.youtubeUrl || '';
-  // Restaura o resultado de verificação salvo com o post, e re-verifica visualmente
-  App._ytEmbeddable = post.youtubeEmbeddable !== undefined ? post.youtubeEmbeddable : null;
-  setTimeout(() => checkYouTubeEmbed(post.youtubeUrl || ''), 100);
-
-  // Gera botões de tag com os já selecionados destacados
-  const tagsContainer = document.getElementById('postTagsContainer');
-  tagsContainer.innerHTML = '';
-  TAG_OPTIONS[post.type].forEach(tag => {
-    const btn = document.createElement('button');
-    btn.textContent   = tag;
-    btn.className     = 'filter-btn';
-    btn.style.cssText = 'border-radius:4px;font-size:.68rem';
-    if (App.selectedTags.includes(tag)) btn.classList.add('active'); // destaca tags já selecionadas
-    btn.onclick = () => togglePostTag(tag, btn);
-    tagsContainer.appendChild(btn);
-  });
-
-  updateCardImagePreview();
-
-  const extended = post.type === 'builds' || post.type === 'guias';
-  document.getElementById('sectionsGroup').style.display = extended ? '' : 'none';
-  document.getElementById('youtubeGroup').style.display  = extended ? '' : 'none';
-
-  if (extended) {
-    if (App.postSections.length === 0) addSection(); // garante pelo menos 1 seção
-    else renderSectionEditors();                      // renderiza seções existentes
-  }
-
-  document.querySelector('#postModal .btn-primary').textContent = '💾 Salvar Alterações';
-  document.getElementById('postModal').classList.remove('hidden');
-}
-
-
-// ===========================================================
 // EDIÇÃO INLINE — diretamente na página de detalhe
 // ===========================================================
 /*
@@ -2143,7 +1617,7 @@ function openEditPostModal(postId) {
 /*
   Ativa o modo de edição inline para o post informado.
   Popula App.postSections, App.selectedTags, App.postCardImage
-  com os dados atuais do post — idêntico ao que openEditPostModal faz,
+  com os dados atuais do post,
   mas em vez de abrir o modal, re-renderiza a página de detalhe em modo editor.
 */
 function startInlineEdit(postId) {
@@ -5022,7 +4496,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const lb = document.querySelector('.lightbox-backdrop');
       if (lb) { lb.remove(); return; } // fecha lightbox primeiro
       closeModal('authModal');
-      closeModal('postModal');
       closeMobileMenu();
     }
   });
@@ -5031,19 +4504,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // navbar.contains(e.target) → verifica se o clique foi DENTRO da navbar
   document.addEventListener('click', e => {
     if (!document.getElementById('navbar').contains(e.target)) closeMobileMenu();
-  });
-
-  /*
-    Verificação de embed ao digitar/colar URL do YouTube no formulário.
-    Usamos debounce de 800ms: só dispara a consulta depois que o usuário
-    para de digitar por 800ms, evitando requisições desnecessárias a cada tecla.
-  */
-  document.getElementById('postYoutube').addEventListener('input', () => {
-    clearTimeout(App._ytDebounce);
-    App._ytDebounce = setTimeout(
-      () => checkYouTubeEmbed(document.getElementById('postYoutube').value.trim()),
-      800
-    );
   });
 
   // Enter no campo de senha do login submete o formulário
