@@ -255,13 +255,24 @@
     };
   }
 
+  // shortcut: cada visita baixa todos os posts inteiros (até 1000, o máximo
+  // que o Supabase devolve por consulta). Ótimo para poucos posts; ao passar
+  // de uns 300, buscar só título/capa/tags na lista e o texto ao abrir o post.
+  const LIMITE_POSTS = 1000;
+  let avisouLimite = false;
   async function recarregarPosts() {
     const [{ data, error }] = await Promise.all([
-      sb.from('posts').select(COLS_POST).order('created_at', { ascending: false }).limit(2000),
+      sb.from('posts').select(COLS_POST).order('created_at', { ascending: false }).limit(LIMITE_POSTS),
       carregarCurtidas(),
     ]);
     if (error) { showToast(msgErro(error, 'Não foi possível carregar os posts.'), 'error'); return; }
     DB.posts = data.map(linhaParaPost).filter(Boolean);
+    // Não deixa os posts mais antigos sumirem calados (auditoria 20/11/2026, item 7)
+    if (data.length >= LIMITE_POSTS && !avisouLimite) {
+      avisouLimite = true;
+      console.warn(`[Drakbuilder] ${LIMITE_POSTS} posts carregados: os mais antigos não aparecem. Hora de carregar em partes.`);
+      if (DB.eu?.isAdmin) showToast(`O site chegou a ${LIMITE_POSTS} posts e os mais antigos não aparecem mais. Peça a mudança "carregar em partes".`, 'error');
+    }
   }
 
   // ---------------------------------------------------------
