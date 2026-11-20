@@ -21,12 +21,13 @@ const PREFIXO_IMG = SUPABASE_URL + '/storage/v1/object/public/imagens/';
 
 export const PAGINAS = {
   '/': {
-    titulo: 'Drakbuilder – Builds, guias e notícias de Drakantos',
-    descricao: 'Builds, guias e notícias de Drakantos em português. Veja e compartilhe builds com troféus, artefatos e orbes.',
+    titulo: 'Drakbuilder – Builds de Drakantos, guias e notícias',
+    descricao: 'Drakbuilder: builds de Drakantos montadas por jogadores, com troféus, artefatos, orbes, prints e vídeo. Guias e notícias do jogo em português.',
+    dadosEstruturados: true,
   },
   '/builds': {
     titulo: 'Builds de Drakantos · Drakbuilder',
-    descricao: 'Builds de Drakantos montadas pela comunidade: troféus, artefatos, orbes e como jogar cada personagem.',
+    descricao: 'Todas as builds de Drakantos do Drakbuilder: troféus, artefatos e orbes de cada herói, montadas e testadas por jogadores.',
     tela: 'page-builds',
   },
   '/guias': {
@@ -95,7 +96,16 @@ export function htmlDoPost(p) {
 }
 
 // Tags do <head>: descrição, endereço oficial (canonical) e prévia de redes sociais
-export function tagsDoHead({ titulo, descricao, caminho, imagem, tipo = 'website', semIndice = false }) {
+// Nome do site para o Google (aparece em cima do link nos resultados). Só na página inicial.
+const DADOS_SITE = JSON.stringify({
+  '@context': 'https://schema.org', '@type': 'WebSite', name: NOME,
+  alternateName: ['Drak Builder', 'Drakantos Builder'], url: URL_DO_SITE + '/', inLanguage: 'pt-BR',
+}).replace(/</g, '\\u003c');
+
+const SUFIXO_POST = { builds: ' – Build de Drakantos', guias: ' – Guia de Drakantos' }; // igual ao backend.js
+export const tituloDoPost = p => `${p.title}${SUFIXO_POST[p.type] || ''} · ${NOME}`;
+
+export function tagsDoHead({ titulo, descricao, caminho, imagem, tipo = 'website', semIndice = false, dadosEstruturados = false }) {
   const url = URL_DO_SITE + caminho;
   const img = imagem || URL_DO_SITE + IMAGEM_PADRAO;
   return [
@@ -111,7 +121,8 @@ export function tagsDoHead({ titulo, descricao, caminho, imagem, tipo = 'website
     `<meta name="twitter:title" content="${esc(titulo)}">`,
     `<meta name="twitter:description" content="${esc(descricao)}">`,
     `<meta name="twitter:image" content="${esc(img)}">`,
-  ].join('\n  ');
+    dadosEstruturados ? `<script type="application/ld+json">${DADOS_SITE}</script>` : '',
+  ].filter(Boolean).join('\n  ');
 }
 
 // Os mesmos cabeçalhos de segurança do _headers (o _headers não vale para respostas de funções)

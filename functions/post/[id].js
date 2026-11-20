@@ -1,5 +1,5 @@
 // Página de um post (/post/ID): título, descrição, prévia e o texto do post já no HTML (ver seo/seo.js)
-import { buscarPost, entregarPagina, htmlDoPost, imagemDaPrevia, resumo } from '../../seo/seo.js';
+import { buscarPost, tituloDoPost, entregarPagina, htmlDoPost, imagemDaPrevia, resumo } from '../../seo/seo.js';
 
 export async function onRequestGet(ctx) {
   const id = String(ctx.params.id || '');
@@ -13,7 +13,7 @@ export async function onRequestGet(ctx) {
     return entregarPagina(ctx, { titulo: 'Post · Drakbuilder', descricao: 'Post do Drakbuilder.', caminho, semIndice: true, status: falhou ? 503 : 404 });
   }
   return entregarPagina(ctx, {
-    titulo: `${post.title} · Drakbuilder`,
+    titulo: tituloDoPost(post),
     descricao: resumo(post.descr || post.sections?.[0]?.content || post.title),
     caminho,
     imagem: imagemDaPrevia(post.card_image),
