@@ -167,10 +167,12 @@
     if (error) console.error('[Drakbuilder] erro ao apagar vídeo', error);
   };
 
-  // Lista os vídeos do Storage usados num post (caminhos dentro do balde)
+  // Lista os vídeos do Storage usados num post (caminhos dentro do balde).
+  // Só os da pasta do autor: um vídeo de outra pessoa colado no post nunca é apagado junto.
   function videosDoPost(p) {
+    const pasta = (p?.authorId || '-') + '/';
     return (p?.sections || []).flatMap(s => s.videos || []).filter(u => window.safeVideoUrl(u))
-      .map(u => u.slice(PREFIXO_VID.length));
+      .map(u => u.slice(PREFIXO_VID.length)).filter(c => c.startsWith(pasta));
   }
 
   // base64 -> arquivo no Storage (pasta do próprio usuário) -> endereço público
@@ -211,13 +213,26 @@
     return valor;
   }
 
-  // Lista as imagens do Storage (da pasta do usuário) usadas por um post
-  function imagensDoMeuStorage(obj, lista = []) {
+  // Pastas do Storage que pertencem a um post: a do autor e, nas notícias
+  // da Steam, steam/<gid>/. Só arquivos dessas pastas são apagados junto com
+  // o post. Assim o admin, ao apagar o post de outra pessoa, apaga as imagens
+  // dele também (auditoria 20/11/2026, item 4), e um link para a imagem de
+  // outra pessoa colado no post nunca apaga o arquivo dela.
+  function pastasDoPost(p) {
+    const pastas = [(p?.authorId || '-') + '/'];
+    if (/^steam-[0-9]{1,30}$/.test(p?.id || '')) pastas.push('steam/' + p.id.slice(6) + '/');
+    return pastas;
+  }
+
+  // Lista as imagens do Storage, dentro das pastas indicadas, usadas num objeto
+  function imagensNasPastas(obj, pastas, lista = []) {
     if (typeof obj === 'string') {
-      const pref = PREFIXO_IMG + (DB.eu?.id || '-') + '/';
-      if (obj.startsWith(pref)) lista.push(obj.slice(PREFIXO_IMG.length));
+      if (obj.startsWith(PREFIXO_IMG)) {
+        const caminho = obj.slice(PREFIXO_IMG.length);
+        if (pastas.some(d => caminho.startsWith(d)) && !lista.includes(caminho)) lista.push(caminho);
+      }
     } else if (obj && typeof obj === 'object') {
-      Object.values(obj).forEach(v => imagensDoMeuStorage(v, lista));
+      Object.values(obj).forEach(v => imagensNasPastas(v, pastas, lista));
     }
     return lista;
   }
@@ -362,7 +377,7 @@
           const { data: apagados, error } = await sb.from('posts').delete().eq('id', p.id).select('id');
           if (error) throw error;
           if (!apagados?.length) throw Object.assign(new Error('Você não tem permissão para apagar este post.'), { code: 'P0001' });
-          const arquivos = imagensDoMeuStorage(p);
+          const arquivos = imagensNasPastas(p, pastasDoPost(p));
           if (arquivos.length) await sb.storage.from('imagens').remove(arquivos);
           const vids = videosDoPost(p);
           if (vids.length) await sb.storage.from('videos').remove(vids);
@@ -449,7 +464,7 @@
         if ('avatar_url' in mudou) {
           eu.avatar = mudou.avatar_url;
           if (App.currentUser) App.currentUser.avatar = mudou.avatar_url;
-          const velhas = imagensDoMeuStorage(antigo.avatar);
+          const velhas = imagensNasPastas(antigo.avatar, [eu.id + '/']);
           if (velhas.length) await sb.storage.from('imagens').remove(velhas);
         }
         DB.perfis.set(eu.id, { id: eu.id, name: eu.name, bio: eu.bio, avatar: eu.avatar });
