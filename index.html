@@ -99,12 +99,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Título que aparece na aba do navegador e nos resultados de busca (SEO) -->
-  <title>Drakbuilder – Tudo sobre o universo do jogo</title>
+  <title>Drakbuilder – Builds de Drakantos, guias e notícias</title>
 
   <!-- SEO (20/11/2026): descrição que o Google mostra embaixo do título.
        Nas páginas /builds, /guias, /novidades e /post/ID a Cloudflare troca o
        título e a descrição e acrescenta a prévia de redes sociais (seo/seo.js). -->
-  <meta name="description" content="Builds, guias e notícias de Drakantos em português. Veja e compartilhe builds com troféus, artefatos e orbes." />
+  <meta name="description" content="Drakbuilder: builds de Drakantos montadas por jogadores, com troféus, artefatos, orbes, prints e vídeo. Guias e notícias do jogo em português." />
   <!-- Endereços como "style.css" e "imagens/..." sempre a partir da raiz do site,
        para funcionarem também em /post/ID -->
   <base href="/" />
@@ -155,7 +155,7 @@
       <!-- 20/11/2026: logo = emblema dragão dourado. WebP (17 KB) com PNG de reserva. -->
       <picture>
         <source srcset="imagens/logo-emblema.webp" type="image/webp" />
-        <img src="imagens/logo-emblema.png" class="nav-logo-icon" alt="Drakbuilder logo" width="40" height="40" />
+        <img src="imagens/logo-emblema.png" class="nav-logo-icon" alt="Drakbuilder – builds de Drakantos" width="40" height="40" />
       </picture>
       <!-- <span> é um container inline genérico — não quebra a linha, só envolve texto -->
       <span class="nav-logo-text">DRAKBUILDER</span>
@@ -323,8 +323,9 @@
           <!-- Texto direto, sem "Portal Oficial": o site é de fã, não da desenvolvedora. -->
           <h1 class="hero-title">Builds de Drakantos</h1>
           <p class="hero-sub">
-            Builds montadas e testadas por jogadores, com prints e vídeo
-            de cada uma. E as notícias do jogo em português.
+            O Drakbuilder reúne builds de Drakantos montadas e testadas por
+            jogadores: troféus, artefatos e orbes de cada herói, com prints e
+            vídeo. Também tem guias e as notícias do jogo em português.
           </p>
           <div class="hero-actions">
             <button class="btn btn-primary" onclick="showPage('builds')">Ver builds</button>
@@ -394,7 +395,7 @@
     <div class="page" id="page-novidades">
       <div class="page-header">
         <div>
-          <h1 class="page-header-title">Notícias</h1>
+          <h1 class="page-header-title">Notícias de Drakantos</h1>
           <p class="page-header-sub">Patches, eventos e anúncios de Drakantos, traduzidos da Steam.</p>
         </div>
         <!-- Botão visível somente para o administrador -->
@@ -428,7 +429,7 @@
     <div class="page" id="page-builds">
       <div class="page-header">
         <div>
-          <h1 class="page-header-title">Builds</h1>
+          <h1 class="page-header-title">Builds de Drakantos</h1>
           <p class="page-header-sub">Montagens de heróis enviadas por jogadores, com prints e vídeo.</p>
         </div>
         <button class="btn btn-primary hidden" id="btnNewBuild" onclick="openNewPostModal('builds')">
@@ -456,7 +457,7 @@
     <div class="page" id="page-guias">
       <div class="page-header">
         <div>
-          <h1 class="page-header-title">Guias</h1>
+          <h1 class="page-header-title">Guias de Drakantos</h1>
           <p class="page-header-sub">Masmorras, economia e o básico para quem está começando.</p>
         </div>
         <button class="btn btn-primary hidden" id="btnNewGuia" onclick="openNewPostModal('guias')">
@@ -696,7 +697,7 @@
        que troca o localStorage pelo banco. Com supabase-config.js vazio, nada muda. -->
   <script src="vendor/supabase-2.117.3.js"></script>
   <script src="supabase-config.js"></script>
-  <script src="backend.js?v=2026-11-20seo"></script>
+  <script src="backend.js?v=2026-11-20kw"></script>
   <script src="editor-assistente.js?v=2026-11-03c"></script>
   <script src="db-supabase.js?v=2026-11-20b"></script>
 </body>

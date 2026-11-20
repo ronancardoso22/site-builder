@@ -1,6 +1,6 @@
 // Teste rápido das partes de segurança do seo.js. Rodar: node seo/seo.test.mjs
 import assert from 'node:assert/strict';
-import { URL_DO_SITE, esc, idValido, imagemDaPrevia, resumo, htmlDoPost } from './seo.js';
+import { URL_DO_SITE, esc, idValido, imagemDaPrevia, resumo, htmlDoPost, tagsDoHead, tituloDoPost } from './seo.js';
 
 const PADRAO = URL_DO_SITE + '/imagens/steam/ss01.jpg';
 assert.equal(esc(`<a "x">&'`), '&lt;a &quot;x&quot;&gt;&amp;&#39;');
@@ -14,4 +14,7 @@ assert.equal(resumo('a\n[imagem 1]\nb'), 'a b');
 const html = htmlDoPost({ type: 'builds', title: '<script>x</script>', descr: '', created_at: '2026-11-10T12:00:00Z',
   sections: [{ name: '<b>', content: 'oi\n[youtube]\n<img onerror=x>' }], autor: { name: '</title>' } });
 assert.ok(!/<script|<img|<b>|<\/title>/.test(html), 'texto do usuário tem que sair escapado');
+assert.equal(tituloDoPost({ title: 'Tanque', type: 'builds' }), 'Tanque – Build de Drakantos · Drakbuilder');
+const ld = tagsDoHead({ titulo: 'x', descricao: 'y', caminho: '/', dadosEstruturados: true }).match(/<script type="application\/ld\+json">(.*)<\/script>/)[1];
+assert.equal(JSON.parse(ld).name, 'Drakbuilder');
 console.log('seo.js ok');

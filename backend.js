@@ -1949,7 +1949,7 @@ function renderPostDetail(post) {
     - nada de emoji como ícone: o banner ou o título fazem esse papel.
   */
   const cover = post.cardImage
-    ? `<div class="bp-cover"><img src="${escapeHtml(post.cardImage)}" alt=""></div>` : '';
+    ? `<div class="bp-cover"><img src="${escapeHtml(post.cardImage)}" alt="${escapeHtml('Capa: ' + post.title)}"></div>` : '';
 
   page.innerHTML = `
     <div class="bp ${post.cardImage ? 'has-cover' : ''}">
@@ -3752,7 +3752,9 @@ function instalarTecladoAcessivel() {
    e usar o botão Voltar. Desde 20/11/2026 os endereços são sem # (/post/ID),
    porque o Google ignora tudo depois do #. A Cloudflare entrega o index.html
    nesses endereços (pasta functions/). Links antigos com #/ continuam valendo. */
-const TITULO_SITE = 'Drakbuilder – Tudo sobre o universo do jogo';
+// Os mesmos títulos que o seo/seo.js põe no HTML (o Google lê o título depois do JavaScript)
+const TITULO_SITE = 'Drakbuilder – Builds de Drakantos, guias e notícias';
+const SUFIXO_POST = { builds: ' – Build de Drakantos', guias: ' – Guia de Drakantos', novidades: '' };
 const ROTAS_SECAO = { builds: 'builds', guias: 'guias', novidades: 'novidades', noticias: 'novidades' };
 
 function enderecoDaTela(pageId) {
@@ -3766,9 +3768,9 @@ function enderecoDaTela(pageId) {
 function tituloDaTela(pageId) {
   if (pageId === 'detail' && App.currentDetailPostId) {
     const p = getPosts().find(x => x.id === App.currentDetailPostId);
-    if (p) return `${p.title} · Drakbuilder`;
+    if (p) return `${p.title}${SUFIXO_POST[p.type] || ''} · Drakbuilder`;
   }
-  const nomes = { builds: 'Builds', guias: 'Guias', novidades: 'Notícias', profile: 'Perfil',
+  const nomes = { builds: 'Builds de Drakantos', guias: 'Guias de Drakantos', novidades: 'Notícias de Drakantos', profile: 'Perfil',
                   myposts: 'Minhas postagens', meuslikes: 'Meus likes', settings: 'Configurações' };
   return nomes[pageId] ? `${nomes[pageId]} · Drakbuilder` : TITULO_SITE;
 }
