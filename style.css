@@ -115,10 +115,16 @@
   --shadow-pixel: 4px 4px 0 #000;
 
   /* Fontes: pixel só nos títulos (identidade do jogo), texto em fonte legível */
-  --font-display: 'Pixelify Sans', 'Courier New', monospace;
+  /* 20/11/2026: Jersey 10 no lugar da Pixelify Sans (mais fácil de ler) */
+  --font-display: 'Jersey 10', 'Courier New', monospace;
   --font-ui:      'Alegreya Sans', 'Segoe UI', sans-serif;
   --font-text:    'Alegreya Sans', 'Segoe UI', sans-serif;
 }
+
+/* A Jersey 10 só tem um peso. Sem esta linha, títulos marcados como
+   negrito ganhariam um "negrito falso" borrado feito pelo navegador.
+   A Alegreya Sans tem negrito de verdade, então não muda nada nela. */
+html { font-synthesis-weight: none; }
 
 /* ============================================================
    RESET & BASE
