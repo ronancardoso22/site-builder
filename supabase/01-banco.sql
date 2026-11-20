@@ -3,8 +3,13 @@
 --  Criado em 25/10/2026
 --
 --  COMO USAR: no painel do Supabase, abra "SQL Editor" > "New query",
---  cole ESTE ARQUIVO INTEIRO e clique em "Run". Pode rodar de novo
---  sem medo: ele recria funções e regras sem apagar dados.
+--  cole ESTE ARQUIVO INTEIRO e clique em "Run".
+--
+--  !!! JÁ INSTALADO (25/10/2026). NÃO RODE ESTE ARQUIVO DE NOVO !!!
+--  Os arquivos 02 a 07 mudaram funções e permissões depois dele.
+--  Rodar este de novo desfaz essas mudanças: o envio de imagens para
+--  de funcionar, as curtidas somem e as notícias da Steam param.
+--  (Auditoria de 20/11/2026.)
 --
 --  SEGURANÇA, EM RESUMO
 --  - Toda tabela tem RLS (Row Level Security) LIGADO. Sem uma regra
