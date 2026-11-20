@@ -78,7 +78,10 @@
     fila: Promise.resolve(),
   };
 
-  const COLS_POST = 'id,type,title,descr,emoji,tags,card_image,sections,youtube_url,youtube_embeddable,suspended,created_at,author_id,autor:profiles(id,name,avatar_url)';
+  // "!posts_author_id_fkey" diz ao banco QUAL ligação usar para achar o autor.
+  // Sem isso, depois das curtidas (post_likes também liga posts a perfis) o banco
+  // respondia "mais de uma ligação" (erro PGRST201) e nenhum post aparecia (20/11/2026).
+  const COLS_POST = 'id,type,title,descr,emoji,tags,card_image,sections,youtube_url,youtube_embeddable,suspended,created_at,author_id,autor:profiles!posts_author_id_fkey(id,name,avatar_url)';
   const PREFIXO_IMG = CFG.url + '/storage/v1/object/public/imagens/';
   const ehUuid = v => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v));
 
