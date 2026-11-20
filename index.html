@@ -37,9 +37,8 @@
         - #page-settings  — configurações (preenchido pelo JavaScript)
      3. <footer>       — rodapé fixo na base
      4. #authModal     — modal de login/cadastro (oculto por padrão)
-     5. #postModal     — modal de criar/editar post (oculto por padrão)
-     6. #toast         — área de notificações flutuantes
-     7. <script>       — carrega o backend.js (toda a lógica do site)
+     5. #toast         — área de notificações flutuantes
+     6. <script>       — carrega o backend.js (toda a lógica do site)
 
   SOBRE A ORDEM DO <script> NO FINAL:
   O backend.js é carregado DEPOIS de todo o HTML por uma razão importante:
@@ -655,133 +654,6 @@
     </div><!-- /modal -->
   </div><!-- /authModal -->
 
-  <!-- ============================================================
-       MODAL DE CRIAR / EDITAR POST
-       Um único modal serve para os três tipos de post: Novidades, Builds e Guias.
-       O JavaScript adapta o formulário conforme o tipo: para Builds e Guias,
-       campos extras (seções, imagens por seção, YouTube) ficam visíveis.
-       Para Novidades, esses campos extras permanecem ocultos.
-
-       POR QUE UM MODAL ÚNICO PARA TRÊS TIPOS EM VEZ DE TRÊS MODAIS SEPARADOS?
-       Reduz duplicação de código: o CSS, o comportamento de abrir/fechar,
-       os campos comuns (título, descrição) — tudo é compartilhado. Só os
-       campos específicos são mostrados/ocultados conforme necessário.
-  ============================================================ -->
-  <div class="modal-backdrop hidden" id="postModal" onclick="closeModalOnBackdrop(event,'postModal')">
-    <!-- modal-wide: versão mais larga do modal (max-width: 640px vs 460px padrão)
-         necessária porque o formulário de post tem mais campos do que o de login -->
-    <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="postModalTitle">
-      <button class="modal-close" onclick="closeModal('postModal')" aria-label="Fechar">✕</button>
-
-      <!-- Título do modal — alterado pelo JavaScript conforme o contexto:
-           "✍️ Nova Notícia", "✍️ Nova Build", "✍️ Novo Guia", "✏️ Editar Post" -->
-      <p class="modal-title" id="postModalTitle">Novo post</p>
-
-      <div class="modal-form">
-
-        <!-- Campo "Seção" é somente-leitura (readonly) — mostra qual seção
-             receberá o post. O usuário não pode editar; é preenchido automaticamente
-             pelo JavaScript quando o modal é aberto.
-             "opacity: .6" deixa o campo visivelmente desativado; "cursor: default"
-             remove a seta de seleção que campos de texto normalmente mostram. -->
-        <div class="form-group">
-          <label class="form-label">Seção</label>
-          <input class="input" type="text" id="postSection" readonly style="opacity:.6;cursor:default" />
-        </div>
-
-        <!-- "maxlength="80"" impede que o título tenha mais de 80 caracteres.
-             Títulos longos quebrariam o layout dos cards na grade de posts.
-             O "* " (asterisco) após "Título" indica campo obrigatório — convenção
-             visual amplamente reconhecida pelos usuários de formulários web. -->
-        <div class="form-group">
-          <label class="form-label" for="postTitle">Título *</label>
-          <input class="input" type="text" id="postTitle" placeholder="Digite um título cativante..." maxlength="80" />
-        </div>
-
-        <!-- <textarea> é um campo de texto MULTILINHA (diferente de <input>,
-             que é sempre uma linha). "rows='3'" define a altura inicial em linhas.
-             O usuário pode redimensionar verticalmente (resize: vertical no CSS). -->
-        <div class="form-group">
-          <label class="form-label" for="postDesc">Descrição *</label>
-          <textarea class="input" id="postDesc" rows="3" placeholder="Resumo do post..."></textarea>
-        </div>
-
-        <!-- Campo de imagem do card: o usuário escolhe uma imagem OU um emoji.
-             A imagem fica como miniatura no topo do card; o emoji aparece quando
-             não há imagem.
-
-             TRUQUE DO LABEL COMO BOTÃO DE UPLOAD:
-             O <input type="file"> tem aparência nativa feia e difícil de estilizar.
-             A solução é esconder o input (display:none) e envolver um <label>
-             estilizado que faz referência ao input. Ao clicar no label, o navegador
-             abre o seletor de arquivo como se o input tivesse sido clicado.
-             O atributo "accept='image/*'" filtra para mostrar apenas imagens. -->
-        <div class="form-group">
-          <label class="form-label">Imagem do Card</label>
-          <div class="card-image-area">
-            <!-- Preenchido pelo JavaScript com a prévia da imagem escolhida -->
-            <div id="cardImagePreview"></div>
-            <label class="image-upload-btn" id="cardImageLabel">
-              Escolher imagem
-              <!-- "display:none" esconde o input feio; clicar no label o ativa.
-                   "onchange" chama handleCardImageUpload() quando um arquivo é escolhido. -->
-              <input type="file" accept="image/*" id="cardImageInput" style="display:none" onchange="handleCardImageUpload(event)" />
-            </label>
-            <span style="font-size:.73rem;color:var(--text-muted)">ou emoji:</span>
-            <!-- Campo para o emoji — maxlength="4" permite 1 emoji moderno
-                 (alguns emojis usam 2 caracteres Unicode, então 4 = margem de segurança) -->
-            <input class="input" type="text" id="postEmoji" placeholder="⚔️" maxlength="4"
-              style="font-size:1.3rem;text-align:center;width:66px;flex-shrink:0;padding:.3rem" />
-          </div>
-          <p style="font-size:.67rem;color:var(--text-muted);margin-top:.3rem">
-            A imagem tem prioridade sobre o emoji. Sem imagem, o emoji aparece no card.
-          </p>
-        </div>
-
-        <!-- Tags: preenchidas dinamicamente pelo JavaScript conforme o tipo de post.
-             Novidades recebe opções diferentes de Builds, que recebe diferentes de Guias.
-             O usuário clica para selecionar/desselecionar cada tag. -->
-        <div class="form-group">
-          <label class="form-label">Tags</label>
-          <div id="postTagsContainer" style="display:flex;gap:.4rem;flex-wrap:wrap;"></div>
-        </div>
-
-        <!-- Seções de conteúdo — visíveis apenas para Builds e Guias (não para Novidades).
-             "display:none" as oculta por padrão; o JavaScript as mostra conforme o tipo.
-             Cada seção é um bloco de título + conteúdo + imagens, permitindo estrutura
-             mais rica do que uma simples descrição. -->
-        <div class="form-group" id="sectionsGroup" style="display:none">
-          <label class="form-label">Seções de Conteúdo</label>
-          <!-- Preenchido pelo JavaScript com blocos de editor de seção -->
-          <div class="section-editor-list" id="sectionEditorList"></div>
-          <!-- Botão para adicionar uma nova seção ao post -->
-          <button class="btn-add-section" type="button" onclick="addSection()">+ Adicionar Seção</button>
-        </div>
-
-        <!-- Campo de URL do YouTube — também apenas para Builds e Guias.
-             O JavaScript extrai o ID do vídeo da URL e gera o embed. -->
-        <div class="form-group" id="youtubeGroup" style="display:none">
-          <!-- Alerta fixo sobre a política de exibição de vídeos -->
-          <div class="yt-embed-alert">
-            ⚠️ Vídeos sem incorporação ativa no YouTube serão exibidos apenas como link.
-          </div>
-          <label class="form-label" for="postYoutube">Vídeo do YouTube (opcional)</label>
-          <input class="input" type="text" id="postYoutube" placeholder="https://www.youtube.com/watch?v=..." />
-          <!-- Mensagem de status da verificação de embed — aparece após colar a URL -->
-          <div id="ytCheckStatus" style="display:none"></div>
-        </div>
-
-        <!-- Botões de ação do formulário — à direita (justify-content: flex-end) -->
-        <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:.75rem">
-          <button class="btn btn-outline" onclick="closeModal('postModal')">Cancelar</button>
-          <!-- handleSavePost() no backend.js cria um novo post OU atualiza um existente,
-               dependendo de como o modal foi aberto (modo criar vs. modo editar). -->
-          <button class="btn btn-primary" onclick="handleSavePost()">Publicar</button>
-        </div>
-
-      </div>
-    </div><!-- /modal -->
-  </div><!-- /postModal -->
 
   <!-- Área onde as notificações temporárias aparecem (toasts de sucesso, erro, info).
        Esta div começa vazia — o JavaScript insere e remove os itens de toast aqui.

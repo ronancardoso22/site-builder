@@ -34,16 +34,25 @@
   const CFG = window.DRK_SUPABASE || {};
   const VERSAO_POLITICA = '2026-10-25'; // mude quando alterar a Política de Privacidade
 
-  if (!CFG.url && !CFG.anonKey) return; // modo antigo (localStorage)
+  // Sem banco o site não funciona: avisa em vez de cair no modo antigo
+  // (que guardava contas e posts só no navegador). Auditoria 20/11/2026, item 6.
+  function pararComErro(msg) {
+    console.error('[Drakbuilder] ' + msg);
+    document.addEventListener('DOMContentLoaded', () => {
+      const aviso = document.createElement('div');
+      aviso.setAttribute('role', 'alert');
+      aviso.style.cssText = 'position:sticky;top:0;z-index:9999;padding:.75rem 1rem;background:#7a1f1f;color:#fff;text-align:center;font-weight:600';
+      aviso.textContent = 'Não foi possível conectar ao banco de dados. Recarregue a página em instantes.';
+      document.body.prepend(aviso);
+    });
+  }
+
+  if (!CFG.url && !CFG.anonKey) return pararComErro('Banco não configurado (supabase-config.js vazio).');
 
   // Enquanto os posts não chegam do banco, a tela mostra "Carregando…"
   // em vez de "Nenhuma build ainda" (03/11/2026).
   App.carregando = true;
 
-  function pararComErro(msg) {
-    console.error('[Drakbuilder] ' + msg);
-    document.addEventListener('DOMContentLoaded', () => showToast(msg, 'error'));
-  }
 
   if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(CFG.url || '')) {
     return pararComErro('Configuração do banco inválida: confira o url em supabase-config.js.');
@@ -261,13 +270,24 @@
     };
   }
 
+  // shortcut: cada visita baixa todos os posts inteiros (até 1000, o máximo
+  // que o Supabase devolve por consulta). Ótimo para poucos posts; ao passar
+  // de uns 300, buscar só título/capa/tags na lista e o texto ao abrir o post.
+  const LIMITE_POSTS = 1000;
+  let avisouLimite = false;
   async function recarregarPosts() {
     const [{ data, error }] = await Promise.all([
-      sb.from('posts').select(COLS_POST).order('created_at', { ascending: false }).limit(2000),
+      sb.from('posts').select(COLS_POST).order('created_at', { ascending: false }).limit(LIMITE_POSTS),
       carregarCurtidas(),
     ]);
     if (error) { showToast(msgErro(error, 'Não foi possível carregar os posts.'), 'error'); return; }
     DB.posts = data.map(linhaParaPost).filter(Boolean);
+    // Não deixa os posts mais antigos sumirem calados (auditoria 20/11/2026, item 7)
+    if (data.length >= LIMITE_POSTS && !avisouLimite) {
+      avisouLimite = true;
+      console.warn(`[Drakbuilder] ${LIMITE_POSTS} posts carregados: os mais antigos não aparecem. Hora de carregar em partes.`);
+      if (DB.eu?.isAdmin) showToast(`O site chegou a ${LIMITE_POSTS} posts e os mais antigos não aparecem mais. Peça a mudança "carregar em partes".`, 'error');
+    }
   }
 
   // ---------------------------------------------------------
@@ -411,11 +431,6 @@
       rerenderAtivo();
     }
   }
-
-  // Os posts de exemplo do modo antigo não são criados no banco
-  window.seedDefaultPosts = () => {};
-  window.seedTestGuias   = () => {};
-  window.applySeedCovers = () => {};
 
   // ---------------------------------------------------------
   // PERFIS E SEGUIDORES
@@ -850,11 +865,6 @@
       <p style="color:var(--text-secondary);margin-bottom:1rem">Sua senha é guardada pelo Supabase com criptografia (bcrypt). Nem o administrador consegue vê-la.</p>
       <button class="btn btn-primary" onclick="drkTrocarSenha()">🔑 Trocar senha</button>`;
 
-    const admin = DB.eu.isAdmin ? `
-      <hr style="border-color:var(--border);margin:1.5rem 0">
-      <p style="color:var(--text-secondary);margin-bottom:.75rem"><strong>Administrador:</strong> envia para o banco os posts que existem só neste navegador (posts antigos e os publicados pelo Drakantos Agent).</p>
-      <button class="btn" onclick="drkImportarPostsLocais()">⬆️ Enviar posts deste navegador para o banco</button>` : '';
-
     lista.insertAdjacentHTML('beforeend', `
       <div class="settings-section">
         <div class="settings-section-header" onclick="toggleSettingsSection('lgpd')">
@@ -871,7 +881,6 @@
             <button class="btn btn-primary" onclick="drkExportarDados()">⬇️ Baixar meus dados</button>
             <button class="btn" style="border-color:var(--red);color:var(--red)" onclick="drkExcluirConta()">🗑️ Excluir minha conta</button>
           </div>
-          ${admin}
         </div>
       </div>`);
   };
@@ -917,29 +926,6 @@
       console.error('[Drakbuilder] erro ao excluir conta', e);
       showToast('Não foi possível excluir agora. Tente de novo ou fale com o administrador.', 'error');
     }
-  };
-
-  window.drkImportarPostsLocais = async function () {
-    if (!DB.eu?.isAdmin) return;
-    let locais = [];
-    try { locais = JSON.parse(localStorage.getItem('drk_posts') || '[]'); } catch (e) { locais = []; }
-    const jaNoBanco = new Set(DB.posts.map(p => p.id));
-    const candidatos = (Array.isArray(locais) ? locais : []).map(sanitizePost).filter(p => p && p.authorId === 'admin' && !jaNoBanco.has(p.id));
-    if (!candidatos.length) { showToast('Nenhum post novo do administrador neste navegador.', 'info'); return; }
-    if (!confirm(`Enviar ${candidatos.length} post(s) deste navegador para o banco, com você como autor?`)) return;
-    let ok = 0, erro = 0;
-    for (const p of candidatos) {
-      try {
-        const linha = await trocarImagensBase64(postParaLinha(p));
-        delete linha.suspended;
-        const { data, error } = await sb.from('posts').insert(linha).select(COLS_POST);
-        if (error) throw error;
-        DB.posts.unshift(linhaParaPost(data[0])); ok++;
-      } catch (e) { console.warn('[Drakbuilder] post não importado', p.id, e); erro++; }
-    }
-    await recarregarPosts();
-    rerenderAtivo();
-    showToast(`${ok} post(s) enviados${erro ? `, ${erro} com erro (veja o console F12)` : ''}.`, erro ? 'info' : 'success');
   };
 
   // ---------------------------------------------------------
