@@ -506,7 +506,7 @@ function showPage(pageId) {
   if (pageId === 'settings')  renderSettings();
   if (pageId === 'profile')   renderProfile();
 
-  atualizarEndereco(pageId); // endereço (#/builds...) e título da aba
+  atualizarEndereco(pageId); // endereço (/builds...) e título da aba
 }
 
 
@@ -3747,18 +3747,19 @@ function instalarTecladoAcessivel() {
   });
 }
 
-/* ---------- Endereços das páginas (#/builds, #/post/ID ...) ----------
-   O site é uma página só. Antes, o endereço nunca mudava, então não dava para
-   compartilhar uma build nem usar o botão Voltar. Agora cada tela tem um
-   endereço com # (funciona em qualquer hospedagem, sem configurar servidor). */
+/* ---------- Endereços das páginas (/builds, /post/ID ...) ----------
+   O site é uma página só, mas cada tela tem endereço próprio para compartilhar
+   e usar o botão Voltar. Desde 20/11/2026 os endereços são sem # (/post/ID),
+   porque o Google ignora tudo depois do #. A Cloudflare entrega o index.html
+   nesses endereços (pasta functions/). Links antigos com #/ continuam valendo. */
 const TITULO_SITE = 'Drakbuilder – Tudo sobre o universo do jogo';
 const ROTAS_SECAO = { builds: 'builds', guias: 'guias', novidades: 'novidades', noticias: 'novidades' };
 
 function enderecoDaTela(pageId) {
-  if (pageId === 'home') return '#/';
-  if (pageId === 'builds' || pageId === 'guias' || pageId === 'novidades') return '#/' + pageId;
-  if (pageId === 'detail' && App.currentDetailPostId) return '#/post/' + encodeURIComponent(App.currentDetailPostId);
-  if (pageId === 'profile' && App.currentProfileId) return '#/perfil/' + encodeURIComponent(App.currentProfileId);
+  if (pageId === 'home') return '/';
+  if (pageId === 'builds' || pageId === 'guias' || pageId === 'novidades') return '/' + pageId;
+  if (pageId === 'detail' && App.currentDetailPostId) return '/post/' + encodeURIComponent(App.currentDetailPostId);
+  if (pageId === 'profile' && App.currentProfileId) return '/#/perfil/' + encodeURIComponent(App.currentProfileId);
   return null; // telas de quem está logado (Minhas postagens, Configurações...) não ganham endereço
 }
 
@@ -3777,17 +3778,20 @@ function atualizarEndereco(pageId) {
   document.title = tituloDaTela(pageId);
   if (App._aplicandoRota) return; // a mudança veio do próprio endereço (Voltar/link)
   const novo = enderecoDaTela(pageId);
-  const alvo = novo === null ? location.pathname + location.search : novo;
-  const atual = location.hash || '';
-  if ((novo === null && !atual) || atual === novo) return;
+  const alvo = novo === null ? '/' : novo;
+  if (location.pathname + location.hash === alvo) return;
   try { history.pushState(null, '', alvo); } catch (e) { /* navegador antigo: ignora */ }
 }
 
 // Lê o endereço e abre a tela certa (ao carregar, no Voltar/Avançar e em links)
 function aplicarRota() {
-  const h = location.hash || '';
+  let h = location.hash || '';
   if (h && !h.startsWith('#/')) return; // âncoras comuns (#algo) não são rotas
-  const partes = h.replace(/^#\/?/, '').split('/').map(x => { try { return decodeURIComponent(x); } catch (e) { return ''; } });
+  // Link antigo (#/post/ID, #/builds): troca pelo endereço novo, sem recarregar
+  if (/^#\/(builds|guias|novidades|noticias|post\/)/.test(h)) {
+    try { history.replaceState(null, '', '/' + h.slice(2)); h = ''; } catch (e) { /* ignora */ }
+  }
+  const partes = (h ? h.slice(2) : location.pathname.slice(1)).split('/').map(x => { try { return decodeURIComponent(x); } catch (e) { return ''; } });
   const [rota, arg] = partes;
   App._aplicandoRota = true;
   try {
@@ -3801,8 +3805,8 @@ function aplicarRota() {
     else if (rota === 'perfil' && arg) showProfile(arg);
     else showPage('home');
   } finally { App._aplicandoRota = false; }
-  if (!rota || (rota === 'post' && !App.carregando && !getPosts().some(p => p.id === arg))) {
-    try { history.replaceState(null, '', location.pathname + location.search + (rota ? '#/' : '')); } catch (e) { /* ignora */ }
+  if ((!rota && h) || (rota === 'post' && !App.carregando && !getPosts().some(p => p.id === arg))) {
+    try { history.replaceState(null, '', '/'); } catch (e) { /* ignora */ }
   }
 }
 window.addEventListener('popstate', aplicarRota);
