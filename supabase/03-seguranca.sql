@@ -3,7 +3,10 @@
 -- Limites de uso (rate limit) direto no banco. Pode rodar de novo.
 -- =====================================================================
 
--- 1) Envio de imagens: no máximo 60 por hora e 1000 no total por pessoa.
+-- 1) Envio de imagens: no máximo 60 por hora e 300 no total por pessoa,
+--    e o envio para se o projeto inteiro passar de 850 MB (o plano grátis
+--    tem 1 GB). Antes eram 1000 por pessoa e sem limite geral: uma conta
+--    só conseguia lotar o armazenamento (auditoria de 20/11/2026).
 --    A contagem fica numa função à parte (uma regra que consulta a própria
 --    tabela entraria em laço infinito).
 create or replace function public.pode_enviar_imagem()
@@ -18,7 +21,10 @@ as $$
     and
     (select count(*) from storage.objects o
       where o.bucket_id = 'imagens'
-        and (storage.foldername(o.name))[1] = (select auth.uid())::text) < 1000;
+        and (storage.foldername(o.name))[1] = (select auth.uid())::text) < 300
+    and
+    (select coalesce(sum((o.metadata->>'size')::bigint), 0) from storage.objects o)
+      < 850 * 1024 * 1024;
 $$;
 revoke all on function public.pode_enviar_imagem() from public, anon;
 grant execute on function public.pode_enviar_imagem() to authenticated;

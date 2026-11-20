@@ -124,7 +124,9 @@ begin
   end if;
   case jsonb_typeof(j)
     when 'string' then
-      if (j #>> '{}') ~* '^(https?://|imagens/)' then
+      -- só pula se o texto for APENAS um endereço (sem espaços); antes,
+      -- começar o texto com um link fazia o resto escapar do filtro
+      if (j #>> '{}') ~* '^(https?://|imagens/)\S*$' then
         return j;
       end if;
       return to_jsonb(public.filtrar_palavroes(j #>> '{}', padrao));
