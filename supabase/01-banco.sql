@@ -6,7 +6,7 @@
 --  cole ESTE ARQUIVO INTEIRO e clique em "Run".
 --
 --  !!! JÁ INSTALADO (25/10/2026). NÃO RODE ESTE ARQUIVO DE NOVO !!!
---  Os arquivos 02 a 07 mudaram funções e permissões depois dele.
+--  Os arquivos 02 a 08 mudaram funções e permissões depois dele.
 --  Rodar este de novo desfaz essas mudanças: o envio de imagens para
 --  de funcionar, as curtidas somem e as notícias da Steam param.
 --  (Auditoria de 20/11/2026.)
